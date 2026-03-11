@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +20,86 @@ type MigrantRow = {
   blocked?: boolean;
 };
 
+type UserDoc = { id: string; name?: string | null; email?: string | null; role?: string | null };
+type ProfileDoc = { name?: string | null; email?: string | null };
+type TriageDoc = { legal_status?: string | null; work_status?: string | null; language_level?: string | null; urgencies?: string[] | null };
+type SessionDoc = { migrant_id?: string | null; scheduled_date?: string | null; status?: string | null };
+type ProgressDoc = { user_id?: string | null; progress_percent?: number | null };
+
+function normalizeLegalStatus(value?: string | null): 'regular' | 'irregular' | 'pendente' | '' {
+  if (!value) return '';
+  const v = value.toLowerCase();
+  if (['regular', 'regularized', 'refugee'].includes(v)) return 'regular';
+  if (['irregular', 'not_regularized'].includes(v)) return 'irregular';
+  if (['pendente', 'pending'].includes(v)) return 'pendente';
+  return '';
+}
+
+function normalizeWorkStatus(value?: string | null): 'empregado' | 'desempregado' | 'informal' | '' {
+  if (!value) return '';
+  const v = value.toLowerCase();
+  if (['empregado', 'employed'].includes(v)) return 'empregado';
+  if (['desempregado', 'unemployed', 'unemployed_seeking'].includes(v)) return 'desempregado';
+  if (['informal', 'student', 'other'].includes(v)) return 'informal';
+  return '';
+}
+
+function normalizeLanguageLevel(value?: string | null): 'iniciante' | 'intermediario' | 'avancado' | '' {
+  if (!value) return '';
+  const v = value.toLowerCase();
+  if (['iniciante', 'basic', 'none'].includes(v)) return 'iniciante';
+  if (['intermediario', 'intermediate'].includes(v)) return 'intermediario';
+  if (['avancado', 'advanced', 'native', 'fluent'].includes(v)) return 'avancado';
+  return '';
+}
+
+function normalizeUrgencyToken(value?: string | null): 'juridico' | 'psicologico' | 'habitacional' | '' {
+  if (!value) return '';
+  const v = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+  if (v.includes('jurid')) return 'juridico';
+  if (v.includes('psicolog')) return 'psicologico';
+  if (v.includes('habitac')) return 'habitacional';
+  return '';
+}
+
+function normalizeUrgencies(values?: string[] | null): Array<'juridico' | 'psicologico' | 'habitacional'> {
+  if (!values || values.length === 0) return [];
+  const set = new Set<'juridico' | 'psicologico' | 'habitacional'>();
+  values.forEach((value) => {
+    const normalized = normalizeUrgencyToken(value);
+    if (normalized) set.add(normalized);
+  });
+  return Array.from(set);
+}
+
+function legalLabel(value?: string | null): string {
+  const normalized = normalizeLegalStatus(value);
+  if (normalized === 'regular') return 'Regular';
+  if (normalized === 'irregular') return 'Irregular';
+  if (normalized === 'pendente') return 'Pendente';
+  return '—';
+}
+
+function workLabel(value?: string | null): string {
+  const normalized = normalizeWorkStatus(value);
+  if (normalized === 'empregado') return 'Empregado';
+  if (normalized === 'desempregado') return 'Desempregado';
+  if (normalized === 'informal') return 'Informal';
+  return '—';
+}
+
+function languageLabel(value?: string | null): string {
+  const normalized = normalizeLanguageLevel(value);
+  if (normalized === 'iniciante') return 'Iniciante';
+  if (normalized === 'intermediario') return 'Intermediário';
+  if (normalized === 'avancado') return 'Avançado';
+  return '—';
+}
+
 export default function MigrantsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Array<MigrantRow>>([]);
@@ -33,71 +113,60 @@ export default function MigrantsAdminPage() {
     async function fetchAll() {
       setLoading(true);
       try {
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, name, email')
-          .eq('role', 'migrant')
-          .order('created_at', { ascending: false });
-        const profileList = (profiles || []) as Array<{ user_id: string; name: string; email: string }>;
-        const userIds = profileList.map(p => p.user_id);
+        const migrants = await queryDocuments<UserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]);
+        const profileList = migrants.map((u) => ({ user_id: u.id, name: u.name || '', email: u.email || '' }));
+        const userIds = profileList.map((p) => p.user_id);
 
-        const triageMap: Record<string, { legal_status?: string | null; work_status?: string | null; language_level?: string | null; urgencies?: string[] | null }> = {};
-        if (userIds.length) {
-          const { data: triages } = await supabase
-            .from('triage')
-            .select('user_id, legal_status, work_status, language_level, urgencies')
-            .in('user_id', userIds);
-          (triages || []).forEach(t => {
-            const item = t as { user_id: string; legal_status?: string | null; work_status?: string | null; language_level?: string | null; urgencies?: string[] | null };
-            triageMap[item.user_id] = { legal_status: item.legal_status, work_status: item.work_status, language_level: item.language_level, urgencies: item.urgencies };
-          });
-        }
+        const [profileDocs, triageDocs, sessionDocs, progressDocs] = await Promise.all([
+          Promise.all(userIds.map(async (uid) => ({ uid, profile: await getDocument<ProfileDoc>('profiles', uid) }))),
+          Promise.all(userIds.map(async (uid) => ({ uid, triage: await getDocument<TriageDoc>('triage', uid) }))),
+          queryDocuments<SessionDoc>('sessions', [{ field: 'status', operator: '==', value: 'Agendada' }]),
+          queryDocuments<ProgressDoc>('user_trail_progress', []),
+        ]);
+
+        const profileMap: Record<string, ProfileDoc> = {};
+        profileDocs.forEach((p) => {
+          if (p.profile) profileMap[p.uid] = p.profile;
+        });
+
+        const triageMap: Record<string, TriageDoc> = {};
+        triageDocs.forEach((t) => {
+          if (t.triage) triageMap[t.uid] = t.triage;
+        });
 
         const sessionsMap: Record<string, number> = {};
-        if (userIds.length) {
-          const todayISO = new Date().toISOString().slice(0, 10);
-          const { data: sess } = await supabase
-            .from('sessions')
-            .select('migrant_id')
-            .in('migrant_id', userIds)
-            .gte('scheduled_date', todayISO)
-            .eq('status', 'Agendada');
-          (sess || []).forEach(s => {
-            const item = s as { migrant_id: string };
-            sessionsMap[item.migrant_id] = (sessionsMap[item.migrant_id] || 0) + 1;
-          });
-        }
+        const todayISO = new Date().toISOString().slice(0, 10);
+        sessionDocs.forEach((s) => {
+          if (!s.migrant_id) return;
+          if (!userIds.includes(s.migrant_id)) return;
+          if (!s.scheduled_date || s.scheduled_date < todayISO) return;
+          sessionsMap[s.migrant_id] = (sessionsMap[s.migrant_id] || 0) + 1;
+        });
 
         const progressMap: Record<string, number> = {};
-        if (userIds.length) {
-          const { data: progress } = await supabase
-            .from('user_trail_progress')
-            .select('user_id, progress_percent')
-            .in('user_id', userIds);
-          const agg: Record<string, { sum: number; count: number }> = {};
-          (progress || []).forEach(p => {
-            const item = p as { user_id: string; progress_percent: number | null };
-            const val = item.progress_percent || 0;
-            const prev = agg[item.user_id] || { sum: 0, count: 0 };
-            agg[item.user_id] = { sum: prev.sum + val, count: prev.count + 1 };
-          });
-          Object.keys(agg).forEach(uid => {
-            const a = agg[uid];
-            progressMap[uid] = Math.round(a.count ? a.sum / a.count : 0);
-          });
-        }
+        const agg: Record<string, { sum: number; count: number }> = {};
+        progressDocs.forEach((p) => {
+          if (!p.user_id || !userIds.includes(p.user_id)) return;
+          const val = p.progress_percent || 0;
+          const prev = agg[p.user_id] || { sum: 0, count: 0 };
+          agg[p.user_id] = { sum: prev.sum + val, count: prev.count + 1 };
+        });
+        Object.keys(agg).forEach((uid) => {
+          const a = agg[uid];
+          progressMap[uid] = Math.round(a.count ? a.sum / a.count : 0);
+        });
 
         const blockedRaw = localStorage.getItem('blockedMigrants');
         const blockedSet = new Set<string>(blockedRaw ? JSON.parse(blockedRaw) as string[] : []);
 
         const result: Array<MigrantRow> = profileList.map(p => ({
           user_id: p.user_id,
-          name: p.name,
-          email: p.email,
+          name: profileMap[p.user_id]?.name || p.name || p.email || 'Migrante',
+          email: profileMap[p.user_id]?.email || p.email || '—',
           legal_status: triageMap[p.user_id]?.legal_status || null,
           work_status: triageMap[p.user_id]?.work_status || null,
           language_level: triageMap[p.user_id]?.language_level || null,
-          urgencies: triageMap[p.user_id]?.urgencies || [],
+          urgencies: normalizeUrgencies(triageMap[p.user_id]?.urgencies),
           upcoming_sessions: sessionsMap[p.user_id] || 0,
           trails_progress_avg: progressMap[p.user_id] || 0,
           blocked: blockedSet.has(p.user_id),
@@ -123,10 +192,10 @@ export default function MigrantsAdminPage() {
   const filtered = useMemo(() => {
     return rows.filter(r => {
       const matchQuery = query.trim().length === 0 || r.name.toLowerCase().includes(query.toLowerCase());
-      const matchLegal = legalFilter === 'all' || (r.legal_status || '').toLowerCase() === legalFilter;
-      const matchWork = workFilter === 'all' || (r.work_status || '').toLowerCase() === workFilter;
-      const matchLang = langFilter === 'all' || (r.language_level || '').toLowerCase() === langFilter;
-      const matchUrg = urgencyFilter === 'all' || (r.urgencies || []).includes(urgencyFilter);
+      const matchLegal = legalFilter === 'all' || normalizeLegalStatus(r.legal_status) === legalFilter;
+      const matchWork = workFilter === 'all' || normalizeWorkStatus(r.work_status) === workFilter;
+      const matchLang = langFilter === 'all' || normalizeLanguageLevel(r.language_level) === langFilter;
+      const matchUrg = urgencyFilter === 'all' || normalizeUrgencies(r.urgencies).includes(urgencyFilter);
       return matchQuery && matchLegal && matchWork && matchLang && matchUrg;
     });
   }, [rows, query, legalFilter, workFilter, langFilter, urgencyFilter]);
@@ -228,9 +297,9 @@ export default function MigrantsAdminPage() {
                   </div>
                   <p className="text-sm text-muted-foreground">{r.email}</p>
                   <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2 mt-3 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4" /> {r.legal_status || '—'}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {r.work_status || '—'}</span>
-                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {r.language_level || '—'}</span>
+                    <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4" /> {legalLabel(r.legal_status)}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {workLabel(r.work_status)}</span>
+                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {languageLabel(r.language_level)}</span>
                     <span className="flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> {(r.urgencies || []).length} urgências</span>
                     <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {r.upcoming_sessions || 0} sessões futuras</span>
                     <span className="flex items-center gap-1"><CheckCircle className="h-4 w-4" /> {r.trails_progress_avg || 0}% progresso médio</span>
