@@ -28,15 +28,15 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 
 vi.mock('@/contexts/LanguageContext', () => ({
-  useLanguage: () => ({ language: 'pt', setLanguage: vi.fn() }),
+  useLanguage: () => ({ language: 'pt', setLanguage: vi.fn(), t: { get: (path: string) => path } }),
 }));
 
 describe('ProfilePage (dashboard/migrante)', () => {
   it('mostra loading e depois renderiza dados vindos da base de dados', async () => {
     mockFetchMigrantProfile.mockResolvedValueOnce({
       userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
-      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: '+351900000000' },
-      triage: { id: 'u1', userId: 'u1', legal_status: 'regularized', work_status: 'employed', language_level: 'basic', urgencies: ['legal'], interests: ['it'] },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: '+351900000000', birthDate: '1990-02-03', nationality: 'Brasil' },
+      triage: { id: 'u1', userId: 'u1', legal_status: 'regularized', work_status: 'employed', language_level: 'basic', urgencies: ['legal'], interests: ['it'], answers: { phone: '+351900000000', birth_date: '1990-02-03', nationality: 'Brasil' } },
       sessions: [{ id: 's1', migrant_id: 'u1', session_type: 'mediador', scheduled_date: '2026-01-01', scheduled_time: '10:00', status: 'pending' }],
       progress: [{ id: 'p1', user_id: 'u1', trail_id: 't1', progress_percent: 50, modules_completed: 1, completed_at: null }],
       trails: { t1: { id: 't1', title: 'Trilha 1', modules_count: 3 } },
@@ -52,6 +52,12 @@ describe('ProfilePage (dashboard/migrante)', () => {
 
     expect(await screen.findByText('Perfil')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toHaveValue('ana@exemplo.com');
+    expect(screen.queryByLabelText('Telefone')).toBeNull();
+    expect(screen.queryByLabelText('Data de nascimento')).toBeNull();
+    expect(screen.queryByLabelText('Nacionalidade')).toBeNull();
+    expect(screen.getByText('+351 900 000 000')).toBeInTheDocument();
+    expect(screen.getByText('03/02/1990')).toBeInTheDocument();
+    expect(screen.getAllByText('Brasil').length).toBeGreaterThan(0);
     expect(screen.getByText('Status Migratório')).toBeInTheDocument();
     expect(screen.getByText('Histórico de Marcações')).toBeInTheDocument();
     expect(screen.getByText('Histórico de Trilhas')).toBeInTheDocument();
@@ -73,6 +79,29 @@ describe('ProfilePage (dashboard/migrante)', () => {
       </MemoryRouter>
     );
     expect(await screen.findByText('Perfil não encontrado.')).toBeInTheDocument();
+  });
+
+  it('mantém campos vazios quando não há dados', async () => {
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, birthDate: null, nationality: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Perfil');
+    expect(screen.queryByLabelText('Telefone')).toBeNull();
+    expect(screen.queryByLabelText('Data de nascimento')).toBeNull();
+    expect(screen.queryByLabelText('Nacionalidade')).toBeNull();
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
   });
 
   it('mostra erro quando a API falha', async () => {

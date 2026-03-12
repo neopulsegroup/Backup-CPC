@@ -48,6 +48,8 @@ export type MigrantTriageDoc = {
   id: string;
   userId: string;
   completed?: boolean;
+  completedAt?: string | null;
+  answers?: Record<string, unknown> | null;
   legal_status?: string | null;
   work_status?: string | null;
   language_level?: string | null;

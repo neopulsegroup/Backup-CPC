@@ -35,13 +35,52 @@ export const COUNTRY_CODES = [
 ];
 
 interface PhoneInputProps {
+  id?: string;
+  name?: string;
   value?: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export function PhoneInput({ value = '', onChange, placeholder, className }: PhoneInputProps) {
+function formatPhoneNumber(countryCode: string, raw: string) {
+  const digits = raw.replace(/\D+/g, '');
+  if (!digits) return '';
+
+  if (countryCode === 'PT') {
+    const trimmed = digits.slice(0, 9);
+    if (trimmed.length <= 3) return trimmed;
+    if (trimmed.length <= 6) return `${trimmed.slice(0, 3)} ${trimmed.slice(3)}`;
+    return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6)}`;
+  }
+
+  if (countryCode === 'BR') {
+    const trimmed = digits.slice(0, 11);
+    if (trimmed.length <= 2) return trimmed;
+    const ddd = trimmed.slice(0, 2);
+    const rest = trimmed.slice(2);
+    if (rest.length <= 4) return `(${ddd}) ${rest}`;
+    if (rest.length <= 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+    return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+  }
+
+  const trimmed = digits.slice(0, 15);
+  const groups: string[] = [];
+  for (let i = 0; i < trimmed.length; i += 3) groups.push(trimmed.slice(i, i + 3));
+  return groups.join(' ');
+}
+
+export function formatPhoneValueForDisplay(value: string) {
+  if (!value || !value.trim()) return '';
+  const val = value.trim();
+  const sortedCodes = [...COUNTRY_CODES].sort((a, b) => b.dial_code.length - a.dial_code.length);
+  const country = sortedCodes.find((c) => val.startsWith(c.dial_code)) || COUNTRY_CODES[0];
+  const rest = val.startsWith(country.dial_code) ? val.slice(country.dial_code.length).trim() : val;
+  const formatted = formatPhoneNumber(country.code, rest);
+  return `${country.dial_code}${formatted ? ` ${formatted}` : ''}`.trim();
+}
+
+export function PhoneInput({ id, name, value = '', onChange, placeholder, className }: PhoneInputProps) {
   const [open, setOpen] = React.useState(false)
   
   // Helper to find country from full phone string
@@ -70,9 +109,10 @@ export function PhoneInput({ value = '', onChange, placeholder, className }: Pho
     if (!value) return '';
     const prefix = selectedCountry.dial_code;
     if (value.startsWith(prefix)) {
-      return value.slice(prefix.length).trim();
+      const raw = value.slice(prefix.length).trim();
+      return formatPhoneNumber(selectedCountry.code, raw);
     }
-    return value;
+    return formatPhoneNumber(selectedCountry.code, value);
   };
 
   const handleCountrySelect = (country: typeof COUNTRY_CODES[0]) => {
@@ -84,10 +124,8 @@ export function PhoneInput({ value = '', onChange, placeholder, className }: Pho
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newNumber = e.target.value;
-    // Allow only numbers and spaces/dashes if desired, but for now just raw input
-    // Maybe strip non-numeric except space/dash?
-    // Let's keep it simple as text for now to match user expectation of free input
-    onChange(`${selectedCountry.dial_code} ${newNumber}`);
+    const formatted = formatPhoneNumber(selectedCountry.code, newNumber);
+    onChange(`${selectedCountry.dial_code} ${formatted}`.trim());
   };
 
   return (
@@ -136,6 +174,8 @@ export function PhoneInput({ value = '', onChange, placeholder, className }: Pho
         </PopoverContent>
       </Popover>
       <Input
+        id={id}
+        name={name}
         type="tel"
         placeholder={placeholder || "912 345 678"}
         value={getPhoneNumber()}

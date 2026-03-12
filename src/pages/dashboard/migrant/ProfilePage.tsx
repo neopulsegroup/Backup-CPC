@@ -10,13 +10,14 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { formatPhoneValueForDisplay } from '@/components/ui/phone-input';
 import { fetchMigrantProfile, type MigrantProfileDoc, type MigrantProfileResponse } from '@/api/migrantProfile';
 import { updateUserProfile } from '@/integrations/firebase/auth';
 import { updateDocument } from '@/integrations/firebase/firestore';
 
 export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<MigrantProfileResponse | null>(null);
@@ -24,9 +25,6 @@ export default function ProfilePage() {
 
   const [edit, setEdit] = useState<{
     name: string;
-    phone: string;
-    birthDate: string;
-    nationality: string;
     currentLocation: string;
     arrivalDate: string;
     resumeUrl: string;
@@ -38,9 +36,6 @@ export default function ProfilePage() {
     contactPreference: 'email' | 'phone';
   }>({
     name: '',
-    phone: '',
-    birthDate: '',
-    nationality: '',
     currentLocation: '',
     arrivalDate: '',
     resumeUrl: '',
@@ -127,9 +122,6 @@ export default function ProfilePage() {
 
         setEdit({
           name: merged?.name || res.userProfile?.name || '',
-          phone: merged?.phone || '',
-          birthDate: merged?.birthDate || '',
-          nationality: merged?.nationality || '',
           currentLocation: merged?.currentLocation || '',
           arrivalDate: merged?.arrivalDate || '',
           resumeUrl: merged?.resumeUrl || '',
@@ -172,6 +164,113 @@ export default function ProfilePage() {
 
   const profileDoc: MigrantProfileDoc | null = data?.profile || null;
   const triage = data?.triage || null;
+  const triageAnswers = useMemo(() => {
+    const a = triage?.answers;
+    return a && typeof a === 'object' ? (a as Record<string, unknown>) : {};
+  }, [triage?.answers]);
+
+  const profileReadOnlyFields = useMemo(() => {
+    const triagePhone = typeof triageAnswers.phone === 'string' ? triageAnswers.phone : null;
+    const triageBirthDate = typeof triageAnswers.birth_date === 'string' ? triageAnswers.birth_date : null;
+    const triageNationality = typeof triageAnswers.nationality === 'string' ? triageAnswers.nationality : null;
+
+    const rawPhone = triagePhone || profileDoc?.phone || '';
+    const phone = rawPhone ? formatPhoneValueForDisplay(rawPhone) : '';
+
+    const rawBirth = triageBirthDate || profileDoc?.birthDate || '';
+    const birth = (() => {
+      if (!rawBirth) return '';
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(rawBirth);
+      if (!m) return rawBirth;
+      return `${m[3]}/${m[2]}/${m[1]}`;
+    })();
+
+    const nationality = triageNationality || profileDoc?.nationality || '';
+
+    return { phone, birth, nationality };
+  }, [profileDoc?.birthDate, profileDoc?.nationality, profileDoc?.phone, triageAnswers]);
+
+  const statusSections = useMemo(
+    () => [
+      {
+        titleKey: 'triage.steps.location',
+        questionIds: ['is_in_portugal', 'current_country', 'arrival_date', 'arrival_date_pt'],
+      },
+      {
+        titleKey: 'triage.steps.pre_arrival_legal',
+        questionIds: ['visa_started', 'visa_stage'],
+      },
+      {
+        titleKey: 'triage.steps.pre_arrival_general',
+        questionIds: ['knowledge_level'],
+      },
+      {
+        titleKey: 'triage.steps.pre_arrival_cultural',
+        questionIds: ['cultural_program_interest', 'portuguese_level', 'portuguese_classes_interest'],
+      },
+      {
+        titleKey: 'triage.steps.pre_arrival_expectations',
+        questionIds: ['motivation', 'doubts', 'challenges', 'why_portugal', 'desired_support', 'expectations_12_months', 'life_in_3_years', 'success_signs'],
+      },
+      {
+        titleKey: 'triage.steps.post_arrival_integration',
+        questionIds: ['legal_status'],
+      },
+      {
+        titleKey: 'triage.steps.post_arrival_autonomy',
+        questionIds: ['daily_autonomy', 'communication_comfort', 'social_norms', 'language_level'],
+      },
+      {
+        titleKey: 'triage.steps.post_arrival_needs',
+        questionIds: ['housing_status', 'basic_services', 'bank_account', 'sns_registered', 'identified_needs'],
+      },
+      {
+        titleKey: 'triage.steps.psychological_support',
+        questionIds: ['emotional_wellbeing', 'wants_psych_support'],
+      },
+      {
+        titleKey: 'triage.steps.professional_profile',
+        questionIds: ['education_level', 'education_validation_interest', 'professional_interests', 'professional_experience', 'work_status'],
+      },
+    ],
+    []
+  );
+
+  function translateOption(questionId: string, value: string) {
+    const key = `triage.options.${questionId}.${value}`;
+    const label = t.get(key);
+    return label === key ? value : label;
+  }
+
+  function formatAnswer(questionId: string, value: unknown) {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'string') {
+      if (value.trim().length === 0) return '—';
+      return translateOption(questionId, value);
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return translateOption(questionId, String(value));
+    }
+    if (Array.isArray(value)) {
+      const items = value.filter((v) => typeof v === 'string' && v.trim().length > 0) as string[];
+      if (items.length === 0) return '—';
+      return (
+        <div className="flex flex-wrap gap-1.5 justify-start">
+          {items.map((v) => (
+            <span key={v} className="px-2 py-0.5 rounded-md border bg-muted/50 text-xs">
+              {translateOption(questionId, v)}
+            </span>
+          ))}
+        </div>
+      );
+    }
+    try {
+      const str = JSON.stringify(value);
+      return str && str !== '{}' ? str : '—';
+    } catch {
+      return '—';
+    }
+  }
 
   async function save() {
     if (!user) return;
@@ -179,9 +278,6 @@ export default function ProfilePage() {
     try {
       await updateDocument('profiles', user.uid, {
         name: edit.name,
-        phone: edit.phone || null,
-        birthDate: edit.birthDate || null,
-        nationality: edit.nationality || null,
         currentLocation: edit.currentLocation || null,
         arrivalDate: edit.arrivalDate || null,
         resumeUrl: edit.resumeUrl || null,
@@ -254,20 +350,26 @@ export default function ProfilePage() {
               <Input id="name" value={edit.name} onChange={(e) => setEdit((s) => ({ ...s, name: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" value={edit.phone} onChange={(e) => setEdit((s) => ({ ...s, phone: e.target.value }))} className="mt-1" />
+              <Label>Telefone</Label>
+              <div className="mt-1 rounded-md border bg-muted/20 px-3 py-2 text-sm">
+                {profileReadOnlyFields.phone || '—'}
+              </div>
             </div>
             <div>
               <Label htmlFor="email">Email</Label>
               <Input id="email" value={profileDoc.email || ''} disabled className="mt-1" />
             </div>
             <div>
-              <Label htmlFor="birthDate">Data de nascimento</Label>
-              <Input id="birthDate" type="date" value={edit.birthDate} onChange={(e) => setEdit((s) => ({ ...s, birthDate: e.target.value }))} className="mt-1" />
+              <Label>Data de nascimento</Label>
+              <div className="mt-1 rounded-md border bg-muted/20 px-3 py-2 text-sm">
+                {profileReadOnlyFields.birth || '—'}
+              </div>
             </div>
             <div>
-              <Label htmlFor="nationality">Nacionalidade</Label>
-              <Input id="nationality" value={edit.nationality} onChange={(e) => setEdit((s) => ({ ...s, nationality: e.target.value }))} className="mt-1" />
+              <Label>Nacionalidade</Label>
+              <div className="mt-1 rounded-md border bg-muted/20 px-3 py-2 text-sm">
+                {profileReadOnlyFields.nationality || '—'}
+              </div>
             </div>
             <div>
               <Label htmlFor="currentLocation">Localização atual</Label>
@@ -336,28 +438,29 @@ export default function ProfilePage() {
         <div className="cpc-card p-6">
           <h2 className="font-semibold mb-4">Status Migratório</h2>
           {triage ? (
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Situação legal</span>
-                <span>{triage.legal_status || '—'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Situação laboral</span>
-                <span>{triage.work_status || '—'}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Nível de idioma</span>
-                <span>{triage.language_level || '—'}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground">Urgências</span>
-                <div>{(triage.urgencies || []).length ? (triage.urgencies || []).join(', ') : '—'}</div>
-              </div>
-              <div className="space-y-1">
-                <span className="text-muted-foreground">Interesses</span>
-                <div>{(triage.interests || []).length ? (triage.interests || []).join(', ') : '—'}</div>
-              </div>
-              <div className="pt-2">
+            <div className="space-y-5 text-sm">
+              {statusSections.map((section) => (
+                <div key={section.titleKey} className="rounded-lg border bg-card">
+                  <div className="px-4 py-3 border-b">
+                    <h3 className="font-medium">{t.get(section.titleKey)}</h3>
+                  </div>
+                  <div className="px-4">
+                    {section.questionIds.map((questionId) => {
+                      const labelKey = `triage.questions.${questionId}`;
+                      const label = t.get(labelKey);
+                      const value = triageAnswers[questionId];
+                      return (
+                        <div key={questionId} className="grid grid-cols-1 md:grid-cols-2 gap-2 py-3 border-b last:border-b-0">
+                          <div className="text-muted-foreground">{label === labelKey ? questionId : label}</div>
+                          <div className="font-medium break-words">{formatAnswer(questionId, value)}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              <div className="pt-1">
                 <Link to="/triagem" className="text-primary hover:underline">Atualizar dados de triagem</Link>
               </div>
             </div>
