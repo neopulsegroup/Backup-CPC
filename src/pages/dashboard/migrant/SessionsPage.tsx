@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -30,12 +30,11 @@ export default function SessionsPage() {
       if (!user) return;
       setLoading(true);
       try {
-        const { data } = await supabase
-          .from('sessions')
-          .select('id, session_type, scheduled_date, scheduled_time, status')
-          .eq('migrant_id', user.id)
-          .order('scheduled_date', { ascending: true });
-        const typed = (data || []) as Array<SessionItem>;
+        const typed = await queryDocuments<SessionItem>(
+          'sessions',
+          [{ field: 'migrant_id', operator: '==', value: user.uid }],
+          { field: 'scheduled_date', direction: 'asc' }
+        );
         setSessions(typed);
       } finally {
         setLoading(false);
@@ -90,19 +89,18 @@ export default function SessionsPage() {
 
   async function bookSession() {
     if (!user || !bookDate || !bookTime) return;
-    await supabase.from('sessions').insert({ migrant_id: user.id, session_type: bookType, scheduled_date: bookDate, scheduled_time: bookTime, status: 'Agendada' });
+    await addDocument('sessions', { migrant_id: user.uid, session_type: bookType, scheduled_date: bookDate, scheduled_time: bookTime, status: 'Agendada' });
     setBookOpen(false);
-    const { data } = await supabase
-      .from('sessions')
-      .select('id, session_type, scheduled_date, scheduled_time, status')
-      .eq('migrant_id', user.id)
-      .order('scheduled_date', { ascending: true });
-    const typed = (data || []) as Array<SessionItem>;
+    const typed = await queryDocuments<SessionItem>(
+      'sessions',
+      [{ field: 'migrant_id', operator: '==', value: user.uid }],
+      { field: 'scheduled_date', direction: 'asc' }
+    );
     setSessions(typed);
   }
 
   async function updateStatus(id: string, status: 'Concluída' | 'Cancelada') {
-    await supabase.from('sessions').update({ status }).eq('id', id);
+    await updateDocument('sessions', id, { status });
     const next = sessions.map(s => (s.id === id ? { ...s, status } : s));
     setSessions(next);
   }

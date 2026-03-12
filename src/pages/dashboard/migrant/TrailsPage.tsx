@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
+import { queryDocuments } from '@/integrations/firebase/firestore';
 import {
   BookOpen,
   Clock,
@@ -47,11 +47,11 @@ export default function TrailsPage() {
 
   async function fetchTrails() {
     try {
-      const { data: trailsData } = await supabase
-        .from('trails')
-        .select('*')
-        .eq('is_active', true)
-        .order('category');
+      const trailsData = await queryDocuments<Trail>(
+        'trails',
+        [{ field: 'is_active', operator: '==', value: true }],
+        'category'
+      );
 
       if (trailsData && trailsData.length > 0) {
         setTrails(trailsData);
@@ -105,16 +105,15 @@ export default function TrailsPage() {
 
       const progressMap: Record<string, UserProgress> = {};
       if (user) {
-        const { data: progressData } = await supabase
-          .from('user_trail_progress')
-          .select('*')
-          .eq('user_id', user.id);
-        if (progressData) {
-          progressData.forEach(p => { progressMap[p.trail_id] = p; });
-        }
+        const progressData = await queryDocuments<UserProgress>('user_trail_progress', [
+          { field: 'user_id', operator: '==', value: user.uid },
+        ]);
+        progressData.forEach((p) => {
+          progressMap[p.trail_id] = p;
+        });
       }
       if (usingDemoData || (!trailsData || trailsData.length === 0)) {
-        const uid = user?.id || 'anon';
+        const uid = user?.uid || 'anon';
         for (const t of [
           'demo-trail-1','demo-trail-2','demo-trail-3','demo-trail-4'
         ]) {

@@ -7,8 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
+import { countDocuments, getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { registerUser } from '@/integrations/firebase/auth';
 import {
   Users,
@@ -377,29 +376,34 @@ export default function CPCDashboard() {
       async function fetchAll() {
         setLoadingList(true);
         try {
-          const { data: apps } = await supabase
-            .from('job_applications')
-            .select('id, applicant_id, job_id, status, created_at')
-            .order('created_at', { ascending: false });
-          const applicantIds = Array.from(new Set((apps || []).map(a => a.applicant_id)));
-          const jobIds = Array.from(new Set((apps || []).map(a => a.job_id)));
-          type ProfileBasic = { user_id: string; name: string; email: string };
-          type JobBasic = { id: string; title: string };
-          const profilesData: ProfileBasic[] = applicantIds.length
-            ? ((await supabase.from('profiles').select('user_id, name, email').in('user_id', applicantIds)).data || [])
-            : [];
-          const jobsData: JobBasic[] = jobIds.length
-            ? ((await supabase.from('job_offers').select('id, title').in('id', jobIds)).data || [])
-            : [];
-          const pmap: Record<string, { name: string; email: string }> = {};
-          profilesData.forEach(p => { pmap[p.user_id] = { name: p.name, email: p.email }; });
-          const jmap: Record<string, { title: string }> = {};
-          jobsData.forEach(j => { jmap[j.id] = { title: j.title }; });
-          const out = (apps || []).map(a => ({
+          const apps = await queryDocuments<{ id: string; applicant_id: string; job_id: string; status: string; created_at: string }>(
+            'job_applications',
+            [],
+            { field: 'created_at', direction: 'desc' },
+            200
+          );
+          const applicantIds = Array.from(new Set(apps.map(a => a.applicant_id).filter(Boolean)));
+          const jobIds = Array.from(new Set(apps.map(a => a.job_id).filter(Boolean)));
+
+          const profileDocs = await Promise.all(applicantIds.map(id => getDocument<{ name?: string | null; email?: string | null }>('profiles', id)));
+          const pmap = new Map<string, { name: string; email: string }>();
+          applicantIds.forEach((id, idx) => {
+            const p = profileDocs[idx];
+            if (p) pmap.set(id, { name: p.name || id, email: p.email || '' });
+          });
+
+          const jobDocs = await Promise.all(jobIds.map(id => getDocument<{ title?: string | null }>('job_offers', id)));
+          const jmap = new Map<string, { title: string }>();
+          jobIds.forEach((id, idx) => {
+            const j = jobDocs[idx];
+            if (j) jmap.set(id, { title: j.title || id });
+          });
+
+          const out = apps.map(a => ({
             id: a.id,
-            applicant: pmap[a.applicant_id]?.name || a.applicant_id,
-            email: pmap[a.applicant_id]?.email || '',
-            job: jmap[a.job_id]?.title || a.job_id,
+            applicant: pmap.get(a.applicant_id)?.name || a.applicant_id,
+            email: pmap.get(a.applicant_id)?.email || '',
+            job: jmap.get(a.job_id)?.title || a.job_id,
             status: a.status,
             created_at: a.created_at,
           }));
@@ -453,12 +457,13 @@ export default function CPCDashboard() {
       async function fetchAll() {
         setLoadingList(true);
         try {
-          const { data } = await supabase
-            .from('job_offers')
-            .select('id, title, location, created_at')
-            .eq('status', 'pending_review')
-            .order('created_at', { ascending: false });
-          setRows((data || []) as Array<{ id: string; title: string; location: string | null; created_at: string }>);
+          const data = await queryDocuments<{ id: string; title: string; location: string | null; created_at: string }>(
+            'job_offers',
+            [{ field: 'status', operator: '==', value: 'pending_review' }],
+            { field: 'created_at', direction: 'desc' },
+            200
+          );
+          setRows(data || []);
         } finally {
           setLoadingList(false);
         }
@@ -536,17 +541,27 @@ export default function CPCDashboard() {
         const prevStartISO = period === 'today' ? prevDay.toISOString().slice(0, 10) : period === 'week' ? prevWeekStart.toISOString().slice(0, 10) : prevMonthStart.toISOString().slice(0, 10);
         const prevEndISO = period === 'today' ? prevDay.toISOString().slice(0, 10) : period === 'week' ? prevWeekEnd.toISOString().slice(0, 10) : prevMonthEnd.toISOString().slice(0, 10);
 
-        const [firebaseMigrants, sessionsRes, companiesRes, offersActiveRes, offersPendingRes, applicationsRes, progressRes, triageRes, applicationsPeriodRes, applicationsPrevRes] = await Promise.all([
+        const [firebaseMigrants, allSessionsRaw, companiesTotalCount, offersActiveCount, offersPendingCount, applicationsTotalCount, progressRaw, triageRaw, applicationsPeriodCountRaw, applicationsPrevCountRaw] = await Promise.all([
           queryDocuments<FirebaseUserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]),
-          supabase.from('sessions').select('id, scheduled_date, status, session_type, scheduled_time, migrant_id'),
-          supabase.from('companies').select('id', { count: 'estimated', head: true }),
-          supabase.from('job_offers').select('id', { count: 'estimated', head: true }).eq('status', 'active'),
-          supabase.from('job_offers').select('id', { count: 'estimated', head: true }).eq('status', 'pending_review'),
-          supabase.from('job_applications').select('id', { count: 'estimated', head: true }),
-          supabase.from('user_trail_progress').select('progress_percent'),
-          supabase.from('triage').select('user_id, urgencies'),
-          supabase.from('job_applications').select('id', { count: 'estimated', head: true }).gte('created_at', periodStartISO).lte('created_at', periodEndISO),
-          supabase.from('job_applications').select('id', { count: 'estimated', head: true }).gte('created_at', prevStartISO).lte('created_at', prevEndISO)
+          queryDocuments<{ id: string; scheduled_date: string; status: string | null; session_type: string; scheduled_time: string; migrant_id: string }>(
+            'sessions',
+            [],
+            { field: 'scheduled_date', direction: 'asc' }
+          ),
+          countDocuments('companies', []),
+          countDocuments('job_offers', [{ field: 'status', operator: '==', value: 'active' }]),
+          countDocuments('job_offers', [{ field: 'status', operator: '==', value: 'pending_review' }]),
+          countDocuments('job_applications', []),
+          queryDocuments<{ progress_percent: number | null }>('user_trail_progress', []),
+          queryDocuments<{ id: string; urgencies: string[] | null }>('triage', []),
+          countDocuments('job_applications', [
+            { field: 'created_at', operator: '>=', value: periodStartISO },
+            { field: 'created_at', operator: '<=', value: periodEndISO },
+          ]),
+          countDocuments('job_applications', [
+            { field: 'created_at', operator: '>=', value: prevStartISO },
+            { field: 'created_at', operator: '<=', value: prevEndISO },
+          ]),
         ]);
 
         const migrantDates = firebaseMigrants
@@ -558,28 +573,26 @@ export default function CPCDashboard() {
         setMigrantsPeriodNew(countDatesBetween(migrantDates, periodStartISO, periodEndISO));
         setMigrantsPrevNew(countDatesBetween(migrantDates, prevStartISO, prevEndISO));
 
-        type SessionRow = { id: string; scheduled_date: string; status: string | null; session_type: string; scheduled_time: string; migrant_id: string };
-        const allSessions = ((sessionsRes.data || []) as SessionRow[]).filter((s) => !isCancelledSessionStatus(s.status));
+        const allSessions = (allSessionsRaw || []).filter((s) => !isCancelledSessionStatus(s.status));
         setSessionsTodayCount(allSessions.filter((s) => s.scheduled_date === todayISO).length);
         setSessionsWeekCount(allSessions.filter((s) => s.scheduled_date >= weekStart.toISOString().slice(0, 10) && s.scheduled_date <= weekEnd.toISOString().slice(0, 10)).length);
         setSessionsCompletedCount(allSessions.filter((s) => isCompletedSessionStatus(s.status)).length);
         setSessionsPeriodCount(allSessions.filter((s) => s.scheduled_date >= periodStartISO && s.scheduled_date <= periodEndISO).length);
         setSessionsPrevCount(allSessions.filter((s) => s.scheduled_date >= prevStartISO && s.scheduled_date <= prevEndISO).length);
 
-        setCompaniesTotal(companiesRes.count || 0);
-        setJobOffersActive(offersActiveRes.count || 0);
-        setJobOffersPendingApproval(offersPendingRes.count || 0);
-        setApplicationsTotal(applicationsRes.count || 0);
-        setApplicationsPeriodCount(applicationsPeriodRes.count || 0);
-        setApplicationsPrevCount(applicationsPrevRes.count || 0);
+        setCompaniesTotal(companiesTotalCount || 0);
+        setJobOffersActive(offersActiveCount || 0);
+        setJobOffersPendingApproval(offersPendingCount || 0);
+        setApplicationsTotal(applicationsTotalCount || 0);
+        setApplicationsPeriodCount(applicationsPeriodCountRaw || 0);
+        setApplicationsPrevCount(applicationsPrevCountRaw || 0);
 
-        const progressValues = ((progressRes.data || []) as Array<{ progress_percent: number | null }>).map(p => p.progress_percent || 0);
+        const progressValues = (progressRaw || []).map(p => p.progress_percent || 0);
         const avg = progressValues.length ? Math.round(progressValues.reduce((a,b)=>a+b,0) / progressValues.length) : 0;
         setAvgProgress(avg);
 
-        const triages = (triageRes.data || []) as Array<{ user_id: string; urgencies: string[] | null }>;
         const agg = { juridico: 0, psicologico: 0, habitacional: 0 };
-        triages.forEach(t => {
+        triageRaw.forEach(t => {
           (t.urgencies || []).forEach(u => {
             if (u === 'juridico') agg.juridico += 1;
             if (u === 'psicologico') agg.psicologico += 1;
@@ -588,14 +601,20 @@ export default function CPCDashboard() {
         });
         setUrgencies(agg);
 
-        const { data: recentProfiles } = await supabase
-          .from('profiles')
-          .select('user_id, name')
-          .eq('role', 'migrant')
-          .order('created_at', { ascending: false })
-          .limit(3);
-        const recentTyped = (recentProfiles || []) as Array<{ user_id: string; name: string }>;
-        const recentList = recentTyped.map(p => ({ id: p.user_id, name: p.name, status: '—', urgency: false, date: new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) }));
+        const recentIds = [...firebaseMigrants]
+          .map((m) => ({ id: m.id, createdAt: parseUnknownDate(m.createdAt) }))
+          .filter((m): m is { id: string; createdAt: Date } => m.createdAt !== null)
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+          .slice(0, 3)
+          .map((m) => m.id);
+        const recentProfiles = await Promise.all(recentIds.map((id) => getDocument<{ name?: string | null }>('profiles', id)));
+        const recentList = recentIds.map((id, idx) => ({
+          id,
+          name: recentProfiles[idx]?.name || id,
+          status: '—',
+          urgency: false,
+          date: new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }),
+        }));
         setRecentMigrants(recentList);
 
         const todaySessTyped = allSessions
@@ -604,12 +623,10 @@ export default function CPCDashboard() {
         const migrantIds = Array.from(new Set(todaySessTyped.map(s => s.migrant_id).filter(Boolean)));
         const migrantMap: Record<string, string> = {};
         if (migrantIds.length) {
-          const { data: migProfiles } = await supabase
-            .from('profiles')
-            .select('user_id, name')
-            .in('user_id', migrantIds);
-          const migTyped = (migProfiles || []) as Array<{ user_id: string; name: string }>;
-          migTyped.forEach(p => { migrantMap[p.user_id] = p.name; });
+          const migrantProfiles = await Promise.all(migrantIds.map((id) => getDocument<{ name?: string | null }>('profiles', id)));
+          migrantIds.forEach((id, idx) => {
+            migrantMap[id] = migrantProfiles[idx]?.name || id;
+          });
         }
         const todayList = todaySessTyped.map(s => ({
           id: s.id,

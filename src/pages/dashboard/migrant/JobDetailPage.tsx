@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,7 @@ interface JobOffer {
   salary_range: string | null;
   requirements: string | null;
   created_at: string;
+  company_id?: string | null;
   company: {
     company_name: string;
     description: string | null;
@@ -50,43 +51,27 @@ export default function JobDetailPage() {
 
   async function fetchJob() {
     try {
-      const { data: jobData } = await supabase
-        .from('job_offers')
-        .select(`
-          id,
-          title,
-          description,
-          location,
-          sector,
-          contract_type,
-          salary_range,
-          requirements,
-          created_at,
-          company_id
-        `)
-        .eq('id', jobId)
-        .single();
+      if (!jobId) return;
+      const jobData = await getDocument<Omit<JobOffer, 'company'>>('job_offers', jobId);
 
       if (jobData) {
-        const { data: company } = await supabase
-          .from('companies')
-          .select('company_name, description, location')
-          .eq('id', jobData.company_id)
-          .single();
-
-        setJob({ ...jobData, company });
+        const company = jobData.company_id
+          ? await getDocument<JobOffer['company']>('companies', String(jobData.company_id))
+          : null;
+        setJob({ ...(jobData as JobOffer), company: (company as JobOffer['company']) || null });
       }
 
-      // Check if already applied
       if (user) {
-        const { data: application } = await supabase
-          .from('job_applications')
-          .select('id')
-          .eq('job_id', jobId)
-          .eq('applicant_id', user.id)
-          .maybeSingle();
-
-        setHasApplied(!!application);
+        const apps = await queryDocuments<{ id: string }>(
+          'job_applications',
+          [
+            { field: 'job_id', operator: '==', value: jobId },
+            { field: 'applicant_id', operator: '==', value: user.uid },
+          ],
+          undefined,
+          1
+        );
+        setHasApplied(apps.length > 0);
       }
     } catch (error) {
       console.error('Error fetching job:', error);
@@ -101,16 +86,13 @@ export default function JobDetailPage() {
     setApplying(true);
 
     try {
-      const { error } = await supabase
-        .from('job_applications')
-        .insert({
-          job_id: jobId,
-          applicant_id: user.id,
-          cover_letter: coverLetter || null,
-          status: 'submitted',
-        });
-
-      if (error) throw error;
+      await addDocument('job_applications', {
+        job_id: jobId,
+        applicant_id: user.uid,
+        cover_letter: coverLetter || null,
+        status: 'submitted',
+        created_at: new Date().toISOString(),
+      });
 
       setHasApplied(true);
       setShowApplicationForm(false);

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowLeft,
@@ -50,41 +50,34 @@ export default function JobApplicationsPage() {
 
     try {
       // Fetch job details
-      const { data: jobData } = await supabase
-        .from('job_offers')
-        .select('id, title, location')
-        .eq('id', jobId)
-        .single();
-
+      const jobData = await getDocument<JobOffer>('job_offers', jobId);
       if (jobData) setJob(jobData);
 
       // Fetch applications with applicant profiles
-      const { data: appsData } = await supabase
-        .from('job_applications')
-        .select(`
-          id,
-          cover_letter,
-          status,
-          created_at,
-          applicant_id
-        `)
-        .eq('job_id', jobId)
-        .order('created_at', { ascending: false });
+      const appsData = await queryDocuments<{ id: string; cover_letter: string | null; status: string; created_at: string; applicant_id: string }>(
+        'job_applications',
+        [{ field: 'job_id', operator: '==', value: jobId }],
+        { field: 'created_at', direction: 'desc' }
+      );
 
-      if (appsData) {
+      if (appsData.length > 0) {
         // Fetch applicant profiles
-        const applicantIds = appsData.map(app => app.applicant_id);
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, name, email')
-          .in('user_id', applicantIds);
+        const applicantIds = Array.from(new Set(appsData.map(app => app.applicant_id)));
+        const profileDocs = await Promise.all(applicantIds.map(id => getDocument<{ id: string; name?: string | null; email?: string | null }>('profiles', id)));
+        const profilesById = new Map<string, { name: string; email: string }>();
+        applicantIds.forEach((id, idx) => {
+          const p = profileDocs[idx];
+          if (p) profilesById.set(id, { name: p.name || 'Unknown', email: p.email || '' });
+        });
 
         const applicationsWithProfiles = appsData.map(app => ({
           ...app,
-          applicant: profiles?.find(p => p.user_id === app.applicant_id) || { name: 'Unknown', email: '' }
+          applicant: profilesById.get(app.applicant_id) || { name: 'Unknown', email: '' }
         }));
 
         setApplications(applicationsWithProfiles);
+      } else {
+        setApplications([]);
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
@@ -94,19 +87,9 @@ export default function JobApplicationsPage() {
   }
 
   async function updateApplicationStatus(applicationId: string, newStatus: 'submitted' | 'viewed' | 'interview' | 'accepted' | 'rejected') {
-    const { error } = await supabase
-      .from('job_applications')
-      .update({ status: newStatus })
-      .eq('id', applicationId);
-
-    if (!error) {
-      setApplications(prev =>
-        prev.map(app =>
-          app.id === applicationId ? { ...app, status: newStatus } : app
-        )
-      );
-      setSelectedApplication(null);
-    }
+    await updateDocument('job_applications', applicationId, { status: newStatus });
+    setApplications(prev => prev.map(app => (app.id === applicationId ? { ...app, status: newStatus } : app)));
+    setSelectedApplication(null);
   }
 
   const getStatusConfig = (status: string) => {

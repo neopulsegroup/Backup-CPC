@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,10 +38,7 @@ export default function TrailsAdminPage() {
 
   async function fetchTrails() {
     try {
-      const { data } = await supabase
-        .from('trails')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const data = await queryDocuments<Trail>('trails', [], { field: 'created_at', direction: 'desc' });
       setTrails(data || []);
     } catch (e) {
       console.error('Erro ao carregar trilhas', e);
@@ -50,28 +47,21 @@ export default function TrailsAdminPage() {
     }
   }
 
-  async function createTrail(e: React.FormEvent) {
+  async function createTrail(e: FormEvent) {
     e.preventDefault();
     setCreating(true);
     try {
-      const { data, error } = await supabase
-        .from('trails')
-        .insert({
-          title: form.title,
-          description: form.description || null,
-          category: form.category,
-          difficulty: form.difficulty,
-          is_active: true,
-          modules_count: 0,
-          duration_minutes: 0,
-        })
-        .select('*')
-        .single();
-
-      if (error) throw error;
-      if (data) {
-        navigate(`/dashboard/cpc/trilhas/${data.id}`);
-      }
+      const id = await addDocument('trails', {
+        title: form.title,
+        description: form.description || null,
+        category: form.category,
+        difficulty: form.difficulty,
+        is_active: true,
+        modules_count: 0,
+        duration_minutes: 0,
+        created_at: new Date().toISOString(),
+      });
+      navigate(`/dashboard/cpc/trilhas/${id}`);
     } catch (e) {
       console.error('Erro ao criar trilha', e);
     } finally {
@@ -132,62 +122,51 @@ export default function TrailsAdminPage() {
     const results: { title: string; status: 'created' | 'exists' | 'error'; message?: string }[] = [];
     try {
       for (const demo of demos) {
-        const { data: existing } = await supabase
-          .from('trails')
-          .select('id')
-          .eq('title', demo.title)
-          .maybeSingle();
-
-        if (existing?.id) {
+        const existing = await queryDocuments<{ id: string }>(
+          'trails',
+          [{ field: 'title', operator: '==', value: demo.title }],
+          undefined,
+          1
+        );
+        if (existing[0]?.id) {
           results.push({ title: demo.title, status: 'exists' });
           continue;
         }
 
-        const { data: trail, error: trailError } = await supabase
-          .from('trails')
-          .insert({
-            title: demo.title,
-            description: demo.description,
-            category: demo.category,
-            difficulty: demo.difficulty,
-            is_active: true,
-            modules_count: 0,
-            duration_minutes: 0,
-          })
-          .select('*')
-          .single();
-
-        if (trailError || !trail) {
-          results.push({ title: demo.title, status: 'error', message: trailError?.message || 'Falha ao criar trilha' });
-          continue;
-        }
+        const trailId = await addDocument('trails', {
+          title: demo.title,
+          description: demo.description,
+          category: demo.category,
+          difficulty: demo.difficulty,
+          is_active: true,
+          modules_count: 0,
+          duration_minutes: 0,
+          created_at: new Date().toISOString(),
+        });
 
         let order = 1;
         let totalDuration = 0;
         for (const m of demo.modules) {
           totalDuration += m.duration;
           const isText = m.type === 'text';
-          const { error: modError } = await supabase
-            .from('trail_modules')
-            .insert({
-              trail_id: trail.id,
+          try {
+            await addDocument('trail_modules', {
+              trail_id: trailId,
               title: m.title,
               content_type: m.type,
               content_url: isText ? null : m.url,
               content_text: isText ? m.text : null,
               duration_minutes: m.duration,
               order_index: order,
+              created_at: new Date().toISOString(),
             });
-          if (modError) {
-            results.push({ title: `${demo.title} - módulo`, status: 'error', message: modError.message });
+          } catch (err) {
+            results.push({ title: `${demo.title} - módulo`, status: 'error', message: err instanceof Error ? err.message : 'Falha ao criar módulo' });
           }
           order += 1;
         }
 
-        await supabase
-          .from('trails')
-          .update({ modules_count: order - 1, duration_minutes: totalDuration })
-          .eq('id', trail.id);
+        await updateDocument('trails', trailId, { modules_count: order - 1, duration_minutes: totalDuration });
 
         results.push({ title: demo.title, status: 'created' });
       }

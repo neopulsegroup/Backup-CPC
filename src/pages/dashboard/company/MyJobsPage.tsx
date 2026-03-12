@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { countDocuments, queryDocuments } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,21 +35,25 @@ export default function MyJobsPage() {
     if (!user) return;
 
     try {
-      // First get company id
-      const { data: company } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const company = await queryDocuments<{ id: string }>(
+        'companies',
+        [{ field: 'user_id', operator: '==', value: user.uid }],
+        undefined,
+        1
+      );
 
-      if (company) {
-        const { data } = await supabase
-          .from('job_offers')
-          .select('id, title, location, status, applications_count, created_at')
-          .eq('company_id', company.id)
-          .order('created_at', { ascending: false });
+      if (company[0]?.id) {
+        const data = await queryDocuments<JobOffer>(
+          'job_offers',
+          [{ field: 'company_id', operator: '==', value: company[0].id }],
+          { field: 'created_at', direction: 'desc' }
+        );
 
-        if (data) setJobs(data);
+        const counts = await Promise.all(
+          data.map(job => countDocuments('job_applications', [{ field: 'job_id', operator: '==', value: job.id }]))
+        );
+        const withCounts = data.map((job, idx) => ({ ...job, applications_count: counts[idx] }));
+        setJobs(withCounts);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);

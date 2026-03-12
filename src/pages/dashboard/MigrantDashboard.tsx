@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -77,34 +77,44 @@ function MigrantHome() {
       setLoading(true);
       try {
         const [sessionsRes, progressRes, triRes] = await Promise.all([
-          supabase.from('sessions').select('id, session_type, scheduled_date, scheduled_time, status').eq('migrant_id', user.id),
-          supabase.from('user_trail_progress').select('trail_id, progress_percent, modules_completed, completed_at').eq('user_id', user.id),
-          supabase.from('triage').select('legal_status, work_status, language_level, interests, urgencies').eq('user_id', user.id).maybeSingle(),
+          queryDocuments<{ id: string; session_type: string; scheduled_date: string; scheduled_time: string; status: string | null }>(
+            'sessions',
+            [{ field: 'migrant_id', operator: '==', value: user.uid }]
+          ),
+          queryDocuments<{ trail_id: string; progress_percent: number | null; modules_completed: number | null; completed_at: string | null }>(
+            'user_trail_progress',
+            [{ field: 'user_id', operator: '==', value: user.uid }]
+          ),
+          getDocument<{ legal_status?: string | null; work_status?: string | null; language_level?: string | null; interests?: string[] | null; urgencies?: string[] | null }>(
+            'triage',
+            user.uid
+          ),
         ]);
-        setSessions(sessionsRes.data || []);
-        const prog = (progressRes.data || []) as Array<{ trail_id: string; progress_percent: number | null; modules_completed: number | null; completed_at: string | null }>;
+        setSessions(sessionsRes || []);
+        const prog = (progressRes || []) as Array<{ trail_id: string; progress_percent: number | null; modules_completed: number | null; completed_at: string | null }>;
         setProgress(prog);
-        if (triRes.data) setTriage(triRes.data as typeof triage);
+        if (triRes) setTriage(triRes as typeof triage);
         const trailIds = Array.from(new Set(prog.map(p => p.trail_id).filter(Boolean)));
         if (trailIds.length > 0) {
-          const { data: trailsRes } = await supabase.from('trails').select('id, title, modules_count').in('id', trailIds);
           const map: Record<string, { id: string; title: string; modules_count: number | null }> = {};
-          const trailsResData = (trailsRes || []) as Array<{ id: string; title: string; modules_count: number | null }>;
-          trailsResData.forEach(t => { map[t.id] = t; });
+          const docs = await Promise.all(trailIds.map((id) => getDocument<{ id: string; title: string; modules_count: number | null }>('trails', id)));
+          docs.forEach((t) => {
+            if (t?.id) map[t.id] = t;
+          });
           setTrails(map);
         } else {
           setTrails({});
         }
         try {
-          const rawNotif = localStorage.getItem(`notifications:${user.id}`);
+          const rawNotif = localStorage.getItem(`notifications:${user.uid}`);
           setNotifications(rawNotif ? JSON.parse(rawNotif) : []);
         } catch { setNotifications([]); }
         try {
-          const rawExtras = localStorage.getItem(`profileExtras:${user.id}`);
+          const rawExtras = localStorage.getItem(`profileExtras:${user.uid}`);
           setExtras(rawExtras ? JSON.parse(rawExtras) : null);
         } catch { setExtras(null); }
         try {
-          const rawChat = localStorage.getItem(`chat:${user.id}`);
+          const rawChat = localStorage.getItem(`chat:${user.uid}`);
           setChatMessages(rawChat ? JSON.parse(rawChat) : []);
         } catch { setChatMessages([]); }
       } finally {
@@ -153,19 +163,18 @@ function MigrantHome() {
 
   async function bookSession() {
     if (!user || !bookDate || !bookTime) return;
-    const { data: newSessionData, error } = await supabase
-      .from('sessions')
-      .insert({
-        migrant_id: user.id,
-        session_type: bookType,
-        scheduled_date: bookDate,
-        scheduled_time: bookTime,
-        status: 'pending' // Corrected from 'Agendada'
-      })
-      .select()
-      .single();
+    await addDocument('sessions', {
+      migrant_id: user.uid,
+      session_type: bookType,
+      scheduled_date: bookDate,
+      scheduled_time: bookTime,
+      status: 'Agendada',
+    });
     setBookOpen(false);
-    const { data } = await supabase.from('sessions').select('id, session_type, scheduled_date, scheduled_time, status').eq('migrant_id', user.id);
+    const data = await queryDocuments<{ id: string; session_type: string; scheduled_date: string; scheduled_time: string; status: string | null }>(
+      'sessions',
+      [{ field: 'migrant_id', operator: '==', value: user.uid }]
+    );
     setSessions(data || []);
   }
 
@@ -173,10 +182,10 @@ function MigrantHome() {
     if (!user || !urgentDesc) return;
     const req: { id: string; type: typeof urgentType; description: string; status: string; date: string } = { id: String(Date.now()), type: urgentType, description: urgentDesc, status: 'submetido', date: new Date().toISOString() };
     try {
-      const raw = localStorage.getItem(`urgentRequests:${user.id}`);
+      const raw = localStorage.getItem(`urgentRequests:${user.uid}`);
       const list = raw ? (JSON.parse(raw) as Array<{ id: string; type: typeof urgentType; description: string; status: string; date: string }>) : [];
       const next = [req, ...list];
-      localStorage.setItem(`urgentRequests:${user.id}`, JSON.stringify(next));
+      localStorage.setItem(`urgentRequests:${user.uid}`, JSON.stringify(next));
     } catch { void 0; }
     setUrgentOpen(false);
     setUrgentDesc('');
@@ -187,7 +196,7 @@ function MigrantHome() {
     const msg = { id: String(Date.now()), text: chatInput.trim(), date: new Date().toISOString(), from: 'migrante' as const };
     const next = [msg, ...chatMessages];
     setChatMessages(next);
-    localStorage.setItem(`chat:${user.id}`, JSON.stringify(next));
+    localStorage.setItem(`chat:${user.uid}`, JSON.stringify(next));
     setChatInput('');
   }
 

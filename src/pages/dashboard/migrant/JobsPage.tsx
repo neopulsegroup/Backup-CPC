@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,6 +22,7 @@ interface JobOffer {
   contract_type: string | null;
   salary_range: string | null;
   created_at: string;
+  company_id?: string | null;
   company: {
     company_name: string;
   } | null;
@@ -142,35 +143,27 @@ export default function JobsPage() {
 
   async function fetchJobs() {
     try {
-      const { data } = await supabase
-        .from('job_offers')
-        .select(`
-          id,
-          title,
-          description,
-          location,
-          sector,
-          contract_type,
-          salary_range,
-          created_at,
-          company_id
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+      const data = await queryDocuments<JobOffer>(
+        'job_offers',
+        [{ field: 'status', operator: '==', value: 'active' }],
+        { field: 'created_at', direction: 'desc' }
+      );
 
-      if (data && data.length > 0) {
-        const companyIds = [...new Set(data.map(j => j.company_id))];
-        const { data: companies } = await supabase
-          .from('companies')
-          .select('id, company_name')
-          .in('id', companyIds);
+      if (data.length > 0) {
+        const companyIds = Array.from(new Set(data.map(j => j.company_id).filter(Boolean))) as string[];
+        const companyDocs = await Promise.all(companyIds.map(id => getDocument<{ company_name: string }>('companies', id)));
+        const companiesById = new Map<string, { company_name: string }>();
+        companyIds.forEach((id, idx) => {
+          const doc = companyDocs[idx];
+          if (doc) companiesById.set(id, doc);
+        });
 
         const jobsWithCompanies = data.map(job => ({
           ...job,
-          company: companies?.find(c => c.id === job.company_id) || null
+          company: job.company_id ? companiesById.get(job.company_id) || null : null,
         }));
 
-        setJobs(jobsWithCompanies);
+        setJobs(jobsWithCompanies as JobOffer[]);
       } else {
         // Use demo data when no real jobs exist
         setJobs(DEMO_JOBS);

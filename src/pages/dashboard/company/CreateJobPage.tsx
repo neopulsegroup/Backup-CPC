@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,18 +31,19 @@ export default function CreateJobPage() {
   async function fetchCompany() {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
+    const data = await queryDocuments<{ id: string }>(
+      'companies',
+      [{ field: 'user_id', operator: '==', value: user.uid }],
+      undefined,
+      1
+    );
 
-    if (data) {
-      setCompanyId(data.id);
+    if (data[0]?.id) {
+      setCompanyId(data[0].id);
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     if (!companyId) {
@@ -57,21 +58,18 @@ export default function CreateJobPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('job_offers')
-        .insert({
-          company_id: companyId,
-          title: form.title,
-          description: form.description || null,
-          location: form.location || null,
-          sector: form.sector || null,
-          contract_type: form.contract_type || null,
-          salary_range: form.salary_range || null,
-          requirements: form.requirements || null,
-          status: 'pending_review',
-        });
-
-      if (error) throw error;
+      await addDocument('job_offers', {
+        company_id: companyId,
+        title: form.title,
+        description: form.description || null,
+        location: form.location || null,
+        sector: form.sector || null,
+        contract_type: form.contract_type || null,
+        salary_range: form.salary_range || null,
+        requirements: form.requirements || null,
+        status: 'pending_review',
+        created_at: new Date().toISOString(),
+      });
 
       toast({
         title: 'Oferta criada!',

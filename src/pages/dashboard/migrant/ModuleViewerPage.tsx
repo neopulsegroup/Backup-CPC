@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -56,7 +56,7 @@ export default function ModuleViewerPage() {
   const [completing, setCompleting] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const isDemo = !!trailId && trailId.startsWith('demo-');
-  const getDemoKey = (id: string) => `demoTrailProgress:${id}:${user?.id || 'anon'}`;
+  const getDemoKey = (id: string) => `demoTrailProgress:${id}:${user?.uid || 'anon'}`;
   const getCommentsKey = (id: string) => `moduleComments:${id}`;
   const getLastKey = (trail: string, uid?: string) => `lastModuleViewed:${trail}:${uid || 'anon'}`;
 
@@ -128,16 +128,31 @@ export default function ModuleViewerPage() {
           }
         }
       } else {
-        const [moduleRes, trailRes, modulesRes, progressRes] = await Promise.all([
-          supabase.from('trail_modules').select('*').eq('id', moduleId).single(),
-          supabase.from('trails').select('id, title, modules_count, category').eq('id', trailId).single(),
-          supabase.from('trail_modules').select('*').eq('trail_id', trailId).order('order_index'),
-          user ? supabase.from('user_trail_progress').select('modules_completed, progress_percent').eq('user_id', user.id).eq('trail_id', trailId).maybeSingle() : null,
+        if (!trailId || !moduleId) return;
+        const [moduleDoc, trailDoc, modulesDocs, progressDocs] = await Promise.all([
+          getDocument<Module>('trail_modules', moduleId),
+          getDocument<Trail>('trails', trailId),
+          queryDocuments<Module>(
+            'trail_modules',
+            [{ field: 'trail_id', operator: '==', value: trailId }],
+            { field: 'order_index', direction: 'asc' }
+          ),
+          user
+            ? queryDocuments<UserProgress>(
+                'user_trail_progress',
+                [
+                  { field: 'user_id', operator: '==', value: user.uid },
+                  { field: 'trail_id', operator: '==', value: trailId },
+                ],
+                undefined,
+                1
+              )
+            : Promise.resolve([] as UserProgress[]),
         ]);
-        if (moduleRes.data) setModule(moduleRes.data);
-        if (trailRes.data) setTrail(trailRes.data);
-        if (modulesRes.data) setAllModules(modulesRes.data);
-        if (progressRes?.data) setUserProgress(progressRes.data);
+        if (moduleDoc) setModule(moduleDoc);
+        if (trailDoc) setTrail(trailDoc);
+        setAllModules(modulesDocs);
+        setUserProgress(progressDocs[0] || null);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -165,7 +180,7 @@ export default function ModuleViewerPage() {
     if (!trailId || !moduleId || !module) return;
     try {
       const info = { module_id: moduleId, title: module.title };
-      localStorage.setItem(getLastKey(trailId as string, user?.id), JSON.stringify(info));
+      localStorage.setItem(getLastKey(trailId as string, user?.uid), JSON.stringify(info));
     } catch (e) { void e; }
   }, [trailId, moduleId, module, user]);
 
@@ -175,7 +190,7 @@ export default function ModuleViewerPage() {
     try {
       const comment: ModuleComment = {
         id: `${Date.now()}`,
-        user_id: user?.id || null,
+        user_id: user?.uid || null,
         user_name: profile?.name || 'Anónimo',
         avatar_url: profile?.avatar_url || null,
         content: newComment.trim(),
@@ -200,22 +215,37 @@ export default function ModuleViewerPage() {
     try {
       if (!isDemo) {
         if (!user) return;
-        const { data: progress } = await supabase
-          .from('user_trail_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('trail_id', trailId)
-          .maybeSingle();
-        if (progress) {
-          const newModulesCompleted = progress.modules_completed + 1;
-          const totalModules = trail?.modules_count || allModules.length;
-          const newProgressPercent = Math.round((newModulesCompleted / totalModules) * 100);
-          const isComplete = newModulesCompleted >= totalModules;
-          await supabase
-            .from('user_trail_progress')
-            .update({ modules_completed: newModulesCompleted, progress_percent: newProgressPercent, completed_at: isComplete ? new Date().toISOString() : null })
-            .eq('id', progress.id);
+        const existing = await queryDocuments<{ id: string; modules_completed: number; progress_percent: number; completed_at?: string | null }>(
+          'user_trail_progress',
+          [
+            { field: 'user_id', operator: '==', value: user.uid },
+            { field: 'trail_id', operator: '==', value: trailId },
+          ],
+          undefined,
+          1
+        );
+        const totalModules = trail?.modules_count || allModules.length;
+        const currentModulesCompleted = existing[0]?.modules_completed || 0;
+        const newModulesCompleted = Math.min(totalModules, currentModulesCompleted + 1);
+        const newProgressPercent = totalModules > 0 ? Math.round((newModulesCompleted / totalModules) * 100) : 0;
+        const isComplete = totalModules > 0 ? newModulesCompleted >= totalModules : false;
+
+        if (existing[0]?.id) {
+          await updateDocument('user_trail_progress', existing[0].id, {
+            modules_completed: newModulesCompleted,
+            progress_percent: newProgressPercent,
+            completed_at: isComplete ? new Date().toISOString() : null,
+          });
+        } else {
+          await addDocument('user_trail_progress', {
+            user_id: user.uid,
+            trail_id: trailId,
+            modules_completed: newModulesCompleted,
+            progress_percent: newProgressPercent,
+            completed_at: isComplete ? new Date().toISOString() : null,
+          });
         }
+        setUserProgress({ modules_completed: newModulesCompleted, progress_percent: newProgressPercent });
       }
       if (isDemo) {
         const total = allModules.length;

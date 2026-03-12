@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { supabase } from '@/integrations/supabase/client';
+import { getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { User, Mail, Phone, ArrowLeft, FileText, Briefcase, Calendar, ExternalLink, BookOpen, CheckCircle, Clock } from 'lucide-react';
@@ -41,63 +41,70 @@ export default function CandidateProfilePage() {
   async function fetchCandidate() {
     if (!candidateId) return;
     try {
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('user_id, name, email, phone, avatar_url')
-        .eq('user_id', candidateId)
-        .maybeSingle();
+      const prof = await getDocument<{ name?: string | null; email?: string | null; phone?: string | null; avatar_url?: string | null }>(
+        'profiles',
+        candidateId
+      );
 
       if (prof) {
-        setProfile(prof as Profile);
+        setProfile({
+          user_id: candidateId,
+          name: prof.name || 'Candidato',
+          email: prof.email || '',
+          phone: prof.phone ?? null,
+          avatar_url: prof.avatar_url ?? null,
+        });
       } else {
         const demo = getDemoProfile(candidateId);
         setProfile(demo);
         setResumeUrl(getDemoResume(candidateId));
       }
 
-      const { data: apps } = await supabase
-        .from('job_applications')
-        .select('id, created_at, status, job_id')
-        .eq('applicant_id', candidateId)
-        .order('created_at', { ascending: false });
+      const apps = await queryDocuments<{ id: string; created_at: string; status: string | null; job_id: string }>(
+        'job_applications',
+        [{ field: 'applicant_id', operator: '==', value: candidateId }],
+        { field: 'created_at', direction: 'desc' }
+      );
 
-      if (apps && apps.length > 0) {
-        const jobIds = apps.map(a => a.job_id);
-        const { data: jobs } = await supabase
-          .from('job_offers')
-          .select('id, title')
-          .in('id', jobIds);
+      if (apps.length > 0) {
+        const jobIds = Array.from(new Set(apps.map(a => a.job_id).filter(Boolean)));
+        const jobDocs = await Promise.all(jobIds.map((id) => getDocument<{ title?: string | null }>('job_offers', id)));
+        const jobsById = new Map<string, { title?: string | null }>();
+        jobIds.forEach((id, idx) => {
+          const doc = jobDocs[idx];
+          if (doc) jobsById.set(id, doc);
+        });
+
         const summaries: ApplicationSummary[] = apps.map(a => ({
           id: a.id,
-          job_title: jobs?.find(j => j.id === a.job_id)?.title || 'Oferta',
+          job_title: jobsById.get(a.job_id)?.title || 'Oferta',
           created_at: a.created_at,
-          status: a.status as string | null,
+          status: a.status,
         }));
         setApplications(summaries);
+      } else {
+        setApplications([]);
       }
 
-      const { data: sess } = await supabase
-        .from('sessions')
-        .select('id, session_type, scheduled_date, scheduled_time, status')
-        .eq('migrant_id', candidateId)
-        .order('scheduled_date', { ascending: true });
+      const sess = await queryDocuments<{ id: string; session_type: string; scheduled_date: string; scheduled_time: string; status: string | null }>(
+        'sessions',
+        [{ field: 'migrant_id', operator: '==', value: candidateId }],
+        { field: 'scheduled_date', direction: 'asc' }
+      );
       setSessions(sess || []);
 
-      const { data: prog } = await supabase
-        .from('user_trail_progress')
-        .select('trail_id, progress_percent, modules_completed, completed_at')
-        .eq('user_id', candidateId);
-      const progArr = (prog || []) as Array<{ trail_id: string; progress_percent: number | null; modules_completed: number | null; completed_at: string | null }>;
+      const progArr = await queryDocuments<{ trail_id: string; progress_percent: number | null; modules_completed: number | null; completed_at: string | null }>(
+        'user_trail_progress',
+        [{ field: 'user_id', operator: '==', value: candidateId }]
+      );
       setProgress(progArr);
       const trailIds = Array.from(new Set(progArr.map(p => p.trail_id).filter(Boolean)));
       if (trailIds.length > 0) {
-        const { data: trailsRes } = await supabase
-          .from('trails')
-          .select('id, title, modules_count')
-          .in('id', trailIds);
-        const typed = (trailsRes || []) as Array<{ id: string; title: string; modules_count: number | null }>;
         const map: Record<string, { id: string; title: string; modules_count: number | null }> = {};
-        typed.forEach(t => { map[t.id] = t; });
+        const trailDocs = await Promise.all(trailIds.map((id) => getDocument<{ id: string; title: string; modules_count: number | null }>('trails', id)));
+        trailDocs.forEach((t) => {
+          if (t?.id) map[t.id] = t;
+        });
         setTrails(map);
       } else {
         setTrails({});

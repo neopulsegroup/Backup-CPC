@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, deleteDocument, getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -49,12 +49,17 @@ export default function TrailEditorPage() {
 
   async function fetchData() {
     try {
-      const [trailRes, modsRes] = await Promise.all([
-        supabase.from('trails').select('*').eq('id', trailId).single(),
-        supabase.from('trail_modules').select('*').eq('trail_id', trailId).order('order_index'),
+      if (!trailId) return;
+      const [trailDoc, mods] = await Promise.all([
+        getDocument<Trail>('trails', trailId),
+        queryDocuments<Module>(
+          'trail_modules',
+          [{ field: 'trail_id', operator: '==', value: trailId }],
+          { field: 'order_index', direction: 'asc' }
+        ),
       ]);
-      if (trailRes.data) setTrail(trailRes.data);
-      setModules(modsRes.data || []);
+      if (trailDoc) setTrail(trailDoc);
+      setModules(mods || []);
     } catch (e) {
       console.error('Erro ao carregar trilha/módulos', e);
     } finally {
@@ -67,24 +72,20 @@ export default function TrailEditorPage() {
     [modules]
   );
 
-  async function saveTrail(e: React.FormEvent) {
+  async function saveTrail(e: FormEvent) {
     e.preventDefault();
     if (!trail) return;
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('trails')
-        .update({
-          title: trail.title,
-          description: trail.description,
-          category: trail.category,
-          difficulty: trail.difficulty,
-          is_active: trail.is_active,
-          modules_count: modules.length,
-          duration_minutes: totalDuration,
-        })
-        .eq('id', trail.id);
-      if (error) throw error;
+      await updateDocument('trails', trail.id, {
+        title: trail.title,
+        description: trail.description,
+        category: trail.category,
+        difficulty: trail.difficulty,
+        is_active: trail.is_active,
+        modules_count: modules.length,
+        duration_minutes: totalDuration,
+      });
     } catch (e) {
       console.error('Erro ao guardar trilha', e);
     } finally {
@@ -92,25 +93,34 @@ export default function TrailEditorPage() {
     }
   }
 
-  async function addModule(e: React.FormEvent) {
+  async function addModule(e: FormEvent) {
     e.preventDefault();
     if (!trailId || !newModule.title) return;
     try {
-      const { data, error } = await supabase
-        .from('trail_modules')
-        .insert({
+      const order_index = modules.length + 1;
+      const id = await addDocument('trail_modules', {
+        trail_id: trailId,
+        title: newModule.title,
+        content_type: newModule.content_type,
+        content_url: newModule.content_type !== 'text' ? (newModule.content_url || null) : null,
+        content_text: newModule.content_type === 'text' ? (newModule.content_text || null) : null,
+        duration_minutes: newModule.duration_minutes || null,
+        order_index,
+        created_at: new Date().toISOString(),
+      });
+      setModules([
+        ...modules,
+        {
+          id,
           trail_id: trailId,
           title: newModule.title,
           content_type: newModule.content_type,
           content_url: newModule.content_type !== 'text' ? (newModule.content_url || null) : null,
           content_text: newModule.content_type === 'text' ? (newModule.content_text || null) : null,
           duration_minutes: newModule.duration_minutes || null,
-          order_index: modules.length + 1,
-        })
-        .select('*')
-        .single();
-      if (error) throw error;
-      setModules([...modules, data]);
+          order_index,
+        },
+      ]);
       setNewModule({ title: '', content_type: 'video', content_url: '', content_text: '', duration_minutes: 10 });
     } catch (e) {
       console.error('Erro ao adicionar módulo', e);
@@ -123,8 +133,8 @@ export default function TrailEditorPage() {
     const a = modules[index];
     const b = modules[targetIndex];
     try {
-      await supabase.from('trail_modules').update({ order_index: b.order_index }).eq('id', a.id);
-      await supabase.from('trail_modules').update({ order_index: a.order_index }).eq('id', b.id);
+      await updateDocument('trail_modules', a.id, { order_index: b.order_index });
+      await updateDocument('trail_modules', b.id, { order_index: a.order_index });
       const updated = [...modules];
       updated[index] = { ...b, order_index: a.order_index };
       updated[targetIndex] = { ...a, order_index: b.order_index };
@@ -136,11 +146,11 @@ export default function TrailEditorPage() {
 
   async function deleteModule(moduleId: string) {
     try {
-      await supabase.from('trail_modules').delete().eq('id', moduleId);
+      await deleteDocument('trail_modules', moduleId);
       const remaining = modules.filter(m => m.id !== moduleId).map((m, i) => ({ ...m, order_index: i + 1 }));
       setModules(remaining);
       for (const m of remaining) {
-        await supabase.from('trail_modules').update({ order_index: m.order_index }).eq('id', m.id);
+        await updateDocument('trail_modules', m.id, { order_index: m.order_index });
       }
     } catch (e) {
       console.error('Erro ao apagar módulo', e);

@@ -1,6 +1,7 @@
 import {
     collection,
     doc,
+    addDoc,
     getDoc,
     getDocs,
     setDoc,
@@ -10,6 +11,7 @@ import {
     where,
     orderBy,
     limit,
+    getCountFromServer,
     serverTimestamp,
     Timestamp,
     WhereFilterOp,
@@ -99,12 +101,45 @@ export async function getCollection<T>(collectionName: string): Promise<T[]> {
 }
 
 /**
+ * Generic function to add a document with an auto-generated id
+ */
+export async function addDocument<T>(collectionName: string, data: T): Promise<string> {
+    try {
+        const docRef = await addDoc(collection(db, collectionName), data as unknown as Record<string, unknown>);
+        return docRef.id;
+    } catch (error) {
+        console.error(`Error adding document in ${collectionName}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Count documents with optional filters (server-side count aggregation)
+ */
+export async function countDocuments(
+    collectionName: string,
+    filters: { field: string; operator: WhereFilterOp; value: unknown }[] = []
+): Promise<number> {
+    try {
+        let q = query(collection(db, collectionName));
+        filters.forEach(filter => {
+            q = query(q, where(filter.field, filter.operator, filter.value));
+        });
+        const snap = await getCountFromServer(q);
+        return snap.data().count;
+    } catch (error) {
+        console.error(`Error counting ${collectionName}:`, error);
+        throw error;
+    }
+}
+
+/**
  * Query documents with filters
  */
 export async function queryDocuments<T>(
     collectionName: string,
     filters: { field: string; operator: WhereFilterOp; value: unknown }[],
-    orderByField?: string,
+    orderByField?: string | { field: string; direction?: 'asc' | 'desc' },
     limitCount?: number
 ): Promise<T[]> {
     try {
@@ -117,7 +152,11 @@ export async function queryDocuments<T>(
 
         // Apply ordering
         if (orderByField) {
-            q = query(q, orderBy(orderByField));
+            if (typeof orderByField === 'string') {
+                q = query(q, orderBy(orderByField));
+            } else {
+                q = query(q, orderBy(orderByField.field, orderByField.direction || 'asc'));
+            }
         }
 
         // Apply limit

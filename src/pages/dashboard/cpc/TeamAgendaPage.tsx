@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { addDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,14 +46,19 @@ export default function TeamAgendaPage() {
     async function fetchAll() {
       setLoading(true);
       try {
-        const [{ data: sess }, { data: migs }, { data: profs }] = await Promise.all([
-          supabase.from('sessions').select('id, session_type, scheduled_date, scheduled_time, status, migrant_id').order('scheduled_date', { ascending: true }),
-          supabase.from('profiles').select('user_id, name').eq('role', 'migrant').order('created_at', { ascending: false }),
-          supabase.from('profiles').select('user_id, name, role').in('role', ['mediator', 'lawyer', 'psychologist', 'manager', 'coordinator'])
+        const [sess, migs, profs] = await Promise.all([
+          queryDocuments<SessionItem>('sessions', [], { field: 'scheduled_date', direction: 'asc' }),
+          queryDocuments<{ id: string; name?: string | null }>('profiles', [{ field: 'role', operator: '==', value: 'migrant' }]),
+          queryDocuments<{ id: string; name?: string | null; role?: string | null }>(
+            'profiles',
+            [{ field: 'role', operator: 'in', value: ['mediator', 'lawyer', 'psychologist', 'manager', 'coordinator'] }]
+          ),
         ]);
-        setSessions(((sess || []) as Array<SessionItem>));
-        setMigrants(((migs || []) as Array<ProfileItem>));
-        setProfessionals(((profs || []) as Array<{ user_id: string; name: string; role: ProfessionalRole }>));
+        setSessions(sess || []);
+        setMigrants((migs || []).map(m => ({ user_id: m.id, name: m.name || 'Migrante' })));
+        setProfessionals(
+          (profs || []).map(p => ({ user_id: p.id, name: p.name || 'Profissional', role: (p.role || 'mediator') as ProfessionalRole }))
+        );
       } finally {
         setLoading(false);
       }
@@ -106,14 +111,14 @@ export default function TeamAgendaPage() {
 
   async function createSession() {
     if (!createMigrantId || !createDate || !createTime) return;
-    await supabase.from('sessions').insert({ migrant_id: createMigrantId, session_type: createArea, scheduled_date: createDate, scheduled_time: createTime, status: 'Agendada' });
+    await addDocument('sessions', { migrant_id: createMigrantId, session_type: createArea, scheduled_date: createDate, scheduled_time: createTime, status: 'Agendada' });
     setCreateOpen(false);
-    const { data } = await supabase.from('sessions').select('id, session_type, scheduled_date, scheduled_time, status, migrant_id').order('scheduled_date', { ascending: true });
+    const data = await queryDocuments<SessionItem>('sessions', [], { field: 'scheduled_date', direction: 'asc' });
     setSessions((data || []) as Array<SessionItem>);
   }
 
   async function cancelSession(id: string) {
-    await supabase.from('sessions').update({ status: 'Cancelada' }).eq('id', id);
+    await updateDocument('sessions', id, { status: 'Cancelada' });
     setSessions(prev => prev.map(s => (s.id === id ? { ...s, status: 'Cancelada' } : s)));
   }
 
@@ -126,7 +131,7 @@ export default function TeamAgendaPage() {
       const countForDay = sessions.filter(s => assignments[s.id] === assigned && s.scheduled_date === nextDate && (s.status || 'Agendada') === 'Agendada').length;
       if (countForDay >= rules.limitPerProfessionalPerDay) return;
     }
-    await supabase.from('sessions').update({ scheduled_date: nextDate, scheduled_time: nextTime }).eq('id', moveOpen.id);
+    await updateDocument('sessions', moveOpen.id, { scheduled_date: nextDate, scheduled_time: nextTime });
     setSessions(prev => prev.map(s => (s.id === moveOpen.id ? { ...s, scheduled_date: nextDate, scheduled_time: nextTime } : s)));
     setMoveOpen(null);
     setCreateDate('');
@@ -336,4 +341,3 @@ export default function TeamAgendaPage() {
     </div>
   );
 }
-

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { addDocument, getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import {
   ArrowLeft,
   BookOpen,
@@ -49,7 +49,7 @@ export default function TrailDetailPage() {
   const [completedModules, setCompletedModules] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const isDemo = !!trailId && trailId.startsWith('demo-');
-  const getDemoKey = (id: string) => `demoTrailProgress:${id}:${user?.id || 'anon'}`;
+  const getDemoKey = (id: string) => `demoTrailProgress:${id}:${user?.uid || 'anon'}`;
 
   useEffect(() => {
     if (trailId) fetchTrailDetails();
@@ -98,31 +98,27 @@ export default function TrailDetailPage() {
           } catch { void 0; }
         }
       } else {
-        const { data: trailData } = await supabase
-          .from('trails')
-          .select('*')
-          .eq('id', trailId)
-          .single();
-
+        const trailData = await getDocument<Trail>('trails', trailId as string);
         if (trailData) setTrail(trailData);
 
-        const { data: modulesData } = await supabase
-          .from('trail_modules')
-          .select('*')
-          .eq('trail_id', trailId)
-          .order('order_index');
-
-        if (modulesData) setModules(modulesData);
+        const modulesData = await queryDocuments<Module>(
+          'trail_modules',
+          [{ field: 'trail_id', operator: '==', value: trailId }],
+          { field: 'order_index', direction: 'asc' }
+        );
+        setModules(modulesData);
 
         if (user) {
-          const { data: progressData } = await supabase
-            .from('user_trail_progress')
-            .select('*')
-            .eq('trail_id', trailId)
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (progressData) setProgress(progressData);
+          const progressDocs = await queryDocuments<UserProgress>(
+            'user_trail_progress',
+            [
+              { field: 'trail_id', operator: '==', value: trailId },
+              { field: 'user_id', operator: '==', value: user.uid },
+            ],
+            undefined,
+            1
+          );
+          setProgress(progressDocs[0] || null);
         }
       }
     } catch (error) {
@@ -141,17 +137,14 @@ export default function TrailDetailPage() {
       return;
     }
     if (!user) return;
-    const { data, error } = await supabase
-      .from('user_trail_progress')
-      .insert({
-        user_id: user.id,
-        trail_id: trailId,
-        progress_percent: 0,
-        modules_completed: 0,
-      })
-      .select()
-      .single();
-    if (data && !error) setProgress(data);
+    const id = await addDocument('user_trail_progress', {
+      user_id: user.uid,
+      trail_id: trailId,
+      progress_percent: 0,
+      modules_completed: 0,
+      completed_at: null,
+    });
+    setProgress({ id, progress_percent: 0, modules_completed: 0, completed_at: null });
   }
 
   const getContentIcon = (type: string) => {
