@@ -105,14 +105,6 @@ function languageLabel(value?: string | null): string {
   return '—';
 }
 
-function answerValue(value: unknown): string {
-  if (Array.isArray(value)) return value.map((item) => String(item)).join(', ');
-  if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
-  if (value === null || value === undefined || value === '') return '—';
-  if (typeof value === 'object') return JSON.stringify(value);
-  return String(value);
-}
-
 export default function MigrantsAdminPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
@@ -124,6 +116,13 @@ export default function MigrantsAdminPage() {
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'juridico' | 'psicologico' | 'habitacional'>('all');
   const [selectedTriage, setSelectedTriage] = useState<MigrantRow | null>(null);
 
+  function isoDateToPt(value: string): string | null {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return null;
+    const [, y, m, d] = match;
+    return `${d}/${m}/${y}`;
+  }
+
   function answerLabel(key: string): string {
     const path = `triage.questions.${key}`;
     const translated = t.get(path);
@@ -131,6 +130,32 @@ export default function MigrantsAdminPage() {
     return key
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (m) => m.toUpperCase());
+  }
+
+  function optionLabel(questionId: string, option: string): string {
+    const path = `triage.options.${questionId}.${option}`;
+    const translated = t.get(path);
+    if (translated !== path) return translated;
+    if (option === 'yes') return 'Sim';
+    if (option === 'no') return 'Não';
+    return option;
+  }
+
+  function answerValue(questionId: string, value: unknown): string {
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => (typeof item === 'string' ? optionLabel(questionId, item) : String(item)))
+        .join(', ');
+    }
+    if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
+    if (value === null || value === undefined || value === '') return '—';
+    if (typeof value === 'string') {
+      const datePt = isoDateToPt(value);
+      if (datePt) return datePt;
+      return optionLabel(questionId, value);
+    }
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
   }
 
   useEffect(() => {
@@ -356,7 +381,7 @@ export default function MigrantsAdminPage() {
                 {Object.entries(selectedTriage.triage_answers).map(([key, value]) => (
                   <div key={key} className="rounded-lg border p-3">
                     <p className="text-xs text-muted-foreground">{answerLabel(key)}</p>
-                    <p className="text-sm font-medium break-words">{answerValue(value)}</p>
+                    <p className="text-sm font-medium break-words">{answerValue(key, value)}</p>
                   </div>
                 ))}
               </div>

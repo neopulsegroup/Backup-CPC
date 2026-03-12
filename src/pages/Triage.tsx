@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { PhoneInput } from '@/components/ui/phone-input';
+import {
+  clearLocalTriageDraft,
+  compareDraftRecency,
+  loadLocalTriageDraft,
+  makeTriageDraft,
+  parseTriageDraft,
+  saveLocalTriageDraft,
+  type TriageDraftV1,
+} from '@/lib/triageDraft';
 
 
 // --- Types ---
@@ -445,8 +454,41 @@ export default function Triage() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<TriageAnswers>({});
   const [saving, setSaving] = useState(false);
+  const [hydrating, setHydrating] = useState(true);
+  const [autoSaveState, setAutoSaveState] = useState<
+    | { status: 'idle' }
+    | { status: 'saving' }
+    | { status: 'saved'; at: string; remote: boolean }
+    | { status: 'offline_saved'; at: string }
+    | { status: 'error'; message: string }
+    | { status: 'conflict'; message: string }
+  >({ status: 'idle' });
 
   const currentStep = ALL_STEPS[step];
+  const uidForDraft = user?.uid || 'anonymous';
+  const writerIdRef = useRef<string>('');
+  const revisionRef = useRef<number>(0);
+  const latestDraftRef = useRef<TriageDraftV1 | null>(null);
+  const lastSavedChecksumRef = useRef<string>('');
+  const lastSavedAtRef = useRef<number>(0);
+  const lastChangeAtRef = useRef<number>(0);
+  const pendingRemoteSyncRef = useRef<boolean>(false);
+  const saveTimeoutRef = useRef<number | null>(null);
+
+  const formSignature = useMemo(() => {
+    const steps = ALL_STEPS.map((s) => ({
+      id: s.id,
+      titleKey: s.titleKey,
+      questions: s.questions.map((q) => ({ id: q.id, type: q.type, options: q.options || [] })),
+    }));
+    const json = JSON.stringify(steps);
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < json.length; i++) {
+      hash ^= json.charCodeAt(i);
+      hash = (hash + ((hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24))) >>> 0;
+    }
+    return hash.toString(16).padStart(8, '0');
+  }, []);
 
   const getVisibleQuestions = (currentStep: TriageStep, currentAnswers: TriageAnswers) => {
     return currentStep.questions.filter(q => !q.dependsOn || currentAnswers[q.dependsOn.field] === q.dependsOn.value);
@@ -495,11 +537,200 @@ export default function Triage() {
   const progress = ((step + 1) / ALL_STEPS.length) * 100;
 
   const updateAnswer = (questionId: string, value: AnswerValue) => {
+    lastChangeAtRef.current = Date.now();
     setAnswers(prev => ({
       ...prev,
       [questionId]: value
     }));
   };
+
+  const resolveStepIndex = useCallback(
+    (desiredStepId: string, desiredAnswers: TriageAnswers): number => {
+      const idx = ALL_STEPS.findIndex((s) => s.id === desiredStepId);
+      const start = idx >= 0 ? idx : 0;
+      for (let i = start; i >= 0; i--) {
+        if (getVisibleQuestions(ALL_STEPS[i], desiredAnswers).length > 0) return i;
+      }
+      for (let i = start; i < ALL_STEPS.length; i++) {
+        if (getVisibleQuestions(ALL_STEPS[i], desiredAnswers).length > 0) return i;
+      }
+      return 0;
+    },
+    []
+  );
+
+  const persistDraft = useCallback(
+    async (opts?: { remoteOnly?: boolean }) => {
+      const stepId = ALL_STEPS[Math.min(step, ALL_STEPS.length - 1)]?.id || ALL_STEPS[0].id;
+      const updatedAt = new Date().toISOString();
+
+      if (!writerIdRef.current) {
+        const seed = `${uidForDraft}:${Math.random().toString(16).slice(2)}:${Date.now()}`;
+        let hash = 0x811c9dc5;
+        for (let i = 0; i < seed.length; i++) {
+          hash ^= seed.charCodeAt(i);
+          hash = (hash + ((hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24))) >>> 0;
+        }
+        writerIdRef.current = `w${hash.toString(16)}`;
+      }
+
+      const draft: TriageDraftV1 =
+        opts?.remoteOnly && latestDraftRef.current
+          ? latestDraftRef.current
+          : makeTriageDraft({
+              formSignature,
+              updatedAt,
+              revision: (revisionRef.current = (revisionRef.current || 0) + 1),
+              stepId,
+              answers: answers as Record<string, unknown>,
+              writerId: writerIdRef.current,
+            });
+
+      if (!opts?.remoteOnly) {
+        if (draft.checksum !== lastSavedChecksumRef.current) {
+          try {
+            setAutoSaveState({ status: 'saving' });
+            saveLocalTriageDraft(uidForDraft, draft);
+            latestDraftRef.current = draft;
+            lastSavedChecksumRef.current = draft.checksum;
+            lastSavedAtRef.current = Date.now();
+          } catch {
+            setAutoSaveState({ status: 'error', message: 'Não foi possível guardar automaticamente neste dispositivo.' });
+            return;
+          }
+        }
+      }
+
+      if (!user) {
+        setAutoSaveState({ status: 'saved', at: updatedAt, remote: false });
+        return;
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        pendingRemoteSyncRef.current = true;
+        setAutoSaveState({ status: 'offline_saved', at: updatedAt });
+        return;
+      }
+
+      try {
+        await setDocument(
+          'triage',
+          user.uid,
+          {
+            draft,
+            draftUpdatedAt: draft.updatedAt,
+            draftRevision: draft.revision,
+            draftFormSignature: draft.formSignature,
+            draftChecksum: draft.checksum,
+          },
+          true
+        );
+        pendingRemoteSyncRef.current = false;
+        setAutoSaveState({ status: 'saved', at: draft.updatedAt, remote: true });
+      } catch {
+        pendingRemoteSyncRef.current = true;
+        setAutoSaveState({ status: 'offline_saved', at: draft.updatedAt });
+      }
+    },
+    [answers, formSignature, step, uidForDraft, user]
+  );
+
+  useEffect(() => {
+    if (!hydrating) return;
+    async function hydrate() {
+      try {
+        const localDraft = loadLocalTriageDraft(uidForDraft);
+        let remoteCompleted = false;
+        let remoteDraft: TriageDraftV1 | null = null;
+
+        if (user) {
+          const doc = await getDocument<Record<string, unknown>>('triage', user.uid);
+          if (doc && typeof doc === 'object') {
+            remoteCompleted = (doc as { completed?: boolean }).completed === true;
+            const candidate = (doc as { draft?: unknown }).draft;
+            if (candidate) remoteDraft = parseTriageDraft(JSON.stringify(candidate));
+          }
+        }
+
+        if (remoteCompleted) {
+          clearLocalTriageDraft(uidForDraft);
+          setHydrating(false);
+          return;
+        }
+
+        let chosen: TriageDraftV1 | null = null;
+        let conflictMessage = '';
+
+        if (localDraft && remoteDraft) {
+          const cmp = compareDraftRecency(localDraft, remoteDraft);
+          chosen = cmp >= 0 ? localDraft : remoteDraft;
+          if (localDraft.checksum !== remoteDraft.checksum) {
+            conflictMessage =
+              chosen === localDraft
+                ? 'Encontrámos duas versões do rascunho. Foi restaurada a versão mais recente neste dispositivo.'
+                : 'Encontrámos duas versões do rascunho. Foi restaurada a versão mais recente no servidor.'
+          }
+        } else {
+          chosen = localDraft || remoteDraft;
+        }
+
+        if (chosen) {
+          const nextAnswers = (chosen.answers || {}) as TriageAnswers;
+          setAnswers(nextAnswers);
+          setStep(resolveStepIndex(chosen.stepId, nextAnswers));
+          lastSavedChecksumRef.current = chosen.checksum;
+          lastSavedAtRef.current = Date.now();
+          writerIdRef.current = chosen.writerId || writerIdRef.current;
+          revisionRef.current = chosen.revision || 0;
+          latestDraftRef.current = chosen;
+          if (chosen.formSignature !== formSignature) {
+            conflictMessage = conflictMessage || 'O formulário foi atualizado desde o último rascunho. Alguns campos podem ter sido ajustados.';
+          }
+          if (conflictMessage) setAutoSaveState({ status: 'conflict', message: conflictMessage });
+          else setAutoSaveState({ status: 'saved', at: chosen.updatedAt, remote: chosen === remoteDraft });
+        }
+      } finally {
+        setHydrating(false);
+      }
+    }
+
+    void hydrate();
+  }, [formSignature, hydrating, resolveStepIndex, uidForDraft, user]);
+
+  useEffect(() => {
+    if (hydrating) return;
+    if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = window.setTimeout(() => {
+      void persistDraft();
+    }, 600);
+    return () => {
+      if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+    };
+  }, [answers, step, hydrating, persistDraft]);
+
+  useEffect(() => {
+    if (hydrating) return;
+    const intervalMs = Math.min(30000, 15000);
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      const sinceChange = now - (lastChangeAtRef.current || 0);
+      const sinceSave = now - (lastSavedAtRef.current || 0);
+      if (sinceChange > 0 && sinceSave >= intervalMs && sinceChange <= intervalMs * 4) {
+        void persistDraft();
+      } else if (pendingRemoteSyncRef.current && user && navigator.onLine) {
+        void persistDraft({ remoteOnly: true });
+      }
+    }, intervalMs);
+    return () => window.clearInterval(id);
+  }, [hydrating, persistDraft, user]);
+
+  useEffect(() => {
+    function onOnline() {
+      if (pendingRemoteSyncRef.current) void persistDraft({ remoteOnly: true });
+    }
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [persistDraft]);
 
   const canProceed = () => {
     if (!currentStep) return false;
@@ -531,7 +762,12 @@ export default function Triage() {
         userId: user.uid,
         completed: true,
         completedAt: new Date().toISOString(),
-        answers: answers
+        answers: answers,
+        draft: null,
+        draftUpdatedAt: null,
+        draftRevision: null,
+        draftFormSignature: null,
+        draftChecksum: null,
       };
 
       // Map answers to database columns where possible
@@ -569,6 +805,7 @@ export default function Triage() {
 
       toast.success(t.triage.success);
       console.log('[Triage] Navigating to dashboard...');
+      clearLocalTriageDraft(uidForDraft);
       navigate('/dashboard/migrante');
     } catch (err: unknown) {
       console.error('[Triage] Final triage save error:', err);
@@ -580,7 +817,7 @@ export default function Triage() {
   };
 
 
-  if (!currentStep) return <div className="p-8 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>;
+  if (hydrating || !currentStep) return <div className="p-8 text-center"><Loader2 className="animate-spin h-8 w-8 mx-auto" /></div>;
 
   return (
     <Layout hideFooter>
@@ -591,7 +828,18 @@ export default function Triage() {
             <h1 className="text-2xl font-bold">{t.triage.title}</h1>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>{t.triage.step_count.replace('{current}', (step + 1).toString()).replace('{total}', ALL_STEPS.length.toString())}</span>
-              <span>{Math.round(progress)}%</span>
+              <span className="flex items-center gap-3">
+                <span>{Math.round(progress)}%</span>
+                <span className="text-xs">
+                  {autoSaveState.status === 'saving' ? 'A guardar automaticamente…' : null}
+                  {autoSaveState.status === 'saved' ? `Guardado${autoSaveState.remote ? '' : ' neste dispositivo'} • ${new Date(autoSaveState.at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : null}
+                  {autoSaveState.status === 'offline_saved'
+                    ? `Sem ligação — guardado neste dispositivo • ${new Date(autoSaveState.at).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
+                    : null}
+                  {autoSaveState.status === 'conflict' ? autoSaveState.message : null}
+                  {autoSaveState.status === 'error' ? autoSaveState.message : null}
+                </span>
+              </span>
             </div>
             <Progress value={progress} className="h-2" />
           </div>

@@ -3,8 +3,13 @@ import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
+import { registerUser } from '@/integrations/firebase/auth';
 import {
   Users,
   Calendar,
@@ -19,7 +24,81 @@ import {
   ArrowUp,
   ArrowDown,
   Filter,
+  UserCog,
+  Plus,
+  Pencil,
+  UserX,
+  RotateCcw,
 } from 'lucide-react';
+
+type FirebaseUserDoc = {
+  id: string;
+  role?: string | null;
+  createdAt?: unknown;
+};
+
+type CpcTeamRole = 'admin' | 'manager' | 'coordinator' | 'mediator' | 'lawyer' | 'psychologist' | 'trainer';
+type CpcTeamUserDoc = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  active?: boolean | null;
+};
+
+const CPC_TEAM_ROLES: CpcTeamRole[] = ['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer'];
+const CPC_TEAM_ROLE_LABELS: Record<CpcTeamRole, string> = {
+  admin: 'Admin',
+  manager: 'Gestor',
+  coordinator: 'Coordenador',
+  mediator: 'Mediador',
+  lawyer: 'Jurista',
+  psychologist: 'Psicólogo',
+  trainer: 'Formador',
+};
+
+function normalizeText(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function parseUnknownDate(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (typeof value === 'object') {
+    if ('toDate' in value && typeof (value as { toDate?: unknown }).toDate === 'function') {
+      const date = (value as { toDate: () => Date }).toDate();
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+    if ('seconds' in value && typeof (value as { seconds?: unknown }).seconds === 'number') {
+      const parsed = new Date(((value as { seconds: number }).seconds) * 1000);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+  }
+  return null;
+}
+
+function countDatesBetween(dates: Date[], startISO: string, endISO: string): number {
+  return dates.filter((d) => {
+    const iso = d.toISOString().slice(0, 10);
+    return iso >= startISO && iso <= endISO;
+  }).length;
+}
+
+function isCancelledSessionStatus(status?: string | null): boolean {
+  return ['cancelled', 'cancelada'].includes(normalizeText(status));
+}
+
+function isCompletedSessionStatus(status?: string | null): boolean {
+  return ['completed', 'concluida'].includes(normalizeText(status));
+}
 
 export default function CPCDashboard() {
   const { profile } = useAuth();
@@ -48,6 +127,248 @@ export default function CPCDashboard() {
   const [recentMigrants, setRecentMigrants] = useState<Array<{ id: string; name: string; status: string; urgency: boolean; date: string }>>([]);
   const [todaySessions, setTodaySessions] = useState<Array<{ id: string; migrant: string; type: string; time: string; status: string }>>([]);
   const [messagesPending, setMessagesPending] = useState(0);
+
+  function EquipaPage() {
+    const [loadingList, setLoadingList] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [rows, setRows] = useState<Array<{ id: string; name: string; email: string; role: CpcTeamRole; active: boolean }>>([]);
+    const [open, setOpen] = useState(false);
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [role, setRole] = useState<CpcTeamRole>('mediator');
+    const [editOpen, setEditOpen] = useState(false);
+    const [editTarget, setEditTarget] = useState<{ id: string; name: string; role: CpcTeamRole } | null>(null);
+    const [editName, setEditName] = useState('');
+    const [editRole, setEditRole] = useState<CpcTeamRole>('mediator');
+    const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+    const [formError, setFormError] = useState('');
+
+    async function loadTeam() {
+      setLoadingList(true);
+      try {
+        const users = await queryDocuments<CpcTeamUserDoc>('users', []);
+        const filtered = users
+          .filter((u): u is CpcTeamUserDoc & { role: CpcTeamRole } => CPC_TEAM_ROLES.includes(normalizeText(u.role) as CpcTeamRole))
+          .map((u) => ({
+            id: u.id,
+            name: u.name || u.email || 'Utilizador',
+            email: u.email || '—',
+            role: normalizeText(u.role) as CpcTeamRole,
+            active: u.active !== false,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setRows(filtered);
+      } finally {
+        setLoadingList(false);
+      }
+    }
+
+    useEffect(() => {
+      loadTeam();
+    }, []);
+
+    async function handleCreateUser() {
+      if (!name.trim() || !email.trim() || !password.trim()) {
+        setFormError('Preencha nome, email e password.');
+        return;
+      }
+      setSaving(true);
+      setFormError('');
+      try {
+        await registerUser(email.trim(), password, name.trim(), role);
+        setOpen(false);
+        setName('');
+        setEmail('');
+        setPassword('');
+        setRole('mediator');
+        await loadTeam();
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erro ao criar utilizador.';
+        setFormError(message);
+      } finally {
+        setSaving(false);
+      }
+    }
+
+    function openEdit(user: { id: string; name: string; role: CpcTeamRole }) {
+      setEditTarget(user);
+      setEditName(user.name);
+      setEditRole(user.role);
+      setEditOpen(true);
+    }
+
+    async function handleSaveEdit() {
+      if (!editTarget) return;
+      if (!editName.trim()) {
+        setFormError('Nome é obrigatório.');
+        return;
+      }
+      setSaving(true);
+      setFormError('');
+      try {
+        await updateDocument('users', editTarget.id, {
+          name: editName.trim(),
+          role: editRole,
+        });
+        await updateDocument('profiles', editTarget.id, { name: editName.trim() });
+        setEditOpen(false);
+        setEditTarget(null);
+        await loadTeam();
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erro ao atualizar utilizador.';
+        setFormError(message);
+      } finally {
+        setSaving(false);
+      }
+    }
+
+    async function toggleActive(user: { id: string; active: boolean }) {
+      setActionLoadingId(user.id);
+      setFormError('');
+      try {
+        await updateDocument('users', user.id, {
+          active: !user.active,
+          disabledAt: user.active ? new Date().toISOString() : null,
+        });
+        await loadTeam();
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erro ao atualizar estado do utilizador.';
+        setFormError(message);
+      } finally {
+        setActionLoadingId(null);
+      }
+    }
+
+    return (
+      <div className="cpc-section">
+        <div className="cpc-container">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-semibold">Equipa</h2>
+            <Button onClick={() => setOpen(true)} className="inline-flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Adicionar novo
+            </Button>
+          </div>
+          {loadingList ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rows.map((r) => (
+                <div key={r.id} className="cpc-card p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{r.name}</p>
+                    <p className="text-sm text-muted-foreground">{r.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                      {CPC_TEAM_ROLE_LABELS[r.role]}
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${r.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {r.active ? 'Ativo' : 'Desativado'}
+                    </span>
+                    <Button variant="outline" size="sm" className="inline-flex items-center gap-1" onClick={() => openEdit(r)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="inline-flex items-center gap-1"
+                      onClick={() => toggleActive(r)}
+                      disabled={actionLoadingId === r.id}
+                    >
+                      {r.active ? <UserX className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
+                      {r.active ? 'Desativar' : 'Reativar'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {rows.length === 0 && (
+                <div className="cpc-card p-12 text-center text-muted-foreground">Sem utilizadores da equipa.</div>
+              )}
+            </div>
+          )}
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Adicionar novo</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome completo" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" placeholder="email@dominio.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Mínimo 6 caracteres" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Perfil</Label>
+                  <Select value={role} onValueChange={(v) => setRole(v as CpcTeamRole)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CPC_TEAM_ROLES.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {CPC_TEAM_ROLE_LABELS[item]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+                <Button className="w-full" onClick={handleCreateUser} disabled={saving}>
+                  {saving ? 'A guardar...' : 'Criar utilizador'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar utilizador</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nome completo" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Perfil</Label>
+                  <Select value={editRole} onValueChange={(v) => setEditRole(v as CpcTeamRole)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CPC_TEAM_ROLES.map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {CPC_TEAM_ROLE_LABELS[item]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formError ? <p className="text-sm text-red-600">{formError}</p> : null}
+                <Button className="w-full" onClick={handleSaveEdit} disabled={saving}>
+                  {saving ? 'A guardar...' : 'Guardar alterações'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    );
+  }
 
   function CandidaturasDetalhadas() {
     const [loadingList, setLoadingList] = useState(true);
@@ -215,45 +536,42 @@ export default function CPCDashboard() {
         const prevStartISO = period === 'today' ? prevDay.toISOString().slice(0, 10) : period === 'week' ? prevWeekStart.toISOString().slice(0, 10) : prevMonthStart.toISOString().slice(0, 10);
         const prevEndISO = period === 'today' ? prevDay.toISOString().slice(0, 10) : period === 'week' ? prevWeekEnd.toISOString().slice(0, 10) : prevMonthEnd.toISOString().slice(0, 10);
 
-        const [profilesRes, profiles7Res, profiles30Res, sessionsTodayRes, sessionsWeekRes, sessionsCompletedRes, companiesRes, offersActiveRes, offersPendingRes, applicationsRes, progressRes, triageRes, migrantsPeriodRes, migrantsPrevRes, sessionsPeriodRes, sessionsPrevRes, applicationsPeriodRes, applicationsPrevRes] = await Promise.all([
-          supabase.from('profiles').select('user_id', { count: 'estimated', head: true }).eq('role', 'migrant'),
-          supabase.from('profiles').select('user_id', { count: 'estimated', head: true }).eq('role', 'migrant').gte('created_at', sevenDaysAgo.toISOString()),
-          supabase.from('profiles').select('user_id', { count: 'estimated', head: true }).eq('role', 'migrant').gte('created_at', thirtyDaysAgo.toISOString()),
-          supabase.from('sessions').select('id', { count: 'estimated', head: true }).eq('status', 'Agendada').eq('scheduled_date', todayISO),
-          supabase.from('sessions').select('id').eq('status', 'Agendada').gte('scheduled_date', weekStart.toISOString().slice(0,10)).lte('scheduled_date', weekEnd.toISOString().slice(0,10)),
-          supabase.from('sessions').select('id', { count: 'estimated', head: true }).eq('status', 'Concluída'),
+        const [firebaseMigrants, sessionsRes, companiesRes, offersActiveRes, offersPendingRes, applicationsRes, progressRes, triageRes, applicationsPeriodRes, applicationsPrevRes] = await Promise.all([
+          queryDocuments<FirebaseUserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]),
+          supabase.from('sessions').select('id, scheduled_date, status, session_type, scheduled_time, migrant_id'),
           supabase.from('companies').select('id', { count: 'estimated', head: true }),
           supabase.from('job_offers').select('id', { count: 'estimated', head: true }).eq('status', 'active'),
           supabase.from('job_offers').select('id', { count: 'estimated', head: true }).eq('status', 'pending_review'),
           supabase.from('job_applications').select('id', { count: 'estimated', head: true }),
           supabase.from('user_trail_progress').select('progress_percent'),
           supabase.from('triage').select('user_id, urgencies'),
-          supabase.from('profiles').select('user_id', { count: 'estimated', head: true }).eq('role', 'migrant').gte('created_at', periodStartISO).lte('created_at', periodEndISO),
-          supabase.from('profiles').select('user_id', { count: 'estimated', head: true }).eq('role', 'migrant').gte('created_at', prevStartISO).lte('created_at', prevEndISO),
-          supabase.from('sessions').select('id', { count: 'estimated', head: true }).eq('status', 'Agendada').gte('scheduled_date', periodStartISO).lte('scheduled_date', periodEndISO),
-          supabase.from('sessions').select('id', { count: 'estimated', head: true }).eq('status', 'Agendada').gte('scheduled_date', prevStartISO).lte('scheduled_date', prevEndISO),
           supabase.from('job_applications').select('id', { count: 'estimated', head: true }).gte('created_at', periodStartISO).lte('created_at', periodEndISO),
           supabase.from('job_applications').select('id', { count: 'estimated', head: true }).gte('created_at', prevStartISO).lte('created_at', prevEndISO)
         ]);
 
-        setMigrantsTotal(profilesRes.count || 0);
-        setMigrantsNew7(profiles7Res.count || 0);
-        setMigrantsNew30(profiles30Res.count || 0);
-        setMigrantsPeriodNew(migrantsPeriodRes.count || 0);
-        setMigrantsPrevNew(migrantsPrevRes.count || 0);
-        setSessionsTodayCount(sessionsTodayRes.count || 0);
-        setSessionsCompletedCount(sessionsCompletedRes.count || 0);
+        const migrantDates = firebaseMigrants
+          .map((u) => parseUnknownDate(u.createdAt))
+          .filter((d): d is Date => d !== null);
+        setMigrantsTotal(firebaseMigrants.length);
+        setMigrantsNew7(migrantDates.filter((d) => d >= sevenDaysAgo).length);
+        setMigrantsNew30(migrantDates.filter((d) => d >= thirtyDaysAgo).length);
+        setMigrantsPeriodNew(countDatesBetween(migrantDates, periodStartISO, periodEndISO));
+        setMigrantsPrevNew(countDatesBetween(migrantDates, prevStartISO, prevEndISO));
+
+        type SessionRow = { id: string; scheduled_date: string; status: string | null; session_type: string; scheduled_time: string; migrant_id: string };
+        const allSessions = ((sessionsRes.data || []) as SessionRow[]).filter((s) => !isCancelledSessionStatus(s.status));
+        setSessionsTodayCount(allSessions.filter((s) => s.scheduled_date === todayISO).length);
+        setSessionsWeekCount(allSessions.filter((s) => s.scheduled_date >= weekStart.toISOString().slice(0, 10) && s.scheduled_date <= weekEnd.toISOString().slice(0, 10)).length);
+        setSessionsCompletedCount(allSessions.filter((s) => isCompletedSessionStatus(s.status)).length);
+        setSessionsPeriodCount(allSessions.filter((s) => s.scheduled_date >= periodStartISO && s.scheduled_date <= periodEndISO).length);
+        setSessionsPrevCount(allSessions.filter((s) => s.scheduled_date >= prevStartISO && s.scheduled_date <= prevEndISO).length);
+
         setCompaniesTotal(companiesRes.count || 0);
         setJobOffersActive(offersActiveRes.count || 0);
         setJobOffersPendingApproval(offersPendingRes.count || 0);
         setApplicationsTotal(applicationsRes.count || 0);
-        setSessionsPeriodCount(sessionsPeriodRes.count || 0);
-        setSessionsPrevCount(sessionsPrevRes.count || 0);
         setApplicationsPeriodCount(applicationsPeriodRes.count || 0);
         setApplicationsPrevCount(applicationsPrevRes.count || 0);
-
-        const weekList = (sessionsWeekRes.data || []) as Array<{ id: string }>;
-        setSessionsWeekCount(weekList.length);
 
         const progressValues = ((progressRes.data || []) as Array<{ progress_percent: number | null }>).map(p => p.progress_percent || 0);
         const avg = progressValues.length ? Math.round(progressValues.reduce((a,b)=>a+b,0) / progressValues.length) : 0;
@@ -280,12 +598,9 @@ export default function CPCDashboard() {
         const recentList = recentTyped.map(p => ({ id: p.user_id, name: p.name, status: '—', urgency: false, date: new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }) }));
         setRecentMigrants(recentList);
 
-        const { data: todaySess } = await supabase
-          .from('sessions')
-          .select('id, session_type, scheduled_time, status, migrant_id')
-          .eq('scheduled_date', todayISO)
-          .order('scheduled_time', { ascending: true });
-        const todaySessTyped = (todaySess || []) as Array<{ id: string; session_type: string; scheduled_time: string; status: string | null; migrant_id: string }>; 
+        const todaySessTyped = allSessions
+          .filter((s) => s.scheduled_date === todayISO)
+          .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
         const migrantIds = Array.from(new Set(todaySessTyped.map(s => s.migrant_id).filter(Boolean)));
         const migrantMap: Record<string, string> = {};
         if (migrantIds.length) {
@@ -306,8 +621,23 @@ export default function CPCDashboard() {
         setTodaySessions(todayList);
 
         try {
-          const rawMsgs = localStorage.getItem('cpcMessagesPending');
-          setMessagesPending(rawMsgs ? Number(rawMsgs) || 0 : 0);
+          let pendingChats = 0;
+          let pendingUrgencies = 0;
+          firebaseMigrants.forEach((migrant) => {
+            const chatRaw = localStorage.getItem(`chat:${migrant.id}`);
+            if (chatRaw) {
+              const chatList = JSON.parse(chatRaw) as Array<{ from?: string }>;
+              if (chatList.length > 0 && normalizeText(chatList[0]?.from) === 'migrante') {
+                pendingChats += 1;
+              }
+            }
+            const urgentRaw = localStorage.getItem(`urgentRequests:${migrant.id}`);
+            if (urgentRaw) {
+              const urgentList = JSON.parse(urgentRaw) as Array<{ status?: string }>;
+              pendingUrgencies += urgentList.filter((item) => ['submetido', 'pending', 'pendente'].includes(normalizeText(item.status))).length;
+            }
+          });
+          setMessagesPending(pendingChats + pendingUrgencies);
         } catch { setMessagesPending(0); }
       } finally {
         setLoading(false);
@@ -349,6 +679,7 @@ export default function CPCDashboard() {
     { to: '/dashboard/cpc/candidaturas', label: 'Candidaturas', icon: FileText },
     { to: '/dashboard/cpc/ofertas', label: 'Ofertas', icon: Briefcase },
     { to: '/dashboard/cpc/trilhas', label: 'Trilhas', icon: BookOpen },
+    { to: '/dashboard/cpc/equipa', label: 'Equipa', icon: UserCog },
   ];
   const isHome = location.pathname === '/dashboard/cpc' || location.pathname === '/dashboard/cpc/';
 
@@ -578,6 +909,7 @@ export default function CPCDashboard() {
                 <Route path="agenda" element={<TeamAgendaPage />} />
                 <Route path="candidaturas" element={<CandidaturasDetalhadas />} />
                 <Route path="ofertas" element={<OfertasAguardandoAprovacao />} />
+                <Route path="equipa" element={<EquipaPage />} />
               </Routes>
             </div>
           </div>
