@@ -65,6 +65,7 @@ export async function registerUser(
             phone: null,
             birthDate: null,
             nationality: null,
+            photoUrl: null,
             currentLocation: null,
             arrivalDate: null,
             updatedAt: serverTimestamp(),

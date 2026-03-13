@@ -18,6 +18,7 @@ export interface Profile {
   phone?: string | null;
   birthDate?: string | null;
   nationality?: string | null;
+  photoUrl?: string | null;
   currentLocation?: string | null;
   arrivalDate?: string | null;
 }

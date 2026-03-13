@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, BookOpen, Clock, Edit } from 'lucide-react';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -14,14 +14,20 @@ import { formatPhoneValueForDisplay } from '@/components/ui/phone-input';
 import { fetchMigrantProfile, type MigrantProfileDoc, type MigrantProfileResponse } from '@/api/migrantProfile';
 import { updateUserProfile } from '@/integrations/firebase/auth';
 import { updateDocument } from '@/integrations/firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { storage } from '@/integrations/firebase/client';
+import { getDownloadURL, ref as makeStorageRef, uploadBytes } from 'firebase/storage';
 
 export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<MigrantProfileResponse | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
 
   const [edit, setEdit] = useState<{
     name: string;
@@ -287,6 +293,61 @@ export default function ProfilePage() {
     }
   }
 
+  async function uploadProfilePhoto(file: File) {
+    if (!user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Ficheiro inválido', description: 'Selecione uma imagem.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Imagem muito grande', description: 'O limite é 5MB.', variant: 'destructive' });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const safeName = file.name.replace(/[^\w.-]+/g, '-').slice(0, 80) || 'foto';
+      const path = `profile_photos/${user.uid}/${Date.now()}-${safeName}`;
+      const ref = makeStorageRef(storage, path);
+      await uploadBytes(ref, file);
+      const url = await getDownloadURL(ref);
+
+      await updateDocument('profiles', user.uid, { photoUrl: url });
+
+      setData((prev) => {
+        if (!prev) return prev;
+        if (!prev.profile) return prev;
+        return { ...prev, profile: { ...prev.profile, photoUrl: url } };
+      });
+      await refreshProfile();
+      toast({ title: 'Foto atualizada', description: 'A sua foto de perfil foi atualizada com sucesso.' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível enviar a imagem. Tente novamente.', variant: 'destructive' });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function removeProfilePhoto() {
+    if (!user) return;
+    setUploadingPhoto(true);
+    try {
+      await updateDocument('profiles', user.uid, { photoUrl: null });
+      setData((prev) => {
+        if (!prev) return prev;
+        if (!prev.profile) return prev;
+        return { ...prev, profile: { ...prev.profile, photoUrl: null } };
+      });
+      await refreshProfile();
+      toast({ title: 'Foto removida' });
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível remover a foto. Tente novamente.', variant: 'destructive' });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -327,8 +388,37 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center gap-4 mb-4">
             <Avatar className="h-14 w-14">
+              <AvatarImage src={profileDoc.photoUrl || undefined} alt={edit.name || profileDoc.email || 'Foto de perfil'} />
               <AvatarFallback>{(edit.name || profileDoc.email || 'U').slice(0, 1).toUpperCase()}</AvatarFallback>
             </Avatar>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.currentTarget.files?.[0];
+                e.currentTarget.value = '';
+                if (file) void uploadProfilePhoto(file);
+              }}
+              disabled={uploadingPhoto}
+            />
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploadingPhoto}
+                onClick={() => photoInputRef.current?.click()}
+              >
+                {uploadingPhoto ? 'A enviar…' : profileDoc.photoUrl ? 'Alterar foto' : 'Enviar foto'}
+              </Button>
+              {profileDoc.photoUrl ? (
+                <Button type="button" variant="ghost" size="sm" disabled={uploadingPhoto} onClick={removeProfilePhoto}>
+                  Remover
+                </Button>
+              ) : null}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

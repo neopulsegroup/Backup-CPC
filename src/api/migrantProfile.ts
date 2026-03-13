@@ -33,6 +33,7 @@ export type MigrantProfileDoc = {
   phone?: string | null;
   birthDate?: string | null;
   nationality?: string | null;
+  photoUrl?: string | null;
   currentLocation?: string | null;
   arrivalDate?: string | null;
   resumeUrl?: string | null;
@@ -90,6 +91,7 @@ export async function fetchMigrantProfile(uid: string): Promise<MigrantProfileRe
       phone: profileFs?.phone ?? null,
       birthDate: profileFs?.birthDate ?? null,
       nationality: profileFs?.nationality ?? null,
+      photoUrl: profileFs?.photoUrl ?? null,
       currentLocation: profileFs?.currentLocation ?? null,
       arrivalDate: profileFs?.arrivalDate ?? null,
       resumeUrl: profileFs?.resumeUrl ?? null,

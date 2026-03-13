@@ -9,6 +9,7 @@ const mockFetchMigrantProfile = vi.fn();
 const mockUpdateDocument = vi.fn();
 const mockUpdateUserProfile = vi.fn();
 const mockRefreshProfile = vi.fn();
+const mockToast = vi.fn();
 const stableUser = { uid: 'u1' };
 
 vi.mock('@/api/migrantProfile', () => ({
@@ -23,6 +24,24 @@ vi.mock('@/integrations/firebase/auth', () => ({
   updateUserProfile: (...args: unknown[]) => mockUpdateUserProfile(...args),
 }));
 
+vi.mock('@/integrations/firebase/client', () => ({
+  storage: {},
+}));
+
+vi.mock('@/hooks/use-toast', () => ({
+  useToast: () => ({ toast: (...args: unknown[]) => mockToast(...args) }),
+}));
+
+const mockStorageRef = vi.fn();
+const mockUploadBytes = vi.fn();
+const mockGetDownloadURL = vi.fn();
+
+vi.mock('firebase/storage', () => ({
+  ref: (...args: unknown[]) => mockStorageRef(...args),
+  uploadBytes: (...args: unknown[]) => mockUploadBytes(...args),
+  getDownloadURL: (...args: unknown[]) => mockGetDownloadURL(...args),
+}));
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: stableUser, refreshProfile: mockRefreshProfile }),
 }));
@@ -33,6 +52,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
 
 describe('ProfilePage (dashboard/migrante)', () => {
   it('mostra loading e depois renderiza dados vindos da base de dados', async () => {
+    localStorage.clear();
     mockFetchMigrantProfile.mockResolvedValueOnce({
       userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
       profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: '+351900000000', birthDate: '1990-02-03', nationality: 'Brasil' },
@@ -64,6 +84,7 @@ describe('ProfilePage (dashboard/migrante)', () => {
   });
 
   it('mostra estado de não encontrado quando o perfil não existe', async () => {
+    localStorage.clear();
     mockFetchMigrantProfile.mockResolvedValueOnce({
       userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
       profile: null,
@@ -82,6 +103,7 @@ describe('ProfilePage (dashboard/migrante)', () => {
   });
 
   it('mantém campos vazios quando não há dados', async () => {
+    localStorage.clear();
     mockFetchMigrantProfile.mockResolvedValueOnce({
       userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
       profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, birthDate: null, nationality: null },
@@ -105,6 +127,7 @@ describe('ProfilePage (dashboard/migrante)', () => {
   });
 
   it('mostra erro quando a API falha', async () => {
+    localStorage.clear();
     mockFetchMigrantProfile.mockRejectedValueOnce(new Error('boom'));
     render(
       <MemoryRouter>
@@ -115,6 +138,7 @@ describe('ProfilePage (dashboard/migrante)', () => {
   });
 
   it('guarda alterações no Firestore', async () => {
+    localStorage.clear();
     const user = userEvent.setup();
     mockFetchMigrantProfile.mockResolvedValueOnce({
       userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
@@ -151,6 +175,46 @@ describe('ProfilePage (dashboard/migrante)', () => {
     await waitFor(() => {
       expect(mockUpdateDocument).toHaveBeenCalledWith('profiles', 'u1', expect.objectContaining({ name: 'Ana Maria' }));
       expect(mockUpdateUserProfile).toHaveBeenCalledWith('u1', expect.objectContaining({ name: 'Ana Maria' }));
+    });
+  });
+
+  it('permite upload de foto e grava photoUrl no perfil', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+
+    mockStorageRef.mockReturnValueOnce({ key: 'ref1' });
+    mockUploadBytes.mockResolvedValueOnce(undefined);
+    mockGetDownloadURL.mockResolvedValueOnce('https://exemplo.com/foto.png');
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, photoUrl: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    mockUpdateDocument.mockResolvedValueOnce(undefined);
+    mockRefreshProfile.mockResolvedValueOnce(undefined);
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Perfil');
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(fileInput).not.toBeNull();
+
+    const file = new File(['abc'], 'foto.png', { type: 'image/png' });
+    await user.upload(fileInput as HTMLInputElement, file);
+
+    await waitFor(() => {
+      expect(mockUploadBytes).toHaveBeenCalled();
+      expect(mockGetDownloadURL).toHaveBeenCalled();
+      expect(mockUpdateDocument).toHaveBeenCalledWith('profiles', 'u1', expect.objectContaining({ photoUrl: 'https://exemplo.com/foto.png' }));
     });
   });
 });
