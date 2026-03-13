@@ -29,6 +29,8 @@ export default function ProfilePage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+  const PHOTO_ALLOWED_MIME = useMemo(() => new Set(['image/jpeg', 'image/png', 'image/gif']), []);
 
   const [edit, setEdit] = useState<{
     name: string;
@@ -304,25 +306,43 @@ export default function ProfilePage() {
   }
 
   async function uploadProfilePhoto(file: File) {
-    if (!user) return;
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    const isAllowedByExt = ['jpg', 'jpeg', 'png', 'gif'].includes(fileExt);
+    const isAllowedByMime = file.type ? PHOTO_ALLOWED_MIME.has(file.type) : false;
 
-    if (!file.type.startsWith('image/')) {
-      toast({ title: 'Ficheiro inválido', description: 'Selecione uma imagem.', variant: 'destructive' });
+    if (!user) {
+      toast({ title: 'Sessão expirada', description: 'Inicie sessão novamente e tente outra vez.', variant: 'destructive' });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+
+    if (!isAllowedByMime && !isAllowedByExt) {
+      toast({
+        title: 'Formato não suportado',
+        description: 'Envie uma imagem JPG, PNG ou GIF (máx. 5MB).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (file.size > PHOTO_MAX_BYTES) {
       toast({ title: 'Imagem muito grande', description: 'O limite é 5MB.', variant: 'destructive' });
       return;
     }
 
     setUploadingPhoto(true);
+    let stage: 'upload' | 'url' | 'db' = 'upload';
     try {
-      const safeName = file.name.replace(/[^\w.-]+/g, '-').slice(0, 80) || 'foto';
+      const safeName = file.name.replace(/[^\w.+-]+/g, '-').slice(0, 80) || 'foto';
       const path = `profile_photos/${user.uid}/${Date.now()}-${safeName}`;
       const ref = makeStorageRef(storage, path);
-      await uploadBytes(ref, file);
+
+      stage = 'upload';
+      await uploadBytes(ref, file, { contentType: file.type || undefined });
+
+      stage = 'url';
       const url = await getDownloadURL(ref);
 
+      stage = 'db';
       await updateDocument('profiles', user.uid, { photoUrl: url });
 
       setData((prev) => {
@@ -332,8 +352,55 @@ export default function ProfilePage() {
       });
       await refreshProfile();
       toast({ title: 'Foto atualizada', description: 'A sua foto de perfil foi atualizada com sucesso.' });
-    } catch {
-      toast({ title: 'Erro', description: 'Não foi possível enviar a imagem. Tente novamente.', variant: 'destructive' });
+    } catch (err: unknown) {
+      const code = typeof err === 'object' && err !== null && 'code' in err ? String((err as { code?: unknown }).code) : '';
+
+      if (stage === 'upload') {
+        if (code === 'storage/unauthorized') {
+          toast({ title: 'Sem permissão', description: 'Não tem permissão para enviar imagens. Verifique as permissões da conta.', variant: 'destructive' });
+          return;
+        }
+        if (code === 'storage/canceled') {
+          toast({ title: 'Upload cancelado', description: 'O envio foi cancelado.', variant: 'destructive' });
+          return;
+        }
+        if (code === 'storage/retry-limit-exceeded' || code === 'storage/network-request-failed') {
+          toast({ title: 'Falha de conexão', description: 'Não foi possível enviar a imagem. Verifique a sua ligação e tente novamente.', variant: 'destructive' });
+          return;
+        }
+        if (code === 'storage/quota-exceeded') {
+          toast({ title: 'Limite excedido', description: 'O serviço de armazenamento atingiu o limite. Tente novamente mais tarde.', variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Erro no upload', description: 'Não foi possível enviar a imagem. Tente novamente.', variant: 'destructive' });
+        return;
+      }
+
+      if (stage === 'url') {
+        if (code === 'storage/unauthorized') {
+          toast({ title: 'Sem permissão', description: 'Não tem permissão para aceder ao ficheiro enviado.', variant: 'destructive' });
+          return;
+        }
+        if (code === 'storage/retry-limit-exceeded' || code === 'storage/network-request-failed') {
+          toast({ title: 'Falha de conexão', description: 'Não foi possível obter a URL da imagem. Tente novamente.', variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Erro ao obter URL', description: 'A imagem foi enviada, mas não foi possível obter o link para exibição.', variant: 'destructive' });
+        return;
+      }
+
+      if (stage === 'db') {
+        if (code === 'permission-denied') {
+          toast({ title: 'Sem permissão', description: 'Não foi possível atualizar o perfil com a nova foto. Verifique permissões.', variant: 'destructive' });
+          return;
+        }
+        if (code === 'unavailable' || code === 'deadline-exceeded') {
+          toast({ title: 'Servidor indisponível', description: 'Não foi possível guardar o link da imagem no perfil. Tente novamente.', variant: 'destructive' });
+          return;
+        }
+        toast({ title: 'Erro ao guardar', description: 'A imagem foi enviada, mas não foi possível associá-la ao perfil.', variant: 'destructive' });
+        return;
+      }
     } finally {
       setUploadingPhoto(false);
     }
@@ -351,7 +418,16 @@ export default function ProfilePage() {
       });
       await refreshProfile();
       toast({ title: 'Foto removida' });
-    } catch {
+    } catch (err: unknown) {
+      const code = typeof err === 'object' && err !== null && 'code' in err ? String((err as { code?: unknown }).code) : '';
+      if (code === 'permission-denied') {
+        toast({ title: 'Sem permissão', description: 'Não foi possível remover a foto do perfil. Verifique permissões.', variant: 'destructive' });
+        return;
+      }
+      if (code === 'unavailable' || code === 'deadline-exceeded') {
+        toast({ title: 'Falha de conexão', description: 'Não foi possível remover a foto. Verifique a ligação e tente novamente.', variant: 'destructive' });
+        return;
+      }
       toast({ title: 'Erro', description: 'Não foi possível remover a foto. Tente novamente.', variant: 'destructive' });
     } finally {
       setUploadingPhoto(false);
@@ -402,7 +478,7 @@ export default function ProfilePage() {
               <input
                 ref={photoInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/gif"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.currentTarget.files?.[0];
@@ -411,6 +487,13 @@ export default function ProfilePage() {
                 }}
                 disabled={uploadingPhoto}
               />
+
+              {uploadingPhoto ? (
+                <div className="absolute inset-0 rounded-2xl bg-background/70 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary"></div>
+                  <span className="text-xs font-medium text-muted-foreground">A enviar…</span>
+                </div>
+              ) : null}
 
               <button
                 type="button"

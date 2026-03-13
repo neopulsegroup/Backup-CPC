@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 import ProfilePage from './ProfilePage';
@@ -51,6 +51,10 @@ vi.mock('@/contexts/LanguageContext', () => ({
 }));
 
 describe('ProfilePage (dashboard/migrante)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('mostra loading e depois renderiza dados vindos da base de dados', async () => {
     localStorage.clear();
     mockFetchMigrantProfile.mockResolvedValueOnce({
@@ -216,6 +220,173 @@ describe('ProfilePage (dashboard/migrante)', () => {
       expect(mockUploadBytes).toHaveBeenCalled();
       expect(mockGetDownloadURL).toHaveBeenCalled();
       expect(mockUpdateDocument).toHaveBeenCalledWith('profiles', 'u1', expect.objectContaining({ photoUrl: 'https://exemplo.com/foto.png' }));
+    });
+  });
+
+  it('rejeita ficheiros com formato inválido', async () => {
+    localStorage.clear();
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, photoUrl: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Informação Pessoal');
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(fileInput).not.toBeNull();
+
+    const file = new File(['abc'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput as HTMLInputElement, { target: { files: [file] } });
+
+    expect(mockUploadBytes).not.toHaveBeenCalled();
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Formato não suportado', variant: 'destructive' }));
+  });
+
+  it('rejeita ficheiros maiores que 5MB', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, photoUrl: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Informação Pessoal');
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    expect(fileInput).not.toBeNull();
+
+    const big = new Uint8Array(5 * 1024 * 1024 + 1);
+    const file = new File([big], 'foto.png', { type: 'image/png' });
+    await user.upload(fileInput as HTMLInputElement, file);
+
+    expect(mockUploadBytes).not.toHaveBeenCalled();
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Imagem muito grande', variant: 'destructive' }));
+  });
+
+  it('mostra loading state durante o upload', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+
+    mockStorageRef.mockReturnValueOnce({ key: 'ref1' });
+    let resolveUpload: (() => void) | null = null;
+    mockUploadBytes.mockImplementationOnce(() => new Promise<void>((res) => { resolveUpload = res; }));
+    mockGetDownloadURL.mockResolvedValueOnce('https://exemplo.com/foto.png');
+    mockUpdateDocument.mockResolvedValueOnce(undefined);
+    mockRefreshProfile.mockResolvedValueOnce(undefined);
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, photoUrl: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Informação Pessoal');
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    const file = new File(['abc'], 'foto.png', { type: 'image/png' });
+    await user.upload(fileInput as HTMLInputElement, file);
+
+    expect(await screen.findByText('A enviar…')).toBeInTheDocument();
+    resolveUpload?.();
+
+    await waitFor(() => {
+      expect(screen.queryByText('A enviar…')).toBeNull();
+      expect(mockUpdateDocument).toHaveBeenCalledWith('profiles', 'u1', expect.objectContaining({ photoUrl: 'https://exemplo.com/foto.png' }));
+    });
+  });
+
+  it('mostra erro específico quando o upload falha por permissão', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+
+    mockStorageRef.mockReturnValueOnce({ key: 'ref1' });
+    mockUploadBytes.mockRejectedValueOnce({ code: 'storage/unauthorized' });
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, photoUrl: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Informação Pessoal');
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    const file = new File(['abc'], 'foto.png', { type: 'image/png' });
+    await user.upload(fileInput as HTMLInputElement, file);
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Sem permissão', variant: 'destructive' }));
+      expect(mockUpdateDocument).not.toHaveBeenCalled();
+    });
+  });
+
+  it('mostra erro específico quando guardar photoUrl falha por permissão', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+
+    mockStorageRef.mockReturnValueOnce({ key: 'ref1' });
+    mockUploadBytes.mockResolvedValueOnce(undefined);
+    mockGetDownloadURL.mockResolvedValueOnce('https://exemplo.com/foto.png');
+    mockUpdateDocument.mockRejectedValueOnce({ code: 'permission-denied' });
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'ana@exemplo.com', name: 'Ana', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'u1', name: 'Ana', email: 'ana@exemplo.com', phone: null, photoUrl: null },
+      triage: null,
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter>
+        <ProfilePage />
+      </MemoryRouter>
+    );
+    await screen.findByText('Informação Pessoal');
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
+    const file = new File(['abc'], 'foto.png', { type: 'image/png' });
+    await user.upload(fileInput as HTMLInputElement, file);
+
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Sem permissão', variant: 'destructive' }));
     });
   });
 });

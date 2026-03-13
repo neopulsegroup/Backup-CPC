@@ -20,6 +20,8 @@
 - [x] Binding e formatação (máscara de telefone e data DD/MM/AAAA) dos campos "Telefone", "Data de nascimento" e "Nacionalidade" no card "Perfil" (dashboard/migrante/perfil), com testes para cenários com/sem dados.
 - [x] Exibição somente leitura (texto estático) de "Telefone", "Data de nascimento" e "Nacionalidade" no card "Perfil" (dashboard/migrante/perfil), recuperando os dados a partir da triagem inicial e formatando em máscara de país/DD/MM/AAAA.
 - [x] Remoção dos campos "Localização atual" e "Data de chegada" e do email duplicado ao lado do botão "Guardar alterações" no card "Perfil" (dashboard/migrante/perfil).
+- [x] Reestruturação do layout da "Visão geral" do dashboard CPC (dashboard/cpc) com novo grid, KPIs, cards e widgets, mantendo responsividade e padrão visual do projeto.
+- [x] Padronização do layout da página CPC "Equipa" para corresponder à estrutura/padrões de UI/UX de CPC "Migrantes" (filtros, lista, estados e ações), mantendo a funcionalidade de gestão de utilizadores.
 
 ## Requisitos CPC (Checklist)
 
