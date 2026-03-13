@@ -25,8 +25,6 @@ export default function ProfilePage() {
 
   const [edit, setEdit] = useState<{
     name: string;
-    currentLocation: string;
-    arrivalDate: string;
     resumeUrl: string;
     professionalTitle: string;
     professionalExperience: string;
@@ -36,8 +34,6 @@ export default function ProfilePage() {
     contactPreference: 'email' | 'phone';
   }>({
     name: '',
-    currentLocation: '',
-    arrivalDate: '',
     resumeUrl: '',
     professionalTitle: '',
     professionalExperience: '',
@@ -77,8 +73,6 @@ export default function ProfilePage() {
               ...p,
               birthDate: p.birthDate || extras?.birthDate || null,
               nationality: p.nationality || extras?.nationality || null,
-              currentLocation: p.currentLocation || extras?.currentLocation || null,
-              arrivalDate: p.arrivalDate || extras?.arrivalDate || null,
               resumeUrl: p.resumeUrl || extras?.resumeUrl || null,
               professionalTitle: p.professionalTitle || extras?.professionalTitle || null,
               professionalExperience: p.professionalExperience || extras?.professionalExperience || null,
@@ -93,8 +87,6 @@ export default function ProfilePage() {
           const shouldMigrate =
             (!p.birthDate && extras.birthDate) ||
             (!p.nationality && extras.nationality) ||
-            (!p.currentLocation && extras.currentLocation) ||
-            (!p.arrivalDate && extras.arrivalDate) ||
             (!p.resumeUrl && extras.resumeUrl) ||
             (!p.professionalTitle && extras.professionalTitle) ||
             (!p.professionalExperience && extras.professionalExperience) ||
@@ -107,8 +99,6 @@ export default function ProfilePage() {
             void updateDocument('profiles', user.uid, {
               birthDate: merged?.birthDate || null,
               nationality: merged?.nationality || null,
-              currentLocation: merged?.currentLocation || null,
-              arrivalDate: merged?.arrivalDate || null,
               resumeUrl: merged?.resumeUrl || null,
               professionalTitle: merged?.professionalTitle || null,
               professionalExperience: merged?.professionalExperience || null,
@@ -122,8 +112,6 @@ export default function ProfilePage() {
 
         setEdit({
           name: merged?.name || res.userProfile?.name || '',
-          currentLocation: merged?.currentLocation || '',
-          arrivalDate: merged?.arrivalDate || '',
           resumeUrl: merged?.resumeUrl || '',
           professionalTitle: merged?.professionalTitle || '',
           professionalExperience: merged?.professionalExperience || '',
@@ -278,8 +266,6 @@ export default function ProfilePage() {
     try {
       await updateDocument('profiles', user.uid, {
         name: edit.name,
-        currentLocation: edit.currentLocation || null,
-        arrivalDate: edit.arrivalDate || null,
         resumeUrl: edit.resumeUrl || null,
         professionalTitle: edit.professionalTitle || null,
         professionalExperience: edit.professionalExperience || null,
@@ -350,9 +336,9 @@ export default function ProfilePage() {
               <Input id="name" value={edit.name} onChange={(e) => setEdit((s) => ({ ...s, name: e.target.value }))} className="mt-1" />
             </div>
             <div>
-              <Label>Telefone</Label>
-              <div className="mt-1 rounded-md border bg-muted/20 px-3 py-2 text-sm">
-                {profileReadOnlyFields.phone || '—'}
+              <div className="rounded-md border bg-muted/20 px-3 py-2 min-h-10 flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                <span className="text-xs text-muted-foreground">Telefone</span>
+                <span className="text-sm font-medium md:text-right">{profileReadOnlyFields.phone || '—'}</span>
               </div>
             </div>
             <div>
@@ -360,28 +346,19 @@ export default function ProfilePage() {
               <Input id="email" value={profileDoc.email || ''} disabled className="mt-1" />
             </div>
             <div>
-              <Label>Data de nascimento</Label>
-              <div className="mt-1 rounded-md border bg-muted/20 px-3 py-2 text-sm">
-                {profileReadOnlyFields.birth || '—'}
+              <div className="rounded-md border bg-muted/20 px-3 py-2 min-h-10 flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                <span className="text-xs text-muted-foreground">Data de nascimento</span>
+                <span className="text-sm font-medium md:text-right">{profileReadOnlyFields.birth || '—'}</span>
               </div>
             </div>
             <div>
-              <Label>Nacionalidade</Label>
-              <div className="mt-1 rounded-md border bg-muted/20 px-3 py-2 text-sm">
-                {profileReadOnlyFields.nationality || '—'}
+              <div className="rounded-md border bg-muted/20 px-3 py-2 min-h-10 flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+                <span className="text-xs text-muted-foreground">Nacionalidade</span>
+                <span className="text-sm font-medium md:text-right">{profileReadOnlyFields.nationality || '—'}</span>
               </div>
-            </div>
-            <div>
-              <Label htmlFor="currentLocation">Localização atual</Label>
-              <Input id="currentLocation" value={edit.currentLocation} onChange={(e) => setEdit((s) => ({ ...s, currentLocation: e.target.value }))} className="mt-1" />
-            </div>
-            <div>
-              <Label htmlFor="arrivalDate">Data de chegada</Label>
-              <Input id="arrivalDate" type="date" value={edit.arrivalDate} onChange={(e) => setEdit((s) => ({ ...s, arrivalDate: e.target.value }))} className="mt-1" />
             </div>
           </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">{profileDoc.email}</div>
+          <div className="mt-4 flex items-center justify-end">
             <Button onClick={save} disabled={saving}>{saving ? 'A guardar…' : 'Guardar alterações'}</Button>
           </div>
         </div>

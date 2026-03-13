@@ -19,6 +19,103 @@
 - [x] Visualização completa do card "Status Migratório" (perguntas + respostas) no perfil do Migrante, com mapeamento de opções para PT-PT e tratamento de não respondidos.
 - [x] Binding e formatação (máscara de telefone e data DD/MM/AAAA) dos campos "Telefone", "Data de nascimento" e "Nacionalidade" no card "Perfil" (dashboard/migrante/perfil), com testes para cenários com/sem dados.
 - [x] Exibição somente leitura (texto estático) de "Telefone", "Data de nascimento" e "Nacionalidade" no card "Perfil" (dashboard/migrante/perfil), recuperando os dados a partir da triagem inicial e formatando em máscara de país/DD/MM/AAAA.
+- [x] Remoção dos campos "Localização atual" e "Data de chegada" e do email duplicado ao lado do botão "Guardar alterações" no card "Perfil" (dashboard/migrante/perfil).
+
+## Requisitos CPC (Checklist)
+
+### Parte pública
+- [x] Página inicial (home) com CTAs para registo/login como “Pessoa Migrante” e “Empresa”.
+- [x] Páginas públicas: Sobre, Como Funciona, Contactos + FAQ.
+- [x] Seleção de idioma (PT/EN/ES) com persistência.
+- [ ] Formulário de contactos com envio real (backend/email).
+
+### 1) Registos e Perfis
+- [x] Registo/login por email para migrantes e empresas.
+- [ ] Registo por telemóvel/OTP para migrantes.
+- [x] Perfis internos CPC (mediador, jurista, psicólogo, gestor, coordenação, admin) e acesso ao painel CPC.
+- [x] Cada tipo só acede ao que lhe diz respeito (rotas protegidas por role + redirecionamento).
+- [x] Empresa: registo com nome e NIF.
+- [ ] Empresa: campo “área de atividade” no registo/perfil.
+
+### 2) Triagem Inicial
+- [x] Triagem inicial multi-passos no fluxo do migrante, obrigatória antes do dashboard.
+- [x] Gravação da triagem no Firestore (triage) com mapeamento para campos estruturados (ex.: legal_status, work_status, language_level, urgencies, interests).
+- [x] Autosave da triagem (rascunho local + sincronização remota).
+- [ ] “Perfil de necessidades” dedicado + recomendações/direcionamento automático (trilha/sessão/CV).
+
+### 3) Agendamentos e Atendimento
+- [x] Migrante: marcar sessões (mediador/jurista/psicóloga) e ver sessões marcadas.
+- [x] Equipa CPC: criar, reagendar e cancelar sessões; filtrar por área e por profissional (atribuição básica).
+- [ ] Equipa CPC: registar notas básicas das sessões.
+- [ ] Lembretes automáticos de sessão (email/notificações).
+
+### 4) Trilhas Formativas
+- [x] Migrante: catálogo de trilhas, detalhe, visualização de módulos (texto/vídeo/pdf) e progresso.
+- [x] Progresso por utilizador (user_trail_progress; demo quando não há dados).
+- [x] Equipa CPC: criar trilhas e gerir/editar módulos.
+- [ ] Quizzes simples.
+- [ ] Trilha recomendada com base na triagem.
+
+### 5) Ligação ao Emprego (Empresas + Ofertas + CVs)
+- [x] Migrante: ver ofertas e detalhe.
+- [x] Migrante: candidatar-se diretamente (job_applications) com carta de apresentação opcional.
+- [ ] Migrante: acompanhar estado/histórico de candidaturas.
+- [x] Empresa: criar ofertas e listar ofertas.
+- [ ] Empresa: editar ofertas.
+- [x] Empresa: ver candidaturas recebidas por oferta e atualizar estado.
+- [x] Empresa: ver perfil do candidato (inclui CV/link quando disponível).
+- [x] CPC: ver candidaturas e listar ofertas pendentes de aprovação.
+- [ ] CPC: aprovar/rejeitar/moderar ofertas (alterar status).
+
+### 6) Painel Equipa CPC (Backoffice)
+- [x] Lista de migrantes com filtros + acesso ao perfil + consulta de triagem.
+- [x] Dashboard CPC com indicadores e exportação simples (CSV/PDF).
+- [ ] Relatórios/exportação abrangentes (atendimentos/ofertas/candidaturas) com filtros.
+
+### 7) Comunicação e Notificações
+- [x] Notificações/chat/pedidos urgentes (MVP/demo via localStorage).
+- [ ] Emails automáticos (criação de conta, lembretes, notificações de candidatura/oferta).
+- [ ] Mensagens internas persistidas (chat real) e/ou fórum.
+
+## Backlog (Subtarefas sugeridas)
+
+### Parte pública
+- [ ] Contactos: persistir mensagens em Firestore (ex.: contact_messages) com data/hora e origem.
+- [ ] Contactos: envio real (Cloud Function/email provider) + proteção anti-spam (rate limit e/ou captcha).
+
+### 1) Registos e Perfis
+- [ ] Migrante: autenticação por telemóvel/OTP (UI + provider do Firebase Auth + validações).
+- [ ] Empresa: adicionar “área de atividade” no registo e guardar no perfil da empresa (companies).
+- [ ] Perfis CPC: decidir suporte a role “trainer” (acesso às rotas CPC) ou remover/normalizar roles.
+
+### 2) Triagem Inicial
+- [ ] Gerar e persistir “perfil de necessidades” a partir da triagem (ex.: needs_profile/flags/score).
+- [ ] Implementar recomendações (“primeiras ações”) com base em urgências/interesses/língua/estado legal.
+- [ ] UI no dashboard do migrante: card “Próximos passos” (marcar sessão / iniciar trilha / completar CV).
+
+### 3) Agendamentos e Atendimento
+- [ ] Sessões: permitir marcar como “Concluída” e guardar resultado (status padronizado).
+- [ ] Sessões: adicionar “notas” (campos + UI na agenda CPC) e permissões por role.
+- [ ] Notificações: lembretes automáticos de sessão (email e/ou notificação in-app) com agendamento.
+
+### 4) Trilhas Formativas
+- [ ] Quizzes: modelo de dados (perguntas/opções/respostas) + viewer + validação.
+- [ ] Quizzes: persistir resultados e refletir no progresso (user_trail_progress).
+- [ ] Recomendar trilha com base na triagem e mostrar “trilha recomendada” no dashboard do migrante.
+
+### 5) Ligação ao Emprego
+- [ ] Migrante: página “Minhas candidaturas” (lista + estado + link para oferta).
+- [ ] Migrante: detalhe de candidatura (histórico/timeline de status).
+- [ ] Empresa: editar ofertas (update em job_offers) mantendo fluxo de revisão quando aplicável.
+- [ ] CPC: aprovar/rejeitar ofertas pendentes (alterar status em job_offers) + registar auditoria.
+
+### 7) Comunicação e Notificações
+- [ ] Notificações in-app reais (coleção notifications) substituindo localStorage.
+- [ ] Chat persistido em Firestore (threads/mensagens) com permissões e leitura/entrega.
+- [ ] Emails automáticos: conta criada, lembrete de sessão, candidatura recebida, oferta nova relevante.
 
 ## Tarefas Pendentes
 - [ ] Migração completa do sistema
+- [ ] Migração completa do sistema: definir escopo e mapeamentos (tabelas/coleções/campos).
+- [ ] Migração completa do sistema: executar dry-run e gerar relatório de inconsistências.
+- [ ] Migração completa do sistema: validação pós-migração (contagens, integridade, permissões, índices).
