@@ -235,13 +235,6 @@ function MigrantHome() {
     try { localStorage.setItem('cpc-accessibility', accessibility ? 'true' : 'false'); } catch { void 0; }
   }, [accessibility]);
 
-  const navItems = [
-    { icon: Calendar, label: t.dashboard.sessions, href: '/dashboard/migrante/sessoes', count: upcomingSessions.length },
-    { icon: BookOpen, label: t.dashboard.trails, href: '/dashboard/migrante/trilhas' },
-    { icon: Briefcase, label: t.dashboard.employment, href: '/dashboard/migrante/emprego' },
-    { icon: User, label: t.dashboard.profile, href: '/dashboard/migrante/perfil' },
-  ];
-
   if (loading) {
     return (
       <div className="py-12 flex items-center justify-center">
@@ -252,22 +245,6 @@ function MigrantHome() {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-        {navItems.map((item) => (
-          <Link key={item.label} to={item.href} className="cpc-card p-4 flex flex-col items-center text-center hover:border-primary/50 transition-colors">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
-                <item.icon className="h-6 w-6" />
-              </div>
-              {item.count ? (
-                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">{item.count}</span>
-              ) : null}
-            </div>
-            <span className="text-sm font-medium">{item.label}</span>
-          </Link>
-        ))}
-      </div>
-
       <div className="grid xl:grid-cols-3 gap-6 mb-8">
         {/* Left Column (Main Content) */}
         <div className="xl:col-span-2 space-y-6">
