@@ -19,6 +19,8 @@ import CPCDashboard from "./pages/dashboard/CPCDashboard";
 import CompanyDashboard from "./pages/dashboard/CompanyDashboard";
 import NotFound from "./pages/NotFound";
 import CreateTestUsersDev from "./pages/dev/CreateTestUsers";
+import Cookies from "./pages/Cookies";
+import Privacy from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -90,8 +92,8 @@ function AppRoutes() {
       <Route path="/registar" element={<Auth />} />
       <Route path="/ajuda" element={<NotFound />} />
       <Route path="/termos" element={<NotFound />} />
-      <Route path="/privacidade" element={<NotFound />} />
-      <Route path="/cookies" element={<NotFound />} />
+      <Route path="/privacidade" element={<Privacy />} />
+      <Route path="/cookies" element={<Cookies />} />
       <Route path="/trails" element={<NotFound />} />
       <Route path="/precos" element={<NotFound />} />
       {import.meta.env.DEV && (

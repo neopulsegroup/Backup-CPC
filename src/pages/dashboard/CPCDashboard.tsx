@@ -1116,7 +1116,7 @@ export default function CPCDashboard() {
                             <Progress value={82} />
                           </div>
                         </div>
-                        <div className="absolute inset-0 bg-white/30 dark:bg-background/45 backdrop-blur-sm flex items-center justify-center z-10 cursor-not-allowed">
+                        <div className="absolute inset-0 bg-background/45 backdrop-blur-sm flex items-center justify-center z-10 cursor-not-allowed">
                           <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 text-white/90 px-5 py-2 text-xs font-semibold shadow-md">
                             <Wrench className="h-4 w-4" />
                             EM BREVE
@@ -1153,7 +1153,7 @@ export default function CPCDashboard() {
                             </div>
                           ))}
                         </div>
-                        <div className="absolute inset-0 bg-white/30 dark:bg-background/45 backdrop-blur-sm flex items-center justify-center z-10 cursor-not-allowed">
+                        <div className="absolute inset-0 bg-background/45 backdrop-blur-sm flex items-center justify-center z-10 cursor-not-allowed">
                           <div className="inline-flex items-center gap-2 rounded-full bg-slate-900/80 text-white/90 px-5 py-2 text-xs font-semibold shadow-md">
                             <Wrench className="h-4 w-4" />
                             EM BREVE

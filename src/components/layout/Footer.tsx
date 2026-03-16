@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Facebook, Linkedin, Instagram } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { COOKIE_CONSENT_OPEN_SETTINGS_EVENT } from '@/lib/cookieConsent';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -122,6 +123,13 @@ export function Footer() {
             <Link to="/privacidade" className="hover:text-primary transition-colors">{t.footer.privacy}</Link>
             <Link to="/termos" className="hover:text-primary transition-colors">{t.footer.terms}</Link>
             <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
+            <button
+              type="button"
+              className="hover:text-primary transition-colors"
+              onClick={() => window.dispatchEvent(new Event(COOKIE_CONSENT_OPEN_SETTINGS_EVENT))}
+            >
+              Gerir cookies
+            </button>
           </div>
         </div>
       </div>

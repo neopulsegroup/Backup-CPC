@@ -2,7 +2,6 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
-  darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
@@ -63,7 +62,7 @@ export default {
         },
         cpc: {
           blue: "hsl(var(--cpc-blue))",
-          "blue-dark": "hsl(var(--cpc-blue-dark))",
+          "blue-strong": "hsl(var(--cpc-blue-strong))",
           "blue-light": "hsl(var(--cpc-blue-light))",
           success: "hsl(var(--cpc-success))",
           warning: "hsl(var(--cpc-warning))",

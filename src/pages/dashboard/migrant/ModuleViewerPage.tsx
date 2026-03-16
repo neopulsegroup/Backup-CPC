@@ -429,7 +429,7 @@ export default function ModuleViewerPage() {
           <div className="bg-card rounded-lg border p-6">
             <h2 className="text-lg font-semibold mb-4">Descrição</h2>
             {module.content_type === 'text' && module.content_text ? (
-              <div className="prose prose-slate dark:prose-invert max-w-none">
+              <div className="prose prose-slate max-w-none">
                 <div dangerouslySetInnerHTML={{ __html: module.content_text.replace(/\n/g, '<br/>') }} />
               </div>
             ) : (

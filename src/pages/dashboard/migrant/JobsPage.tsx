@@ -238,7 +238,7 @@ export default function JobsPage() {
 
       {/* Demo Data Notice */}
       {usingDemoData && (
-        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 rounded-lg p-4 mb-6">
+        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-700 rounded-lg p-4 mb-6">
           <p className="text-sm">
             <strong>Modo de demonstração:</strong> Estas são ofertas de exemplo para visualização da plataforma.
           </p>

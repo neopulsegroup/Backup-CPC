@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Globe, LogOut, User, Moon } from 'lucide-react';
+import { Menu, X, Globe, LogOut, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
@@ -122,11 +122,6 @@ export function Header() {
                 </Button>
               </div>
             )}
-
-            {/* Theme Toggle Button (Visual only for now if context missing) */}
-            <button className="p-2 text-muted-foreground hover:text-primary transition-colors">
-              <Moon className="h-5 w-5" />
-            </button>
 
             {/* Mobile Menu Button */}
             <Button

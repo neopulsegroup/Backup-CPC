@@ -13,6 +13,8 @@ Formato validado automaticamente.
 |---|---|---|---|---|---|---:|---|---|
 | CPC-101 | CPC • Trilhas: alternância de visualização (grade/lista) em “Trilhas existentes” | done | P2 | Renato | 2026-03-13 | 100 | 2026-03-13 | src/pages/dashboard/cpc/TrailsAdminPage.tsx |
 | OPS-001 | Automação: validação e notificações do project-tasks.md (CI + revisão diária) | done | P0 | Equipa | 2026-03-20 | 100 | 2026-03-13 | .github/workflows/project-tasks.yml |
+| UI-001 | UI • Cookies: popup de preferências com acordeão + responsividade (evitar overflow de texto) | done | P2 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/cookies/CookieConsent.tsx |
+| UI-002 | UI • Remoção completa do dark mode (ícones, CSS, dependências, referências) | done | P1 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/layout/Header.tsx; src/index.css; tailwind.config.ts; src/components/ui/sonner.tsx |
 
 ### Convenções do Registro
 - `Status`: `todo` | `in_progress` | `blocked` | `done`
