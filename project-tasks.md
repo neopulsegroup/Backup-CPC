@@ -16,6 +16,7 @@ Formato validado automaticamente.
 | UI-001 | UI • Cookies: popup de preferências com acordeão + responsividade (evitar overflow de texto) | done | P2 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/cookies/CookieConsent.tsx |
 | UI-002 | UI • Remoção completa do dark mode (ícones, CSS, dependências, referências) | done | P1 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/layout/Header.tsx; src/index.css; tailwind.config.ts; src/components/ui/sonner.tsx |
 | UI-003 | UI • Atualizar emails nas políticas (Privacidade/Cookies) | done | P3 | Renato | 2026-03-17 | 100 | 2026-03-17 | src/pages/Privacy.tsx; src/pages/Cookies.tsx |
+| UI-004 | CPC • Migrantes: exportação da lista (CSV/XLSX) com filtros e permissões (Email no lugar de CPF) | done | P2 | Renato | 2026-03-17 | 100 | 2026-03-17 | src/pages/dashboard/cpc/MigrantsAdminPage.tsx |
 
 ### Convenções do Registro
 - `Status`: `todo` | `in_progress` | `blocked` | `done`

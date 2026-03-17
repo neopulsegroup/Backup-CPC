@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDocument, queryDocuments } from '@/integrations/firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Filter, Eye, Ban, CheckCircle, AlertTriangle, Clock, ClipboardList } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { toast } from '@/hooks/use-toast';
+import { Users, Filter, Eye, Ban, CheckCircle, AlertTriangle, Clock, ClipboardList, Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 
 type TriageAnswers = Record<string, unknown>;
 
@@ -15,6 +18,10 @@ type MigrantRow = {
   user_id: string;
   name: string;
   email: string;
+  nif?: string | null;
+  birth_date?: string | null;
+  nationality?: string | null;
+  arrival_date?: string | null;
   legal_status?: string | null;
   work_status?: string | null;
   language_level?: string | null;
@@ -25,8 +32,8 @@ type MigrantRow = {
   blocked?: boolean;
 };
 
-type UserDoc = { id: string; name?: string | null; email?: string | null; role?: string | null };
-type ProfileDoc = { name?: string | null; email?: string | null };
+type UserDoc = { id: string; name?: string | null; email?: string | null; role?: string | null; nif?: string | null };
+type ProfileDoc = { name?: string | null; email?: string | null; birthDate?: string | null; nationality?: string | null; arrivalDate?: string | null };
 type TriageDoc = { legal_status?: string | null; work_status?: string | null; language_level?: string | null; urgencies?: string[] | null; answers?: TriageAnswers | null };
 type SessionDoc = { migrant_id?: string | null; scheduled_date?: string | null; status?: string | null };
 type ProgressDoc = { user_id?: string | null; progress_percent?: number | null };
@@ -107,6 +114,7 @@ function languageLabel(value?: string | null): string {
 
 export default function MigrantsAdminPage() {
   const { t } = useLanguage();
+  const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Array<MigrantRow>>([]);
   const [query, setQuery] = useState('');
@@ -115,6 +123,9 @@ export default function MigrantsAdminPage() {
   const [langFilter, setLangFilter] = useState<'all' | 'iniciante' | 'intermediario' | 'avancado'>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'juridico' | 'psicologico' | 'habitacional'>('all');
   const [selectedTriage, setSelectedTriage] = useState<MigrantRow | null>(null);
+  const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
+  const xlsxModuleRef = useRef<typeof import('xlsx') | null>(null);
+  const xlsxLoaderRef = useRef<Promise<typeof import('xlsx')> | null>(null);
 
   function isoDateToPt(value: string): string | null {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -158,12 +169,188 @@ export default function MigrantsAdminPage() {
     return String(value);
   }
 
+  function getExportTimestamp(now = new Date()): string {
+    const y = String(now.getFullYear());
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    return `${y}${m}${d}_${hh}${mm}${ss}`;
+  }
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function csvEscape(value: string): string {
+    const shouldQuote = /[",\r\n]/.test(value);
+    if (!shouldQuote) return value;
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+
+  function getStringFromCell(value: unknown): string {
+    if (value === null || value === undefined) return '—';
+    if (typeof value === 'string') {
+      const datePt = isoDateToPt(value);
+      if (datePt) return datePt;
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    return JSON.stringify(value);
+  }
+
+  function normalizeEmail(value: unknown): { value: string; valid: boolean } {
+    if (typeof value !== 'string') return { value: '—', valid: false };
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === '—') return { value: '—', valid: false };
+    const normalized = trimmed.toLowerCase();
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+    return { value: valid ? normalized : '—', valid };
+  }
+
+  function exportRowValue(row: MigrantRow, key: 'birth_date' | 'nationality' | 'arrival_date'): string {
+    const fromAnswers = row.triage_answers?.[key] ?? row.triage_answers?.[key === 'arrival_date' ? 'arrival_date_pt' : key];
+    if (typeof fromAnswers === 'string') return getStringFromCell(fromAnswers);
+    if (key === 'birth_date') return getStringFromCell(row.birth_date);
+    if (key === 'nationality') return getStringFromCell(row.nationality);
+    return getStringFromCell(row.arrival_date);
+  }
+
+  async function handleExport(format: 'csv' | 'xlsx') {
+    if (!profile || !['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer'].includes(profile.role)) {
+      toast({
+        title: 'Sem permissão',
+        description: 'O seu utilizador não tem permissões para exportar a lista de migrantes.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (format === 'xlsx' && !xlsxModuleRef.current) {
+      setExporting('xlsx');
+      try {
+        if (!xlsxLoaderRef.current) {
+          xlsxLoaderRef.current = import('xlsx');
+        }
+        const module = await xlsxLoaderRef.current;
+        xlsxModuleRef.current = module;
+      } catch {
+        toast({
+          title: 'Erro na exportação',
+          description: 'Não foi possível preparar o exportador XLSX. Tente novamente.',
+          variant: 'destructive',
+        });
+      } finally {
+        setExporting(null);
+      }
+      toast({
+        title: 'Exportação XLSX pronta',
+        description: 'Clique novamente em “XLSX” para gerar o ficheiro.',
+      });
+      return;
+    }
+
+    if (filtered.length === 0) {
+      toast({ title: 'Sem resultados', description: 'Não existem migrantes para exportar com os filtros atuais.' });
+      return;
+    }
+
+    if (filtered.length > 10000) {
+      toast({
+        title: 'Limite excedido',
+        description: 'A exportação suporta até 10.000 registos. Refine os filtros para reduzir a lista.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setExporting(format);
+    try {
+      const header = ['Nome', 'Email', 'Data de nascimento', 'Nacionalidade', 'Status migratório', 'Data de entrada'];
+      const data: string[][] = new Array(filtered.length + 1);
+      data[0] = header;
+      let invalidEmailCount = 0;
+
+      for (let i = 0; i < filtered.length; i += 1) {
+        const r = filtered[i];
+        const email = normalizeEmail(r.email);
+        if (!email.valid) invalidEmailCount += 1;
+        data[i + 1] = [
+          getStringFromCell(r.name),
+          email.value,
+          exportRowValue(r, 'birth_date'),
+          exportRowValue(r, 'nationality'),
+          legalLabel(r.legal_status),
+          exportRowValue(r, 'arrival_date'),
+        ];
+      }
+
+      const timestamp = getExportTimestamp();
+      const baseName = `migrantes_export_${timestamp}`;
+
+      if (format === 'csv') {
+        const lines: string[] = new Array(data.length);
+        for (let i = 0; i < data.length; i += 1) {
+          const row = data[i];
+          const cols: string[] = new Array(row.length);
+          for (let j = 0; j < row.length; j += 1) {
+            cols[j] = csvEscape(row[j] ?? '');
+          }
+          lines[i] = cols.join(',');
+        }
+        const csv = `\uFEFF${lines.join('\r\n')}`;
+        downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${baseName}.csv`);
+      } else {
+        const XLSX = xlsxModuleRef.current;
+        if (!XLSX) {
+          throw new Error('Módulo XLSX não está disponível.');
+        }
+        const worksheet = XLSX.utils.aoa_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Migrantes');
+        const out = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        downloadBlob(
+          new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+          `${baseName}.xlsx`,
+        );
+      }
+
+      toast({ title: 'Exportação concluída', description: `${filtered.length} registos exportados com sucesso.` });
+      if (invalidEmailCount > 0) {
+        toast({
+          title: 'Aviso',
+          description: `${invalidEmailCount} email(s) inválido(s) foram exportados como —.`,
+        });
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao exportar a lista de migrantes.';
+      toast({ title: 'Erro na exportação', description: message, variant: 'destructive' });
+    } finally {
+      setExporting(null);
+    }
+  }
+
   useEffect(() => {
+    if (!xlsxLoaderRef.current) {
+      xlsxLoaderRef.current = import('xlsx');
+      xlsxLoaderRef.current
+        .then((module) => {
+          xlsxModuleRef.current = module;
+        })
+        .catch(() => {});
+    }
+
     async function fetchAll() {
       setLoading(true);
       try {
         const migrants = await queryDocuments<UserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]);
-        const profileList = migrants.map((u) => ({ user_id: u.id, name: u.name || '', email: u.email || '' }));
+        const profileList = migrants.map((u) => ({ user_id: u.id, name: u.name || '', email: u.email || '', nif: u.nif || null }));
         const userIds = profileList.map((p) => p.user_id);
 
         const [profileDocs, triageDocs, sessionDocs, progressDocs] = await Promise.all([
@@ -212,6 +399,10 @@ export default function MigrantsAdminPage() {
           user_id: p.user_id,
           name: profileMap[p.user_id]?.name || p.name || p.email || 'Migrante',
           email: profileMap[p.user_id]?.email || p.email || '—',
+          nif: p.nif || null,
+          birth_date: profileMap[p.user_id]?.birthDate || null,
+          nationality: profileMap[p.user_id]?.nationality || null,
+          arrival_date: profileMap[p.user_id]?.arrivalDate || null,
           legal_status: triageMap[p.user_id]?.legal_status || null,
           work_status: triageMap[p.user_id]?.work_status || null,
           language_level: triageMap[p.user_id]?.language_level || null,
@@ -265,6 +456,24 @@ export default function MigrantsAdminPage() {
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2"><Users className="h-7 w-7 text-primary" /> Migrantes</h1>
           <p className="text-muted-foreground mt-1">Lista completa com filtros e acesso ao perfil</p>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="gap-2" disabled={exporting !== null}>
+              {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              Exportar Lista
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('csv')}>
+              <FileText className="h-4 w-4 mr-2" />
+              CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('xlsx')}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              XLSX
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="cpc-card p-6 mb-6">
