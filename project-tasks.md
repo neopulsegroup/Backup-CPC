@@ -11,18 +11,26 @@ Formato validado automaticamente.
 
 | ID | Tarefa | Status | Prioridade | Responsável | Prazo | Progresso | Atualizado em | Referência |
 |---|---|---|---|---|---|---:|---|---|
-| CPC-101 | CPC • Trilhas: alternância de visualização (grade/lista) em “Trilhas existentes” | done | P2 | Renato | 2026-03-13 | 100 | 2026-03-13 | src/pages/dashboard/cpc/TrailsAdminPage.tsx |
-| OPS-001 | Automação: validação e notificações do project-tasks.md (CI + revisão diária) | done | P0 | Equipa | 2026-03-20 | 100 | 2026-03-13 | .github/workflows/project-tasks.yml |
-| UI-001 | UI • Cookies: popup de preferências com acordeão + responsividade (evitar overflow de texto) | done | P2 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/cookies/CookieConsent.tsx |
-| UI-002 | UI • Remoção completa do dark mode (ícones, CSS, dependências, referências) | done | P1 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/layout/Header.tsx; src/index.css; tailwind.config.ts; src/components/ui/sonner.tsx |
-| UI-003 | UI • Atualizar emails nas políticas (Privacidade/Cookies) | done | P3 | Renato | 2026-03-17 | 100 | 2026-03-17 | src/pages/Privacy.tsx; src/pages/Cookies.tsx |
-| UI-004 | CPC • Migrantes: exportação da lista (CSV/XLSX) com filtros e permissões (Email no lugar de CPF) | done | P2 | Renato | 2026-03-17 | 100 | 2026-03-17 | src/pages/dashboard/cpc/MigrantsAdminPage.tsx |
+| CPC-101 | [x] CPC • Trilhas: alternância de visualização (grade/lista) em “Trilhas existentes” | done | P2 | Renato | 2026-03-13 | 100 | 2026-03-13 | src/pages/dashboard/cpc/TrailsAdminPage.tsx |
+| OPS-001 | [x] Automação: validação e notificações do project-tasks.md (CI + revisão diária) | done | P0 | Equipa | 2026-03-20 | 100 | 2026-03-13 | .github/workflows/project-tasks.yml |
+| UI-001 | [x] UI • Cookies: popup de preferências com acordeão + responsividade (evitar overflow de texto) | done | P2 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/cookies/CookieConsent.tsx |
+| UI-002 | [x] UI • Remoção completa do dark mode (ícones, CSS, dependências, referências) | done | P1 | Renato | 2026-03-16 | 100 | 2026-03-16 | src/components/layout/Header.tsx; src/index.css; tailwind.config.ts; src/components/ui/sonner.tsx |
+| UI-003 | [x] UI • Atualizar emails nas políticas (Privacidade/Cookies) | done | P3 | Renato | 2026-03-17 | 100 | 2026-03-17 | src/pages/Privacy.tsx; src/pages/Cookies.tsx |
+| UI-004 | [x] CPC • Migrantes: exportação da lista (CSV/XLSX) com filtros e permissões (Email no lugar de CPF) | done | P2 | Renato | 2026-03-17 | 100 | 2026-03-17 | src/pages/dashboard/cpc/MigrantsAdminPage.tsx |
 
 ### Convenções do Registro
 - `Status`: `todo` | `in_progress` | `blocked` | `done`
 - `Prioridade`: `P0` (crítico) | `P1` (alta) | `P2` (média) | `P3` (baixa)
 - `Prazo` e `Atualizado em`: formato `YYYY-MM-DD`
 - `Referência`: arquivo, link de issue/PR, ou contexto suficiente para rastreabilidade
+
+### Guia de Estilo (Padrão Visual)
+- No Registro de Tarefas (tabela), a coluna `Tarefa` deve começar com `[x]` (concluída) ou `[ ]` (pendente), e deve estar coerente com `Status`:
+  - `Status = done` → `[x]`
+  - `Status = todo | in_progress | blocked` → `[ ]`
+- Em listas de tarefas fora da tabela, usar sempre o padrão:
+  - `- [x] ...` para concluída
+  - `- [ ] ...` para pendente
 
 ## Tarefas em Progresso (Legacy)
 

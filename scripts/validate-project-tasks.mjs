@@ -122,6 +122,19 @@ function validateRows(header, dataRows) {
     if (!ALLOWED_STATUS.has(status)) issues.push(makeError(`Linha ${rowNumber}: Status inválido "${status}"`));
     if (!ALLOWED_PRIORITY.has(priority)) issues.push(makeError(`Linha ${rowNumber}: Prioridade inválida "${priority}"`));
 
+    if (task) {
+      const match = /^\[(x| )\]\s+/.exec(task);
+      if (!match) {
+        issues.push(makeError(`Linha ${rowNumber}: Tarefa deve começar com "[x]" ou "[ ]" (ex.: "[ ] Minha tarefa")`));
+      } else {
+        const isChecked = match[1] === 'x';
+        const expectedChecked = status === 'done';
+        if (isChecked !== expectedChecked) {
+          issues.push(makeError(`Linha ${rowNumber}: Marcação de Tarefa (${isChecked ? '[x]' : '[ ]'}) inconsistente com Status "${status}"`));
+        }
+      }
+    }
+
     if (!owner) issues.push(makeError(`Linha ${rowNumber}: Responsável vazio`));
 
     if (!isIsoDate(due)) issues.push(makeError(`Linha ${rowNumber}: Prazo inválido "${due}" (YYYY-MM-DD)`));
@@ -148,6 +161,15 @@ function validateRows(header, dataRows) {
   return issues;
 }
 
+function validateCheckboxMarkup(raw) {
+  const issues = [];
+  const invalidUpperX = raw.match(/-\s*\[X\]\s+/g);
+  if (invalidUpperX) issues.push(makeError('Marcação inválida: use "- [x]" (minúsculo) em vez de "- [X]"'));
+  const missingSpace = raw.match(/-\s*\[(x| )\](\S)/g);
+  if (missingSpace) issues.push(makeError('Marcação inválida: use espaço após "]" em checklists (ex.: "- [ ] Tarefa")'));
+  return issues;
+}
+
 const raw = await fs.readFile(TASKS_FILE, 'utf8');
 const rows = findRegistryTable(raw);
 if (!rows) {
@@ -161,7 +183,7 @@ if (!separator?.every((c) => /^:?-{3,}:?$/.test(c) || c === '---')) {
   process.exit(1);
 }
 
-const issues = validateRows(header, dataRows);
+const issues = [...validateRows(header, dataRows), ...validateCheckboxMarkup(raw)];
 const errors = issues.filter((i) => i.level === 'error');
 const warns = issues.filter((i) => i.level === 'warn');
 
