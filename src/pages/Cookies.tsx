@@ -221,8 +221,8 @@ export default function Cookies() {
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed">
               <li>Praticus – Formação e Serviços de Apoio às Empresas, Lda. NIF: 503 650 498</li>
               <li>
-                <a className="text-primary underline underline-offset-4" href="mailto:porto@oportoforte.com">
-                  porto@oportoforte.com
+                <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
+                  geral@oportoforte.com
                 </a>
               </li>
               <li>Rua Francisco Carqueja, 179, 2.º Dto, 4350-185 Porto</li>

@@ -48,16 +48,16 @@ export default function Privacy() {
               <li>NIF: 503 650 498</li>
               <li>Rua Francisco Carqueja, 179, 2.º Dto, 4350-185 Porto</li>
               <li>
-                <a className="text-primary underline underline-offset-4" href="mailto:porto@oportoforte.com">
-                  porto@oportoforte.com
+                <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
+                  geral@oportoforte.com
                 </a>
               </li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-2">Encarregado de Proteção de Dados (DPO)</p>
             <p className="text-muted-foreground leading-relaxed mb-8">
               Email:{' '}
-              <a className="text-primary underline underline-offset-4" href="mailto:porto@oportoforte.com">
-                porto@oportoforte.com
+              <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
+                geral@oportoforte.com
               </a>
             </p>
 
@@ -279,8 +279,8 @@ export default function Privacy() {
               <li>Praticus – Formação e Serviços de Apoio às Empresas, Lda. NIF: 503 650 498</li>
               <li>Rua Francisco Carqueja, 179, 2.º Dto, 4350-185 Porto</li>
               <li>
-                <a className="text-primary underline underline-offset-4" href="mailto:porto@oportoforte.com">
-                  porto@oportoforte.com
+                <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
+                  geral@oportoforte.com
                 </a>
               </li>
             </ul>
