@@ -551,6 +551,10 @@ export const translations = {
         badges: {
           blocked: 'Bloqueado',
         },
+        load: {
+          error_title: 'Erro ao carregar',
+          generic_error: 'Não foi possível carregar a lista de migrantes.',
+        },
         stats: {
           urgencies: '{count} urgências',
           upcoming_sessions: '{count} sessões futuras',
@@ -561,6 +565,29 @@ export const translations = {
           triage: 'Triagem Inicial',
           block: 'Bloquear',
           activate: 'Ativar',
+          delete: 'Excluir',
+        },
+        delete: {
+          confirm: {
+            title: 'Confirmar exclusão',
+            description: 'Vai excluir permanentemente o cadastro de {name} e todos os registos associados. Esta ação é irreversível.',
+          },
+          buttons: {
+            confirm: 'Confirmar',
+            cancel: 'Cancelar',
+          },
+          no_permission: {
+            title: 'Sem permissão',
+            description: 'O seu utilizador não tem permissões para excluir migrantes.',
+          },
+          success: {
+            title: 'Migrante excluído',
+            description: 'O cadastro de {name} foi excluído com sucesso.',
+          },
+          error: {
+            title: 'Erro na exclusão',
+            generic: 'Não foi possível excluir o cadastro do migrante.',
+          },
         },
         triageDialog: {
           title: 'Triagem Inicial — {name}',
@@ -1207,6 +1234,10 @@ export const translations = {
         badges: {
           blocked: 'Blocked',
         },
+        load: {
+          error_title: 'Loading failed',
+          generic_error: 'Could not load the migrant list.',
+        },
         stats: {
           urgencies: '{count} urgencies',
           upcoming_sessions: '{count} upcoming sessions',
@@ -1217,6 +1248,29 @@ export const translations = {
           triage: 'Initial triage',
           block: 'Block',
           activate: 'Activate',
+          delete: 'Delete',
+        },
+        delete: {
+          confirm: {
+            title: 'Confirm deletion',
+            description: 'You are about to permanently delete {name} and all associated records. This action cannot be undone.',
+          },
+          buttons: {
+            confirm: 'Confirm',
+            cancel: 'Cancel',
+          },
+          no_permission: {
+            title: 'No permission',
+            description: 'Your user does not have permission to delete migrants.',
+          },
+          success: {
+            title: 'Migrant deleted',
+            description: '{name} has been deleted successfully.',
+          },
+          error: {
+            title: 'Deletion failed',
+            generic: 'Could not delete the migrant record.',
+          },
         },
         triageDialog: {
           title: 'Initial triage — {name}',
@@ -1865,6 +1919,10 @@ export const translations = {
         badges: {
           blocked: 'Bloqueado',
         },
+        load: {
+          error_title: 'Error al cargar',
+          generic_error: 'No fue posible cargar la lista de migrantes.',
+        },
         stats: {
           urgencies: '{count} urgencias',
           upcoming_sessions: '{count} sesiones futuras',
@@ -1875,6 +1933,29 @@ export const translations = {
           triage: 'Triaje inicial',
           block: 'Bloquear',
           activate: 'Activar',
+          delete: 'Eliminar',
+        },
+        delete: {
+          confirm: {
+            title: 'Confirmar eliminación',
+            description: 'Va a eliminar permanentemente el registro de {name} y todos los registros asociados. Esta acción es irreversible.',
+          },
+          buttons: {
+            confirm: 'Confirmar',
+            cancel: 'Cancelar',
+          },
+          no_permission: {
+            title: 'Sin permiso',
+            description: 'Su usuario no tiene permisos para eliminar migrantes.',
+          },
+          success: {
+            title: 'Migrante eliminado',
+            description: 'El registro de {name} se eliminó con éxito.',
+          },
+          error: {
+            title: 'Error al eliminar',
+            generic: 'No fue posible eliminar el registro del migrante.',
+          },
         },
         triageDialog: {
           title: 'Triaje inicial — {name}',

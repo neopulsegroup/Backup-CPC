@@ -75,9 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Fetch user profile
       const userProfile = await getUserProfile(firebaseUser.uid);
-      if (userProfile) {
-        setProfile(userProfile);
+      if (!userProfile) {
+        await logoutUser();
+        setUser(null);
+        setProfile(null);
+        setProfileData(null);
+        setTriage(null);
+        return;
       }
+      setProfile(userProfile);
 
       // Fetch profile data
       const profileDoc = await getDocument<Profile>('profiles', firebaseUser.uid);

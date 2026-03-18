@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getDocument, queryDocuments } from '@/integrations/firebase/firestore';
+import { deleteDocument, getDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { Users, Filter, Eye, Ban, CheckCircle, AlertTriangle, Clock, ClipboardList, Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
+import { Users, Filter, Eye, Ban, CheckCircle, AlertTriangle, Clock, ClipboardList, Download, FileSpreadsheet, FileText, Loader2, Trash2 } from 'lucide-react';
 
 type TriageAnswers = Record<string, unknown>;
 
@@ -100,6 +110,8 @@ export default function MigrantsAdminPage() {
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'juridico' | 'psicologico' | 'habitacional'>('all');
   const [selectedTriage, setSelectedTriage] = useState<MigrantRow | null>(null);
   const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MigrantRow | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const xlsxModuleRef = useRef<typeof import('xlsx') | null>(null);
   const xlsxLoaderRef = useRef<Promise<typeof import('xlsx')> | null>(null);
 
@@ -423,6 +435,14 @@ export default function MigrantsAdminPage() {
         }));
 
         setRows(result);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : t.get('cpc.migrantsAdmin.load.generic_error');
+        toast({
+          title: t.get('cpc.migrantsAdmin.load.error_title'),
+          description: message,
+          variant: 'destructive',
+        });
+        setRows([]);
       } finally {
         setLoading(false);
       }
@@ -437,6 +457,67 @@ export default function MigrantsAdminPage() {
     if (set.has(uid)) set.delete(uid); else set.add(uid);
     localStorage.setItem('blockedMigrants', JSON.stringify(Array.from(set)));
     setRows(prev => prev.map(r => r.user_id === uid ? { ...r, blocked: set.has(uid) } : r));
+  }
+
+  async function confirmDeleteMigrant() {
+    if (!deleteTarget) return;
+    const uid = deleteTarget.user_id;
+    const name = deleteTarget.name || t.get('cpc.migrantsAdmin.fallback_migrant');
+    const allowedRoles: Array<string> = ['admin', 'manager', 'coordinator'];
+    if (!profile || !allowedRoles.includes(profile.role)) {
+      toast({
+        title: t.get('cpc.migrantsAdmin.delete.no_permission.title'),
+        description: t.get('cpc.migrantsAdmin.delete.no_permission.description'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setDeletingUserId(uid);
+    try {
+      const [sessions, progress, applications] = await Promise.all([
+        queryDocuments<{ id: string }>('sessions', [{ field: 'migrant_id', operator: '==', value: uid }]),
+        queryDocuments<{ id: string }>('user_trail_progress', [{ field: 'user_id', operator: '==', value: uid }]),
+        queryDocuments<{ id: string }>('job_applications', [{ field: 'applicant_id', operator: '==', value: uid }]),
+      ]);
+
+      await Promise.all([
+        ...sessions.map((s) => deleteDocument('sessions', s.id)),
+        ...progress.map((p) => deleteDocument('user_trail_progress', p.id)),
+        ...applications.map((a) => deleteDocument('job_applications', a.id)),
+      ]);
+
+      await Promise.all([
+        deleteDocument('triage', uid).catch(() => {}),
+        deleteDocument('profiles', uid).catch(() => {}),
+        deleteDocument('users', uid).catch(() => {}),
+      ]);
+
+      const blockedRaw = localStorage.getItem('blockedMigrants');
+      if (blockedRaw) {
+        const blockedList = JSON.parse(blockedRaw) as string[];
+        const next = blockedList.filter((id) => id !== uid);
+        localStorage.setItem('blockedMigrants', JSON.stringify(next));
+      }
+
+      setRows((prev) => prev.filter((r) => r.user_id !== uid));
+      setSelectedTriage((prev) => (prev?.user_id === uid ? null : prev));
+
+      toast({
+        title: t.get('cpc.migrantsAdmin.delete.success.title'),
+        description: t.get('cpc.migrantsAdmin.delete.success.description', { name }),
+      });
+      setDeleteTarget(null);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t.get('cpc.migrantsAdmin.delete.error.generic');
+      toast({
+        title: t.get('cpc.migrantsAdmin.delete.error.title'),
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingUserId(null);
+    }
   }
 
   const filtered = useMemo(() => {
@@ -581,6 +662,15 @@ export default function MigrantsAdminPage() {
                   <Button variant="outline" className="inline-flex items-center justify-center gap-2 w-full" onClick={() => toggleBlock(r.user_id)}>
                     <Ban className="h-4 w-4" /> {r.blocked ? t.get('cpc.migrantsAdmin.actions.activate') : t.get('cpc.migrantsAdmin.actions.block')}
                   </Button>
+                  <Button
+                    variant="destructive"
+                    className="inline-flex items-center justify-center gap-2 w-full"
+                    onClick={() => setDeleteTarget(r)}
+                    disabled={deletingUserId !== null}
+                  >
+                    {deletingUserId === r.user_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {t.get('cpc.migrantsAdmin.actions.delete')}
+                  </Button>
                 </div>
               </div>
             </div>
@@ -611,6 +701,27 @@ export default function MigrantsAdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t.get('cpc.migrantsAdmin.delete.confirm.title')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.get('cpc.migrantsAdmin.delete.confirm.description', { name: deleteTarget?.name || t.get('cpc.migrantsAdmin.fallback_migrant') })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingUserId !== null}>
+              {t.get('cpc.migrantsAdmin.delete.buttons.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmDeleteMigrant()} disabled={deletingUserId !== null}>
+              {t.get('cpc.migrantsAdmin.delete.buttons.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -7,15 +7,18 @@ import MigrantsAdminPage from './MigrantsAdminPage';
 
 const mockQueryDocuments = vi.fn();
 const mockGetDocument = vi.fn();
+const mockDeleteDocument = vi.fn();
 const mockToast = vi.fn();
 
 vi.mock('@/integrations/firebase/firestore', () => ({
   queryDocuments: (...args: unknown[]) => mockQueryDocuments(...args),
   getDocument: (...args: unknown[]) => mockGetDocument(...args),
+  deleteDocument: (...args: unknown[]) => mockDeleteDocument(...args),
 }));
 
+let mockRole: string = 'admin';
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ profile: { role: 'admin', email: 'admin@test.com', name: 'Admin' } }),
+  useAuth: () => ({ profile: { role: mockRole, email: 'admin@test.com', name: 'Admin' } }),
 }));
 
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -35,6 +38,17 @@ vi.mock('@/contexts/LanguageContext', () => ({
           'cpc.migrantsAdmin.export.columns.legal_status': 'Status migratório',
           'cpc.migrantsAdmin.export.columns.arrival_date': 'Data de entrada',
           'cpc.migrantsAdmin.fallback_migrant': 'Migrante',
+          'cpc.migrantsAdmin.actions.delete': 'Excluir',
+          'cpc.migrantsAdmin.delete.confirm.title': 'Confirmar exclusão',
+          'cpc.migrantsAdmin.delete.confirm.description': 'Vai excluir permanentemente o cadastro de {name} e todos os registos associados. Esta ação é irreversível.',
+          'cpc.migrantsAdmin.delete.buttons.confirm': 'Confirmar',
+          'cpc.migrantsAdmin.delete.buttons.cancel': 'Cancelar',
+          'cpc.migrantsAdmin.delete.no_permission.title': 'Sem permissão',
+          'cpc.migrantsAdmin.delete.no_permission.description': 'O seu utilizador não tem permissões para excluir migrantes.',
+          'cpc.migrantsAdmin.delete.success.title': 'Migrante excluído',
+          'cpc.migrantsAdmin.delete.success.description': 'O cadastro de {name} foi excluído com sucesso.',
+          'cpc.migrantsAdmin.delete.error.title': 'Erro na exclusão',
+          'cpc.migrantsAdmin.delete.error.generic': 'Não foi possível excluir o cadastro do migrante.',
           'common.yes': 'Sim',
           'common.no': 'Não',
         };
@@ -51,12 +65,22 @@ vi.mock('@/hooks/use-toast', () => ({
 }));
 
 function setupFirestoreMocks(users: Array<{ id: string; name: string; email: string }>, profiles: Record<string, unknown> = {}) {
-  mockQueryDocuments.mockImplementation(async (collection: string) => {
+  mockQueryDocuments.mockImplementation(async (collection: string, filters?: Array<{ field: string; operator: string; value: unknown }>) => {
     if (collection === 'users') {
       return users.map((u) => ({ ...u, role: 'migrant' }));
     }
-    if (collection === 'sessions') return [];
-    if (collection === 'user_trail_progress') return [];
+    if (collection === 'sessions') {
+      if (Array.isArray(filters) && filters.some((f) => f.field === 'migrant_id')) return [];
+      return [];
+    }
+    if (collection === 'user_trail_progress') {
+      if (Array.isArray(filters) && filters.some((f) => f.field === 'user_id')) return [];
+      return [];
+    }
+    if (collection === 'job_applications') {
+      if (Array.isArray(filters) && filters.some((f) => f.field === 'applicant_id')) return [];
+      return [];
+    }
     return [];
   });
 
@@ -71,7 +95,9 @@ describe('MigrantsAdminPage - exportação (Email)', () => {
   beforeEach(() => {
     mockQueryDocuments.mockReset();
     mockGetDocument.mockReset();
+    mockDeleteDocument.mockReset();
     mockToast.mockReset();
+    mockRole = 'admin';
   });
 
   it('exporta CSV com header Email e emails normalizados', async () => {
@@ -207,5 +233,94 @@ describe('MigrantsAdminPage - exportação (Email)', () => {
     revokeSpy.mockRestore();
     clickSpy.mockRestore();
     (globalThis as unknown as { Blob: typeof Blob }).Blob = OriginalBlob;
+  });
+
+  it('exclui cadastro do migrante e remove o card da listagem sem refresh', async () => {
+    const users = [
+      { id: 'u1', name: 'Pessoa 1', email: 'p1@exemplo.com' },
+      { id: 'u2', name: 'Pessoa 2', email: 'p2@exemplo.com' },
+    ];
+
+    mockQueryDocuments.mockImplementation(async (collection: string, filters?: Array<{ field: string; operator: string; value: unknown }>) => {
+      if (collection === 'users') return users.map((u) => ({ ...u, role: 'migrant' }));
+      if (collection === 'sessions') {
+        if (Array.isArray(filters) && filters.some((f) => f.field === 'migrant_id' && f.value === 'u1')) return [{ id: 's1' }, { id: 's2' }];
+        return [];
+      }
+      if (collection === 'user_trail_progress') {
+        if (Array.isArray(filters) && filters.some((f) => f.field === 'user_id' && f.value === 'u1')) return [{ id: 'p1' }];
+        return [];
+      }
+      if (collection === 'job_applications') {
+        if (Array.isArray(filters) && filters.some((f) => f.field === 'applicant_id' && f.value === 'u1')) return [{ id: 'a1' }];
+        return [];
+      }
+      return [];
+    });
+
+    mockGetDocument.mockImplementation(async (collection: string, docId: string) => {
+      if (collection === 'profiles') return { name: docId === 'u1' ? 'Pessoa 1' : 'Pessoa 2', email: `${docId}@exemplo.com` };
+      if (collection === 'triage') return { legal_status: 'regular', answers: {} };
+      return null;
+    });
+
+    mockDeleteDocument.mockResolvedValue(undefined);
+
+    render(
+      <MemoryRouter>
+        <MigrantsAdminPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Migrantes');
+    await screen.findByText('Pessoa 1');
+    await screen.findByText('Pessoa 2');
+
+    const user = userEvent.setup();
+    const deleteButtons = screen.getAllByRole('button', { name: 'Excluir' });
+    await user.click(deleteButtons[0]);
+
+    await screen.findByText('Confirmar exclusão');
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Pessoa 1')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('Pessoa 2')).toBeInTheDocument();
+
+    expect(mockDeleteDocument).toHaveBeenCalledWith('sessions', 's1');
+    expect(mockDeleteDocument).toHaveBeenCalledWith('sessions', 's2');
+    expect(mockDeleteDocument).toHaveBeenCalledWith('user_trail_progress', 'p1');
+    expect(mockDeleteDocument).toHaveBeenCalledWith('job_applications', 'a1');
+    expect(mockDeleteDocument).toHaveBeenCalledWith('triage', 'u1');
+    expect(mockDeleteDocument).toHaveBeenCalledWith('profiles', 'u1');
+    expect(mockDeleteDocument).toHaveBeenCalledWith('users', 'u1');
+  });
+
+  it('bloqueia exclusão para utilizadores sem permissão', async () => {
+    mockRole = 'mediator';
+    setupFirestoreMocks([{ id: 'u1', name: 'Pessoa 1', email: 'p1@exemplo.com' }], { u1: { name: 'Pessoa 1', email: 'p1@exemplo.com' } });
+
+    render(
+      <MemoryRouter>
+        <MigrantsAdminPage />
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Migrantes');
+    await screen.findByText('Pessoa 1');
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Excluir' }));
+    await screen.findByText('Confirmar exclusão');
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+
+    expect(mockDeleteDocument).not.toHaveBeenCalled();
+    expect(mockToast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Sem permissão',
+        variant: 'destructive',
+      })
+    );
   });
 });
