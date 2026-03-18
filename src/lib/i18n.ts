@@ -499,6 +499,7 @@ export const translations = {
         errors: {
           required_fields: 'Preencha nome, email e password.',
           name_required: 'Nome é obrigatório.',
+          load_failed: 'Erro ao carregar utilizadores.',
           create_failed: 'Erro ao criar utilizador.',
           update_failed: 'Erro ao atualizar utilizador.',
           update_state_failed: 'Erro ao atualizar estado do utilizador.',
@@ -1192,6 +1193,7 @@ export const translations = {
         errors: {
           required_fields: 'Fill in name, email and password.',
           name_required: 'Name is required.',
+          load_failed: 'Error loading users.',
           create_failed: 'Error creating user.',
           update_failed: 'Error updating user.',
           update_state_failed: 'Error updating user status.',
@@ -1887,6 +1889,7 @@ export const translations = {
         errors: {
           required_fields: 'Complete nombre, email y contraseña.',
           name_required: 'El nombre es obligatorio.',
+          load_failed: 'Error al cargar usuarios.',
           create_failed: 'Error al crear usuario.',
           update_failed: 'Error al actualizar usuario.',
           update_state_failed: 'Error al actualizar el estado del usuario.',

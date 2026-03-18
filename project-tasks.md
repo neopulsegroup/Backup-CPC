@@ -21,6 +21,11 @@ Formato validado automaticamente.
 | CPC-106 | [x] CPC • Equipa: somente Admin pode gerir/editar utilizadores (UI + regra de segurança) | done | P1 | Renato | 2026-03-18 | 100 | 2026-03-18 | src/pages/dashboard/CPCDashboard.tsx; firestore.rules; src/lib/i18n.ts |
 | CPC-107 | [x] CPC • i18n runtime: permitir leitura de i18n/settings e i18n_overrides via Firestore Rules | done | P1 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules; src/contexts/LanguageContext.tsx |
 | CPC-108 | [x] CPC • Controle de acesso: bloquear login e acesso em tempo real (blocked/active) + auditoria + liberação pelo Admin | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | src/contexts/AuthContext.tsx; src/pages/Auth.tsx; src/pages/dashboard/cpc/MigrantsAdminPage.tsx; src/pages/dashboard/CPCDashboard.tsx; src/integrations/firebase/auth.ts; firestore.rules; src/contexts/AuthContext.access.test.tsx |
+| CPC-109 | [x] CPC • Correção de carregamento: listas vazias em dashboard/cpc/migrantes e dashboard/cpc/equipa (roles case-insensitive + regras + fallback via profiles.role) | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules; src/pages/dashboard/cpc/MigrantsAdminPage.tsx; src/pages/dashboard/CPCDashboard.tsx; src/lib/i18n.ts |
+| CPC-110 | [x] CPC • Hotfix de permissões persistentes: leitura do próprio perfil sem bloqueio + mapeamento de roles PT/EN + resiliência no carregamento | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules; src/contexts/AuthContext.tsx; src/pages/dashboard/cpc/MigrantsAdminPage.tsx |
+| CPC-111 | [x] CPC • Hotfix final de ACL: compatibilidade com roles legadas (cpc/staff/equipa) + leitura owner em triage/progress sem bloqueio | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules |
+| CPC-112 | [x] CPC • ACL: compatibilidade com schema legado (role em profile/perfil/type) para restaurar isCpcStaff e leituras em massa | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules |
+| CPC-113 | [x] CPC • Diagnóstico/estabilidade Firestore: suporte a App Check (reCAPTCHA v3 via env) + retry para erros transitórios + logs com code | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | src/integrations/firebase/client.ts; src/integrations/firebase/firestore.ts |
 
 ### Convenções do Registro
 - `Status`: `todo` | `in_progress` | `blocked` | `done`

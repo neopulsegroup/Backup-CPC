@@ -113,18 +113,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(userProfile);
 
       // Fetch profile data
-      const profileDoc = await getDocument<Profile>('profiles', firebaseUser.uid);
-      if (profileDoc) {
-        setProfileData(profileDoc);
+      try {
+        const profileDoc = await getDocument<Profile>('profiles', firebaseUser.uid);
+        if (profileDoc) {
+          setProfileData(profileDoc);
+        } else {
+          setProfileData(null);
+        }
+      } catch (error) {
+        console.error('Error fetching profile data:', error);
+        setProfileData(null);
       }
 
       // Fetch triage data
-      const triageDoc = await getDocument<TriageData>('triage', firebaseUser.uid);
-      if (triageDoc) {
-        setTriage(triageDoc);
-      } else {
-        // If no triage doc exists, set default/empty triage state
-        // This ensures triage.completed is false, forcing redirection to /triagem
+      try {
+        const triageDoc = await getDocument<TriageData>('triage', firebaseUser.uid);
+        if (triageDoc) {
+          setTriage(triageDoc);
+        } else {
+          setTriage({
+            userId: firebaseUser.uid,
+            completed: false
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching triage data:', error);
         setTriage({
           userId: firebaseUser.uid,
           completed: false
@@ -177,21 +190,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) return;
     const ref = doc(db, 'users', user.uid);
-    const unsubscribe = onSnapshot(ref, async (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data() as UserProfile;
-      const issue = getAccessIssue(data);
-      if (issue) {
-        setAccessIssue(issue);
-        await logoutUser();
-        setUser(null);
-        setProfile(null);
-        setProfileData(null);
-        setTriage(null);
-        return;
+    const unsubscribe = onSnapshot(
+      ref,
+      async (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data() as UserProfile;
+        const issue = getAccessIssue(data);
+        if (issue) {
+          setAccessIssue(issue);
+          await logoutUser();
+          setUser(null);
+          setProfile(null);
+          setProfileData(null);
+          setTriage(null);
+          return;
+        }
+        setProfile(data);
+      },
+      (error) => {
+        console.error('Error listening user status:', error);
       }
-      setProfile(data);
-    });
+    );
     return () => unsubscribe();
   }, [getAccessIssue, user]);
 

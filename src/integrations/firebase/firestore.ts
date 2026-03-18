@@ -17,6 +17,51 @@ import {
     WhereFilterOp,
 } from 'firebase/firestore';
 import { db } from './client';
+import { auth } from './client';
+
+type FirestoreLikeError = { code?: unknown; message?: unknown };
+
+function getFirestoreErrorCode(error: unknown): string | null {
+    if (!error || typeof error !== 'object') return null;
+    const code = (error as FirestoreLikeError).code;
+    return typeof code === 'string' ? code : null;
+}
+
+function isRetryableFirestoreError(error: unknown): boolean {
+    const code = getFirestoreErrorCode(error);
+    return code === 'unavailable' || code === 'deadline-exceeded' || code === 'resource-exhausted' || code === 'internal';
+}
+
+async function sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry<T>(action: () => Promise<T>, attempts: number = 3): Promise<T> {
+    let lastError: unknown = null;
+    for (let i = 0; i < attempts; i += 1) {
+        try {
+            return await action();
+        } catch (error) {
+            lastError = error;
+            const code = getFirestoreErrorCode(error);
+            if (code === 'permission-denied' && auth.currentUser && i === 0) {
+                try {
+                    await auth.currentUser.getIdToken(true);
+                    await sleep(150);
+                    continue;
+                } catch {
+                    throw error;
+                }
+            }
+            if (!isRetryableFirestoreError(error) || i === attempts - 1) {
+                throw error;
+            }
+            const backoffMs = 250 * Math.pow(2, i);
+            await sleep(backoffMs);
+        }
+    }
+    throw lastError;
+}
 
 /**
  * Generic function to get a document from Firestore
@@ -24,14 +69,20 @@ import { db } from './client';
 export async function getDocument<T>(collectionName: string, documentId: string): Promise<T | null> {
     try {
         const docRef = doc(db, collectionName, documentId);
-        const docSnap = await getDoc(docRef);
+        const docSnap = await withRetry(() => getDoc(docRef));
 
         if (docSnap.exists()) {
             return { id: docSnap.id, ...docSnap.data() } as T;
         }
         return null;
     } catch (error) {
-        console.error(`Error getting document from ${collectionName}:`, error);
+        const code = getFirestoreErrorCode(error);
+        console.error(`Error getting document from ${collectionName}:`, {
+            code,
+            uid: auth.currentUser?.uid ?? null,
+            hasAuth: !!auth.currentUser,
+            error,
+        });
         throw error;
     }
 }
@@ -125,10 +176,16 @@ export async function countDocuments(
         filters.forEach(filter => {
             q = query(q, where(filter.field, filter.operator, filter.value));
         });
-        const snap = await getCountFromServer(q);
+        const snap = await withRetry(() => getCountFromServer(q));
         return snap.data().count;
     } catch (error) {
-        console.error(`Error counting ${collectionName}:`, error);
+        const code = getFirestoreErrorCode(error);
+        console.error(`Error counting ${collectionName}:`, {
+            code,
+            uid: auth.currentUser?.uid ?? null,
+            hasAuth: !!auth.currentUser,
+            error,
+        });
         throw error;
     }
 }
@@ -164,10 +221,16 @@ export async function queryDocuments<T>(
             q = query(q, limit(limitCount));
         }
 
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await withRetry(() => getDocs(q));
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
     } catch (error) {
-        console.error(`Error querying ${collectionName}:`, error);
+        const code = getFirestoreErrorCode(error);
+        console.error(`Error querying ${collectionName}:`, {
+            code,
+            uid: auth.currentUser?.uid ?? null,
+            hasAuth: !!auth.currentUser,
+            error,
+        });
         throw error;
     }
 }

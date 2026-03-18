@@ -56,6 +56,21 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
     return <Navigate to="/entrar" replace />;
   }
 
+  if (allowedRoles && !profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="w-full max-w-md rounded-lg border bg-card p-6 text-card-foreground">
+          <h1 className="text-lg font-semibold">Sem acesso aos dados</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Não foi possível carregar o seu perfil de permissões. Termine a sessão e entre novamente. Se persistir,
+            contacte o administrador do sistema.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">Erro típico: Missing or insufficient permissions.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
     // Redirect to their appropriate dashboard instead of home
     const correctDashboard = getDashboardPath(profile.role);

@@ -371,7 +371,7 @@ export default function MigrantsAdminPage() {
     async function fetchAll() {
       setLoading(true);
       try {
-        const migrants = await queryDocuments<UserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]);
+        const migrants = await queryDocuments<UserDoc>('users', [{ field: 'role', operator: 'in', value: ['migrant', 'Migrant', 'MIGRANT'] }]);
         const profileList = migrants.map((u) => ({
           user_id: u.id,
           name: u.name || '',
@@ -382,8 +382,28 @@ export default function MigrantsAdminPage() {
         const userIds = profileList.map((p) => p.user_id);
 
         const [profileDocs, triageDocs, sessionDocs, progressDocs] = await Promise.all([
-          Promise.all(userIds.map(async (uid) => ({ uid, profile: await getDocument<ProfileDoc>('profiles', uid) }))),
-          Promise.all(userIds.map(async (uid) => ({ uid, triage: await getDocument<TriageDoc>('triage', uid) }))),
+          Promise.all(
+            userIds.map(async (uid) => {
+              try {
+                const profile = await getDocument<ProfileDoc>('profiles', uid);
+                return { uid, profile };
+              } catch (error) {
+                console.error(`Error loading profile for ${uid}:`, error);
+                return { uid, profile: null };
+              }
+            })
+          ),
+          Promise.all(
+            userIds.map(async (uid) => {
+              try {
+                const triage = await getDocument<TriageDoc>('triage', uid);
+                return { uid, triage };
+              } catch (error) {
+                console.error(`Error loading triage for ${uid}:`, error);
+                return { uid, triage: null };
+              }
+            })
+          ),
           queryDocuments<SessionDoc>('sessions', [{ field: 'status', operator: '==', value: 'Agendada' }]),
           queryDocuments<ProgressDoc>('user_trail_progress', []),
         ]);

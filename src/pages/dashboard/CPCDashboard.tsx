@@ -200,6 +200,7 @@ export default function CPCDashboard() {
 
     async function loadTeam() {
       setLoadingList(true);
+      setFormError('');
       try {
         const users = await queryDocuments<CpcTeamUserDoc>('users', []);
         const filtered = users
@@ -213,6 +214,10 @@ export default function CPCDashboard() {
           }))
           .sort((a, b) => a.name.localeCompare(b.name));
         setRows(filtered);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : t.get('cpc.team.errors.load_failed');
+        setFormError(message);
+        setRows([]);
       } finally {
         setLoadingList(false);
       }
@@ -760,7 +765,7 @@ export default function CPCDashboard() {
         const prevEndISO = period === 'today' ? prevDay.toISOString().slice(0, 10) : period === 'week' ? prevWeekEnd.toISOString().slice(0, 10) : prevMonthEnd.toISOString().slice(0, 10);
 
         const [firebaseMigrants, allSessionsRaw, companiesTotalCount, offersActiveCount, offersPendingCount, applicationsTotalCount, progressRaw, triageRaw, applicationsPeriodCountRaw, applicationsPrevCountRaw] = await Promise.all([
-          queryDocuments<FirebaseUserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]),
+          queryDocuments<FirebaseUserDoc>('users', [{ field: 'role', operator: 'in', value: ['migrant', 'Migrant', 'MIGRANT'] }]),
           queryDocuments<{ id: string; scheduled_date: string; status: string | null; session_type: string; scheduled_time: string; migrant_id: string }>(
             'sessions',
             [],
