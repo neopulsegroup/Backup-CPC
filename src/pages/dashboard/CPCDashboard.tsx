@@ -62,6 +62,16 @@ function normalizeText(value?: string | null): string {
     .toLowerCase();
 }
 
+function deriveNameFromEmail(email?: string | null): string {
+  if (!email) return '';
+  const local = email.split('@')[0] ?? '';
+  const parts = local.split(/[._-]+/g).filter(Boolean);
+  if (parts.length === 0) return '';
+  return parts
+    .map((p) => p.slice(0, 1).toUpperCase() + p.slice(1))
+    .join(' ');
+}
+
 function parseUnknownDate(value: unknown): Date | null {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -102,9 +112,28 @@ function isInProgressSessionStatus(status?: string | null): boolean {
 }
 
 export default function CPCDashboard() {
-  const { profile, user } = useAuth();
+  const { profile, profileData, user } = useAuth();
   const { t, language } = useLanguage();
   const location = useLocation();
+
+  const cpcDisplayName = useMemo(() => {
+    const profileDocName = typeof profileData?.name === 'string' ? profileData.name.trim() : '';
+    const userDocName = typeof profile?.name === 'string' ? profile.name.trim() : '';
+    const authName = typeof user?.displayName === 'string' ? user.displayName.trim() : '';
+    const rawName = profileDocName || userDocName || authName;
+    const rawEmail = typeof profile?.email === 'string' ? profile.email.trim() : '';
+    const authEmail = typeof user?.email === 'string' ? user.email.trim() : '';
+    const email = rawEmail || authEmail;
+    const derivedFromEmail = deriveNameFromEmail(email);
+    const normalizedName = normalizeText(rawName);
+    const normalizedRole = normalizeText(profile?.role ?? null);
+    const isGeneric =
+      normalizedName.length === 0 ||
+      normalizedName === 'cpc' ||
+      normalizedName === normalizedRole ||
+      ['admin', 'administrador', 'equipa', 'staff', 'team'].includes(normalizedName);
+    return isGeneric ? (derivedFromEmail || t.get('cpc.menu.user_fallback')) : rawName;
+  }, [profile?.email, profile?.name, profile?.role, profileData?.name, t, user?.displayName, user?.email]);
 
   const [loading, setLoading] = useState(true);
   const [period] = useState<'today' | 'week' | 'month'>('week');
@@ -1016,7 +1045,7 @@ export default function CPCDashboard() {
             <aside className="cpc-card p-4 h-fit lg:sticky lg:top-24">
               <div className="mb-4 px-2">
                 <p className="text-sm text-muted-foreground">{t.get('cpc.menu.title')}</p>
-                <p className="font-semibold">{profile?.name || t.get('cpc.menu.user_fallback')}</p>
+                <p className="font-semibold">{cpcDisplayName}</p>
               </div>
               <nav className="space-y-1">
                 {sidebarItems.map((item) => (
@@ -1040,7 +1069,7 @@ export default function CPCDashboard() {
                 <>
                   <div className="mb-8">
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                      {t.get('cpc.dashboard.welcome')}, <span className="text-primary">CPC</span>
+                      {t.get('cpc.dashboard.welcome')}, <span className="text-primary">{cpcDisplayName}</span>
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
                       {t.get('cpc.dashboard.today_summary', { date: longDateFormatter.format(new Date()) })}

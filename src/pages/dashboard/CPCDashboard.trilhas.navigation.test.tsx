@@ -12,12 +12,17 @@ const mockUpdateDocument = vi.fn();
 const mockAddDocument = vi.fn();
 const mockServerTimestamp = vi.fn();
 
+let authState: { profile: { name?: string; role?: string; email?: string }; user?: { email?: string } } = {
+  profile: { name: 'Ana', role: 'admin', email: 'ana@teste.com' },
+  user: { email: 'ana@teste.com' },
+};
+
 vi.mock('@/components/layout/Layout', () => ({
   Layout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ profile: { name: 'Ana', role: 'admin' } }),
+  useAuth: () => authState,
 }));
 
 vi.mock('@/contexts/LanguageContext', () => ({
@@ -36,6 +41,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
           'cpc.menu.trails': 'Trilhas',
           'cpc.menu.team': 'Equipa',
           'cpcTranslations.title': 'Traduções',
+          'cpc.dashboard.welcome': 'Bem-vindo(a)',
         };
         const template = dict[key] ?? key;
         if (!params) return template;
@@ -60,6 +66,10 @@ vi.mock('@/integrations/firebase/firestore', () => ({
 
 describe('CPCDashboard - navegação (inclui Trilhas)', () => {
   beforeEach(() => {
+    authState = {
+      profile: { name: 'Ana', role: 'admin', email: 'ana@teste.com' },
+      user: { email: 'ana@teste.com' },
+    };
     mockQueryDocuments.mockReset().mockResolvedValue([]);
     mockCountDocuments.mockReset().mockResolvedValue(0);
     mockGetDocument.mockReset().mockResolvedValue(null);
@@ -67,6 +77,23 @@ describe('CPCDashboard - navegação (inclui Trilhas)', () => {
     mockAddDocument.mockReset().mockResolvedValue('log1');
     mockServerTimestamp.mockReset().mockReturnValue('ts');
     localStorage.clear();
+  });
+
+  it('mostra o nome do utilizador no "Bem-vindo(a)" (fallback para email se o nome for genérico)', async () => {
+    authState = {
+      profile: { name: 'CPC', role: 'admin', email: 'testeb@teste.com' },
+      user: { email: 'testeb@teste.com' },
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc']}>
+        <Routes>
+          <Route path="/dashboard/cpc/*" element={<CPCDashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Bem-vindo(a), Testeb' })).toBeInTheDocument();
   });
 
   it('marca "Trilhas" como ativo e permite navegar para "Equipa"', async () => {

@@ -19,6 +19,22 @@ export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const deriveNameFromEmail = (email?: string | null) => {
+    if (!email) return '';
+    const local = email.split('@')[0] ?? '';
+    const parts = local.split(/[._-]+/g).filter(Boolean);
+    if (parts.length === 0) return '';
+    return parts.map((p) => p.slice(0, 1).toUpperCase() + p.slice(1)).join(' ');
+  };
+
+  const displayName = (() => {
+    const name = typeof profile?.name === 'string' ? profile.name.trim() : '';
+    const email = (typeof profile?.email === 'string' ? profile.email.trim() : '') || (typeof user?.email === 'string' ? user.email.trim() : '');
+    const normalizedName = name.toLowerCase();
+    if (!name || normalizedName === 'cpc') return deriveNameFromEmail(email) || '';
+    return name;
+  })();
+
   const navLinks = [
     { href: '/', label: t.nav.home },
     { href: '/sobre', label: t.nav.about },
@@ -99,7 +115,7 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-primary">
                     <User className="h-5 w-5" />
-                    <span className="hidden sm:inline font-medium">{profile?.name}</span>
+                    <span className="hidden sm:inline font-medium">{displayName}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
