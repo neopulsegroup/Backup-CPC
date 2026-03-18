@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { auth } from '@/integrations/firebase/client';
+import { db } from '@/integrations/firebase/client';
 import {
   registerUser,
   loginUser,
@@ -38,10 +40,12 @@ interface AuthContextType {
   triage: TriageData | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  accessIssue: 'blocked' | 'disabled' | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  clearAccessIssue: () => void;
 }
 
 interface RegisterData {
@@ -70,12 +74,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [triage, setTriage] = useState<TriageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [accessIssue, setAccessIssue] = useState<'blocked' | 'disabled' | null>(null);
+
+  const clearAccessIssue = useCallback(() => {
+    setAccessIssue(null);
+  }, []);
+
+  const getAccessIssue = useCallback((p: UserProfile | null): 'blocked' | 'disabled' | null => {
+    if (!p) return null;
+    if (p.blocked === true) return 'blocked';
+    if (p.active === false) return 'disabled';
+    return null;
+  }, []);
 
   const fetchUserData = useCallback(async (firebaseUser: FirebaseUser) => {
     try {
       // Fetch user profile
       const userProfile = await getUserProfile(firebaseUser.uid);
       if (!userProfile) {
+        await logoutUser();
+        setUser(null);
+        setProfile(null);
+        setProfileData(null);
+        setTriage(null);
+        return;
+      }
+
+      const issue = getAccessIssue(userProfile);
+      if (issue) {
+        setAccessIssue(issue);
         await logoutUser();
         setUser(null);
         setProfile(null);
@@ -106,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Error fetching user data:', error);
     }
-  }, []);
+  }, [getAccessIssue]);
 
   const refreshProfile = useCallback(async () => {
     if (user) {
@@ -147,15 +174,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [fetchUserData]);
 
+  useEffect(() => {
+    if (!user) return;
+    const ref = doc(db, 'users', user.uid);
+    const unsubscribe = onSnapshot(ref, async (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data() as UserProfile;
+      const issue = getAccessIssue(data);
+      if (issue) {
+        setAccessIssue(issue);
+        await logoutUser();
+        setUser(null);
+        setProfile(null);
+        setProfileData(null);
+        setTriage(null);
+        return;
+      }
+      setProfile(data);
+    });
+    return () => unsubscribe();
+  }, [getAccessIssue, user]);
+
   const login = useCallback(async (email: string, password: string) => {
     try {
-      await loginUser(email, password);
+      setAccessIssue(null);
+      const firebaseUser = await loginUser(email, password);
+      const userProfile = await getUserProfile(firebaseUser.uid);
+      const issue = getAccessIssue(userProfile);
+      if (issue) {
+        setAccessIssue(issue);
+        await logoutUser();
+        setUser(null);
+        setProfile(null);
+        setProfileData(null);
+        setTriage(null);
+        throw new Error(issue === 'blocked' ? 'ACCOUNT_BLOCKED' : 'ACCOUNT_DISABLED');
+      }
       // onAuthStateChanged will handle the rest
     } catch (error: unknown) {
       console.error('Login error:', error);
       throw new Error(getErrorMessage(error, 'Failed to login'));
     }
-  }, []);
+  }, [getAccessIssue]);
 
   const register = useCallback(async (data: RegisterData) => {
     try {
@@ -189,10 +249,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         triage,
         isAuthenticated: !!user,
         isLoading,
+        accessIssue,
         login,
         register,
         logout,
         refreshProfile,
+        clearAccessIssue,
       }}
     >
       {children}

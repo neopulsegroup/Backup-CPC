@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { deleteDocument, getDocument, queryDocuments } from '@/integrations/firebase/firestore';
+import { addDocument, deleteDocument, getDocument, queryDocuments, serverTimestamp, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +42,7 @@ type MigrantRow = {
   blocked?: boolean;
 };
 
-type UserDoc = { id: string; name?: string | null; email?: string | null; role?: string | null; nif?: string | null };
+type UserDoc = { id: string; name?: string | null; email?: string | null; role?: string | null; nif?: string | null; blocked?: boolean | null; active?: boolean | null };
 type ProfileDoc = { name?: string | null; email?: string | null; birthDate?: string | null; nationality?: string | null; arrivalDate?: string | null };
 type TriageDoc = { legal_status?: string | null; work_status?: string | null; language_level?: string | null; urgencies?: string[] | null; answers?: TriageAnswers | null };
 type SessionDoc = { migrant_id?: string | null; scheduled_date?: string | null; status?: string | null };
@@ -100,7 +100,7 @@ function normalizeUrgencies(values?: string[] | null): Array<'juridico' | 'psico
 
 export default function MigrantsAdminPage() {
   const { t } = useLanguage();
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Array<MigrantRow>>([]);
   const [query, setQuery] = useState('');
@@ -112,6 +112,7 @@ export default function MigrantsAdminPage() {
   const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MigrantRow | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
   const xlsxModuleRef = useRef<typeof import('xlsx') | null>(null);
   const xlsxLoaderRef = useRef<Promise<typeof import('xlsx')> | null>(null);
 
@@ -371,7 +372,13 @@ export default function MigrantsAdminPage() {
       setLoading(true);
       try {
         const migrants = await queryDocuments<UserDoc>('users', [{ field: 'role', operator: '==', value: 'migrant' }]);
-        const profileList = migrants.map((u) => ({ user_id: u.id, name: u.name || '', email: u.email || '', nif: u.nif || null }));
+        const profileList = migrants.map((u) => ({
+          user_id: u.id,
+          name: u.name || '',
+          email: u.email || '',
+          nif: u.nif || null,
+          blocked: u.blocked === true,
+        }));
         const userIds = profileList.map((p) => p.user_id);
 
         const [profileDocs, triageDocs, sessionDocs, progressDocs] = await Promise.all([
@@ -413,9 +420,6 @@ export default function MigrantsAdminPage() {
           progressMap[uid] = Math.round(a.count ? a.sum / a.count : 0);
         });
 
-        const blockedRaw = localStorage.getItem('blockedMigrants');
-        const blockedSet = new Set<string>(blockedRaw ? JSON.parse(blockedRaw) as string[] : []);
-
         const result: Array<MigrantRow> = profileList.map(p => ({
           user_id: p.user_id,
           name: profileMap[p.user_id]?.name || p.name || p.email || t.get('cpc.migrantsAdmin.fallback_migrant'),
@@ -431,7 +435,7 @@ export default function MigrantsAdminPage() {
           triage_answers: triageMap[p.user_id]?.answers || null,
           upcoming_sessions: sessionsMap[p.user_id] || 0,
           trails_progress_avg: progressMap[p.user_id] || 0,
-          blocked: blockedSet.has(p.user_id),
+          blocked: p.blocked,
         }));
 
         setRows(result);
@@ -450,13 +454,46 @@ export default function MigrantsAdminPage() {
     fetchAll();
   }, []);
 
-  function toggleBlock(uid: string) {
-    const blockedRaw = localStorage.getItem('blockedMigrants');
-    const blockedList = blockedRaw ? JSON.parse(blockedRaw) as string[] : [];
-    const set = new Set<string>(blockedList);
-    if (set.has(uid)) set.delete(uid); else set.add(uid);
-    localStorage.setItem('blockedMigrants', JSON.stringify(Array.from(set)));
-    setRows(prev => prev.map(r => r.user_id === uid ? { ...r, blocked: set.has(uid) } : r));
+  async function toggleBlock(uid: string) {
+    if (!profile || profile.role !== 'admin') {
+      toast({
+        title: t.get('cpc.migrantsAdmin.delete.no_permission.title'),
+        description: t.get('cpc.migrantsAdmin.delete.no_permission.description'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    const current = rows.find((r) => r.user_id === uid)?.blocked === true;
+    const next = !current;
+    setBlockingUserId(uid);
+    try {
+      await updateDocument('users', uid, {
+        blocked: next,
+        blockedAt: next ? serverTimestamp() : null,
+        blockedBy: next ? (user?.uid ?? null) : null,
+      });
+      if (user?.uid) {
+        await addDocument('audit_logs', {
+          action: next ? 'user.blocked' : 'user.unblocked',
+          actor_id: user.uid,
+          target_id: uid,
+          createdAt: serverTimestamp(),
+        });
+      }
+      setRows((prev) => prev.map((r) => (r.user_id === uid ? { ...r, blocked: next } : r)));
+    } catch (error: unknown) {
+      const rawMessage = error instanceof Error ? error.message : '';
+      const message = rawMessage.includes('Missing or insufficient permissions')
+        ? t.get('cpc.migrantsAdmin.delete.error.permission_denied')
+        : rawMessage || t.get('cpc.migrantsAdmin.load.generic_error');
+      toast({
+        title: t.get('cpc.migrantsAdmin.delete.error.title'),
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setBlockingUserId(null);
+    }
   }
 
   async function confirmDeleteMigrant() {
@@ -496,13 +533,6 @@ export default function MigrantsAdminPage() {
       const stillExists = await getDocument<{ id: string }>('users', uid);
       if (stillExists) {
         throw new Error(t.get('cpc.migrantsAdmin.delete.error.not_persisted'));
-      }
-
-      const blockedRaw = localStorage.getItem('blockedMigrants');
-      if (blockedRaw) {
-        const blockedList = JSON.parse(blockedRaw) as string[];
-        const next = blockedList.filter((id) => id !== uid);
-        localStorage.setItem('blockedMigrants', JSON.stringify(next));
       }
 
       setRows((prev) => prev.filter((r) => r.user_id !== uid));
@@ -667,8 +697,14 @@ export default function MigrantsAdminPage() {
                   <Button variant="outline" className="inline-flex items-center justify-center gap-2 w-full" onClick={() => setSelectedTriage(r)}>
                     <ClipboardList className="h-4 w-4" /> {t.get('cpc.migrantsAdmin.actions.triage')}
                   </Button>
-                  <Button variant="outline" className="inline-flex items-center justify-center gap-2 w-full" onClick={() => toggleBlock(r.user_id)}>
-                    <Ban className="h-4 w-4" /> {r.blocked ? t.get('cpc.migrantsAdmin.actions.activate') : t.get('cpc.migrantsAdmin.actions.block')}
+                  <Button
+                    variant="outline"
+                    className="inline-flex items-center justify-center gap-2 w-full"
+                    onClick={() => void toggleBlock(r.user_id)}
+                    disabled={blockingUserId !== null}
+                  >
+                    {blockingUserId === r.user_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}
+                    {r.blocked ? t.get('cpc.migrantsAdmin.actions.activate') : t.get('cpc.migrantsAdmin.actions.block')}
                   </Button>
                   <Button
                     variant="destructive"

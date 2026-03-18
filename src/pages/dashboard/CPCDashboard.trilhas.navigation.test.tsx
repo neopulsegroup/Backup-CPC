@@ -9,6 +9,8 @@ const mockQueryDocuments = vi.fn();
 const mockCountDocuments = vi.fn();
 const mockGetDocument = vi.fn();
 const mockUpdateDocument = vi.fn();
+const mockAddDocument = vi.fn();
+const mockServerTimestamp = vi.fn();
 
 vi.mock('@/components/layout/Layout', () => ({
   Layout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -52,6 +54,8 @@ vi.mock('@/integrations/firebase/firestore', () => ({
   countDocuments: (...args: unknown[]) => mockCountDocuments(...args),
   getDocument: (...args: unknown[]) => mockGetDocument(...args),
   updateDocument: (...args: unknown[]) => mockUpdateDocument(...args),
+  addDocument: (...args: unknown[]) => mockAddDocument(...args),
+  serverTimestamp: (...args: unknown[]) => mockServerTimestamp(...args),
 }));
 
 describe('CPCDashboard - navegação (inclui Trilhas)', () => {
@@ -60,6 +64,8 @@ describe('CPCDashboard - navegação (inclui Trilhas)', () => {
     mockCountDocuments.mockReset().mockResolvedValue(0);
     mockGetDocument.mockReset().mockResolvedValue(null);
     mockUpdateDocument.mockReset().mockResolvedValue(undefined);
+    mockAddDocument.mockReset().mockResolvedValue('log1');
+    mockServerTimestamp.mockReset().mockReturnValue('ts');
     localStorage.clear();
   });
 

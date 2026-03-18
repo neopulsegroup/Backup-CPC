@@ -7,13 +7,19 @@ import MigrantsAdminPage from './MigrantsAdminPage';
 
 const mockQueryDocuments = vi.fn();
 const mockGetDocument = vi.fn();
+const mockUpdateDocument = vi.fn();
 const mockDeleteDocument = vi.fn();
+const mockAddDocument = vi.fn();
+const mockServerTimestamp = vi.fn();
 const mockToast = vi.fn();
 
 vi.mock('@/integrations/firebase/firestore', () => ({
   queryDocuments: (...args: unknown[]) => mockQueryDocuments(...args),
   getDocument: (...args: unknown[]) => mockGetDocument(...args),
+  updateDocument: (...args: unknown[]) => mockUpdateDocument(...args),
   deleteDocument: (...args: unknown[]) => mockDeleteDocument(...args),
+  addDocument: (...args: unknown[]) => mockAddDocument(...args),
+  serverTimestamp: (...args: unknown[]) => mockServerTimestamp(...args),
 }));
 
 let mockRole: string = 'admin';
@@ -95,7 +101,10 @@ describe('MigrantsAdminPage - exportação (Email)', () => {
   beforeEach(() => {
     mockQueryDocuments.mockReset();
     mockGetDocument.mockReset();
+    mockUpdateDocument.mockReset();
     mockDeleteDocument.mockReset();
+    mockAddDocument.mockReset();
+    mockServerTimestamp.mockReset().mockReturnValue('ts');
     mockToast.mockReset();
     mockRole = 'admin';
   });

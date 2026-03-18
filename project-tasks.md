@@ -20,6 +20,7 @@ Formato validado automaticamente.
 | CPC-105 | [x] CPC • Migrantes: exclusão persistida (regras Firestore + validação pós-delete + mensagem de permissão) | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules; src/pages/dashboard/cpc/MigrantsAdminPage.tsx; src/lib/i18n.ts |
 | CPC-106 | [x] CPC • Equipa: somente Admin pode gerir/editar utilizadores (UI + regra de segurança) | done | P1 | Renato | 2026-03-18 | 100 | 2026-03-18 | src/pages/dashboard/CPCDashboard.tsx; firestore.rules; src/lib/i18n.ts |
 | CPC-107 | [x] CPC • i18n runtime: permitir leitura de i18n/settings e i18n_overrides via Firestore Rules | done | P1 | Renato | 2026-03-18 | 100 | 2026-03-18 | firestore.rules; src/contexts/LanguageContext.tsx |
+| CPC-108 | [x] CPC • Controle de acesso: bloquear login e acesso em tempo real (blocked/active) + auditoria + liberação pelo Admin | done | P0 | Renato | 2026-03-18 | 100 | 2026-03-18 | src/contexts/AuthContext.tsx; src/pages/Auth.tsx; src/pages/dashboard/cpc/MigrantsAdminPage.tsx; src/pages/dashboard/CPCDashboard.tsx; src/integrations/firebase/auth.ts; firestore.rules; src/contexts/AuthContext.access.test.tsx |
 
 ### Convenções do Registro
 - `Status`: `todo` | `in_progress` | `blocked` | `done`

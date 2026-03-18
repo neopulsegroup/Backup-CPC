@@ -14,8 +14,20 @@ export interface UserProfile {
     name: string;
     role: 'migrant' | 'company' | 'admin' | 'mediator' | 'lawyer' | 'psychologist' | 'manager' | 'coordinator' | 'trainer';
     nif?: string;
+    active?: boolean | null;
+    disabledAt?: unknown | null;
+    blocked?: boolean | null;
+    blockedAt?: unknown | null;
+    blockedBy?: string | null;
     createdAt: unknown;
     updatedAt: unknown;
+}
+
+function normalizeRole(role: unknown): UserProfile['role'] {
+    if (typeof role !== 'string') return role as UserProfile['role'];
+    const v = role.toLowerCase();
+    const allowed: Array<UserProfile['role']> = ['migrant', 'company', 'admin', 'mediator', 'lawyer', 'psychologist', 'manager', 'coordinator', 'trainer'];
+    return (allowed.includes(v as UserProfile['role']) ? v : role) as UserProfile['role'];
 }
 
 function getErrorMessage(error: unknown, fallback: string): string {
@@ -51,6 +63,11 @@ export async function registerUser(
             email,
             name,
             role,
+            active: true,
+            disabledAt: null,
+            blocked: false,
+            blockedAt: null,
+            blockedBy: null,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             ...(additionalData?.nif && { nif: additionalData.nif }),
@@ -122,7 +139,8 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     try {
         const userDoc = await getDoc(doc(db, 'users', userId));
         if (userDoc.exists()) {
-            return userDoc.data() as UserProfile;
+            const data = userDoc.data() as Record<string, unknown>;
+            return { ...(data as UserProfile), role: normalizeRole(data.role) };
         }
         return null;
     } catch (error: unknown) {

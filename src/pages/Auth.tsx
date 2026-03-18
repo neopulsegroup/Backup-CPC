@@ -33,7 +33,7 @@ export default function Auth() {
   });
 
   const { t } = useLanguage();
-  const { login, register, isAuthenticated, profile, triage, isLoading: authLoading } = useAuth();
+  const { login, register, isAuthenticated, profile, triage, isLoading: authLoading, accessIssue, clearAccessIssue } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -59,6 +59,7 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearAccessIssue();
     setIsLoading(true);
 
     try {
@@ -101,12 +102,16 @@ export default function Auth() {
       }
     } catch (error: unknown) {
       console.error('Auth error:', error);
-      const message = error instanceof Error
-        ? (error.message === 'Invalid login credentials'
-          ? t.auth.loginError || 'Email ou palavra-passe incorretos'
-          : error.message)
-        : t.common.error;
-      toast.error(message);
+      const message = error instanceof Error ? error.message : t.common.error;
+      if (message === 'ACCOUNT_BLOCKED') {
+        toast.error(t.auth.accessDeniedBlockedToast);
+      } else if (message === 'ACCOUNT_DISABLED') {
+        toast.error(t.auth.accessDeniedDisabledToast);
+      } else if (message === 'Invalid login credentials') {
+        toast.error(t.auth.loginError || 'Email ou palavra-passe incorretos');
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -197,6 +202,18 @@ export default function Auth() {
                 </p>
               )}
             </div>
+
+            {mode === 'login' && accessIssue && (
+              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="font-semibold">
+                  {accessIssue === 'blocked' ? t.auth.accessDeniedBlockedTitle : t.auth.accessDeniedDisabledTitle}
+                </div>
+                <div className="mt-1">
+                  {accessIssue === 'blocked' ? t.auth.accessDeniedBlockedDescription : t.auth.accessDeniedDisabledDescription}
+                </div>
+                <div className="mt-2 font-medium">{t.auth.accessDeniedContactAdmin}</div>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === 'register' && (

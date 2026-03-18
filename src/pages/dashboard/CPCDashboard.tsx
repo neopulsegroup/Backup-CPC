@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEffect, useMemo, useState } from 'react';
-import { countDocuments, getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
+import { addDocument, countDocuments, getDocument, queryDocuments, serverTimestamp, updateDocument } from '@/integrations/firebase/firestore';
 import { registerUser } from '@/integrations/firebase/auth';
 import {
   Users,
@@ -102,7 +102,7 @@ function isInProgressSessionStatus(status?: string | null): boolean {
 }
 
 export default function CPCDashboard() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { t, language } = useLanguage();
   const location = useLocation();
 
@@ -289,18 +289,27 @@ export default function CPCDashboard() {
       }
     }
 
-    async function toggleActive(user: { id: string; active: boolean }) {
+    async function toggleActive(teamUser: { id: string; active: boolean }) {
       if (!isAdmin) {
         setFormError(t.get('cpc.team.errors.no_permission'));
         return;
       }
-      setActionLoadingId(user.id);
+      setActionLoadingId(teamUser.id);
       setFormError('');
       try {
-        await updateDocument('users', user.id, {
-          active: !user.active,
-          disabledAt: user.active ? new Date().toISOString() : null,
+        await updateDocument('users', teamUser.id, {
+          active: !teamUser.active,
+          disabledAt: teamUser.active ? new Date().toISOString() : null,
         });
+        const actorId = user?.uid;
+        if (actorId) {
+          await addDocument('audit_logs', {
+            action: teamUser.active ? 'user.deactivated' : 'user.reactivated',
+            actor_id: actorId,
+            target_id: teamUser.id,
+            createdAt: serverTimestamp(),
+          });
+        }
         await loadTeam();
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : t.get('cpc.team.errors.update_state_failed');
