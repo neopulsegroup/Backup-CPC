@@ -1787,8 +1787,8 @@
       "loading": "Loading candidates...",
       "companyNotFound": "Company profile not found.",
       "breadcrumbs": {
-        "root": "CANDIDATES",
-        "current": "CANDIDATE MANAGEMENT"
+        "root": "Candidates",
+        "current": "Candidate Management"
       },
       "title": "Candidate Management",
       "subtitle": "List, filter and manage your candidate database.",
@@ -1822,7 +1822,7 @@
         "jobFallback": "Job"
       },
       "pagination": {
-        "summary": "Showing {from}-{to}",
+        "summary": "Showing {from}-{to} of {total} candidates",
         "prev": "Previous",
         "next": "Next"
       },

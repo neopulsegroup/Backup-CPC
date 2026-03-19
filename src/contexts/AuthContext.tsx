@@ -10,7 +10,7 @@ import {
   getUserProfile,
   UserProfile,
 } from '@/integrations/firebase/auth';
-import { getDocument } from '@/integrations/firebase/firestore';
+import { getDocument, setDocument } from '@/integrations/firebase/firestore';
 
 export type UserRole = 'migrant' | 'company' | 'admin' | 'mediator' | 'lawyer' | 'psychologist' | 'manager' | 'coordinator' | 'trainer';
 
@@ -111,6 +111,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
       setProfile(userProfile);
+
+      if (userProfile.role === 'company') {
+        try {
+          const existingCompany = await getDocument<Record<string, unknown>>('companies', firebaseUser.uid);
+          const baseName =
+            (typeof userProfile.name === 'string' && userProfile.name.trim() ? userProfile.name.trim() : null) ??
+            (typeof firebaseUser.displayName === 'string' && firebaseUser.displayName.trim() ? firebaseUser.displayName.trim() : null) ??
+            firebaseUser.email ??
+            'Empresa';
+
+          if (!existingCompany) {
+            await setDocument(
+              'companies',
+              firebaseUser.uid,
+              {
+                user_id: firebaseUser.uid,
+                company_name: baseName,
+                verified: false,
+                createdAt: new Date().toISOString(),
+              },
+              false
+            );
+          } else {
+            const patch: Record<string, unknown> = {};
+            if (existingCompany.user_id !== firebaseUser.uid) patch.user_id = firebaseUser.uid;
+            if (typeof existingCompany.company_name !== 'string' || !existingCompany.company_name.trim()) patch.company_name = baseName;
+            if (typeof existingCompany.verified !== 'boolean') patch.verified = false;
+            if (Object.keys(patch).length > 0) {
+              await setDocument('companies', firebaseUser.uid, patch, true);
+            }
+          }
+        } catch (error) {
+          console.error('Error ensuring company profile:', error);
+        }
+      }
 
       // Fetch profile data
       try {

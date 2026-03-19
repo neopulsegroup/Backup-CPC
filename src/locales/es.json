@@ -1787,8 +1787,8 @@
       "loading": "Cargando candidatos...",
       "companyNotFound": "Perfil de empresa no encontrado.",
       "breadcrumbs": {
-        "root": "CANDIDATOS",
-        "current": "GESTIÓN DE CANDIDATOS"
+        "root": "Candidatos",
+        "current": "Gestión de Candidatos"
       },
       "title": "Gestión de Candidatos",
       "subtitle": "Lista, filtra y gestiona tu base de candidatos.",
@@ -1822,7 +1822,7 @@
         "jobFallback": "Vacante"
       },
       "pagination": {
-        "summary": "Mostrando {from}-{to}",
+        "summary": "Mostrando {from}-{to} de {total} candidatos",
         "prev": "Anterior",
         "next": "Siguiente"
       },

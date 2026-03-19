@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { addDocument, countDocuments, deleteDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
+import { addDocument, countDocuments, deleteDocument, queryDocuments, setDocument, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
@@ -28,14 +29,7 @@ import {
   Eye,
   Pencil,
   Trash2,
-  Plus,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  Briefcase,
-  Users,
-  Sparkles,
+  ChevronDown,
 } from 'lucide-react';
 import {
   CandidateFormValues,
@@ -71,7 +65,7 @@ interface JobOfferLite {
   title: string;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 4;
 
 function downloadBlob(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
@@ -108,6 +102,12 @@ function stagePill(stage: CandidateStage): string {
   if (stage === 'triage') return 'bg-amber-100 text-amber-700';
   if (stage === 'rejected') return 'bg-red-100 text-red-700';
   return 'bg-emerald-100 text-emerald-700';
+}
+
+function presenceDot(stage: CandidateStage): string {
+  if (stage === 'triage') return 'bg-slate-300';
+  if (stage === 'rejected') return 'bg-red-500';
+  return 'bg-emerald-500';
 }
 
 function experienceLabel(exp: ExperienceLevel, t: { get: (k: string) => string }): string {
@@ -150,9 +150,14 @@ function MatchRing({ value }: { value: number }) {
 }
 
 export default function CandidatesPage() {
-  const { user } = useAuth();
-  const { t } = useLanguage();
+  const { user, profile, profileData } = useAuth();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
+
+  const numberFormatter = useMemo(() => {
+    const locale = language === 'pt' ? 'pt-PT' : language === 'es' ? 'es-ES' : 'en-US';
+    return new Intl.NumberFormat(locale);
+  }, [language]);
 
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [offers, setOffers] = useState<JobOfferLite[]>([]);
@@ -222,8 +227,42 @@ export default function CandidatesPage() {
     if (!user) return;
     setLoadingInitial(true);
     try {
-      const company = await queryDocuments<{ id: string }>('companies', [{ field: 'user_id', operator: '==', value: user.uid }], undefined, 1);
-      setCompanyId(company[0]?.id ?? null);
+      const company = await queryDocuments<{ id: string }>(
+        'companies',
+        [{ field: 'user_id', operator: '==', value: user.uid }],
+        undefined,
+        1
+      );
+
+      if (company[0]?.id) {
+        setCompanyId(company[0].id);
+        return;
+      }
+
+      if (profile?.role === 'company') {
+        const baseName =
+          (profileData?.name && profileData.name.trim() ? profileData.name.trim() : null) ??
+          (profile?.name && profile.name.trim() ? profile.name.trim() : null) ??
+          (user.displayName && user.displayName.trim() ? user.displayName.trim() : null) ??
+          user.email ??
+          'Empresa';
+
+        await setDocument(
+          'companies',
+          user.uid,
+          {
+            user_id: user.uid,
+            company_name: baseName,
+            verified: false,
+            createdAt: new Date().toISOString(),
+          },
+          true
+        );
+        setCompanyId(user.uid);
+        return;
+      }
+
+      setCompanyId(null);
     } catch (error) {
       console.error('Error loading company:', error);
       setCompanyId(null);
@@ -520,142 +559,119 @@ export default function CandidatesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground">
-            <span>{t.get('company.candidates.breadcrumbs.root')}</span>
-            <span className="text-muted-foreground/60">›</span>
-            <span className="text-primary">{t.get('company.candidates.breadcrumbs.current')}</span>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <div className="text-sm text-muted-foreground">
+            {t.get('company.candidates.breadcrumbs.root')} /{' '}
+            <span className="text-foreground">{t.get('company.candidates.breadcrumbs.current')}</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-4">{t.get('company.candidates.title')}</h1>
-          <p className="text-muted-foreground mt-2">{t.get('company.candidates.subtitle')}</p>
+          <h1 className="text-4xl font-bold tracking-tight">{t.get('company.candidates.title')}</h1>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button variant="outline" onClick={() => void handleExport('csv')} disabled={loadingList}>
-            <Download className="h-4 w-4 mr-2" />
-            {t.get('company.candidates.export.buttons.csv')}
-          </Button>
-          <Button variant="outline" onClick={() => void handleExport('xlsx')} disabled={loadingList}>
-            <Download className="h-4 w-4 mr-2" />
-            {t.get('company.candidates.export.buttons.xlsx')}
-          </Button>
-          <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t.get('company.candidates.actions.new')}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="cpc-card p-5 border-l-4 border-l-cpc-blue">
-          <div className="flex items-center justify-between">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="cpc-card px-5 py-4">
             <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.kpis.total')}</p>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="mt-2 flex items-baseline gap-3">
+              <p className="text-3xl font-bold">{numberFormatter.format(stats.total)}</p>
+              <span className="text-sm font-semibold text-emerald-600">
+                +{Math.min(99, Math.max(0, Math.round((stats.newMonth / Math.max(1, stats.total)) * 100)))}%
+              </span>
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-2">{stats.total.toLocaleString('pt-PT')}</p>
-        </div>
-        <div className="cpc-card p-5 border-l-4 border-l-emerald-500">
-          <div className="flex items-center justify-between">
+          <div className="cpc-card px-5 py-4">
             <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.kpis.newMonth')}</p>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <div className="mt-2 flex items-baseline gap-3">
+              <p className="text-3xl font-bold">{numberFormatter.format(stats.newMonth)}</p>
+              <span className="text-sm font-semibold text-primary">Fase 1</span>
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-2">{stats.newMonth.toLocaleString('pt-PT')}</p>
-        </div>
-        <div className="cpc-card p-5 border-l-4 border-l-blue-500">
-          <div className="flex items-center justify-between">
+          <div className="cpc-card px-5 py-4">
             <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.kpis.ideal')}</p>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <div className="mt-2 flex items-baseline gap-3">
+              <p className="text-3xl font-bold">{numberFormatter.format(stats.ideal)}</p>
+              <span className="text-sm font-semibold text-primary">★ Top Tier</span>
+            </div>
           </div>
-          <p className="text-3xl font-bold mt-2">{stats.ideal.toLocaleString('pt-PT')}</p>
         </div>
       </div>
 
       <div className="cpc-card overflow-hidden">
-        <div className="p-4 md:p-6">
-          <div className="grid gap-4 lg:grid-cols-4">
+        <div className="p-6">
+          <div className="grid gap-6 lg:grid-cols-4">
             <div className="space-y-2">
               <label htmlFor="candidate-filter-job" className="text-xs font-semibold tracking-widest text-muted-foreground">
                 {t.get('company.candidates.filters.job')}
               </label>
-              <select
-                id="candidate-filter-job"
-                value={jobFilter}
-                onChange={(e) => setJobFilter(e.target.value)}
-                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
-              >
-                <option value="all">{t.get('company.candidates.filters.job_all')}</option>
-                {offers.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.title}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  id="candidate-filter-job"
+                  value={jobFilter}
+                  onChange={(e) => setJobFilter(e.target.value)}
+                  className="h-11 w-full appearance-none rounded-xl border border-input bg-muted/30 px-3 pr-10"
+                >
+                  <option value="all">{t.get('company.candidates.filters.job_all')}</option>
+                  {offers.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="candidate-filter-skills" className="text-xs font-semibold tracking-widest text-muted-foreground">
                 {t.get('company.candidates.filters.skills')}
               </label>
-              <Input
-                id="candidate-filter-skills"
-                value={skillsFilter}
-                onChange={(e) => setSkillsFilter(e.target.value)}
-                placeholder={t.get('company.candidates.filters.skills_placeholder')}
-              />
+              <div className="relative">
+                <Input
+                  id="candidate-filter-skills"
+                  value={skillsFilter}
+                  onChange={(e) => setSkillsFilter(e.target.value)}
+                  placeholder={t.get('company.candidates.filters.skills_placeholder')}
+                  className="h-11 rounded-xl bg-muted/30 pr-10"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                  #
+                </span>
+              </div>
             </div>
 
             <div className="space-y-2">
               <label htmlFor="candidate-filter-exp" className="text-xs font-semibold tracking-widest text-muted-foreground">
                 {t.get('company.candidates.filters.experience')}
               </label>
-              <select
-                id="candidate-filter-exp"
-                value={experienceFilter}
-                onChange={(e) => setExperienceFilter(e.target.value)}
-                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
-              >
-                <option value="all">{t.get('company.candidates.filters.experience_all')}</option>
-                <option value="junior">{t.get('company.candidates.experience.junior')}</option>
-                <option value="mid">{t.get('company.candidates.experience.mid')}</option>
-                <option value="senior">{t.get('company.candidates.experience.senior')}</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="candidate-filter-exp"
+                  value={experienceFilter}
+                  onChange={(e) => setExperienceFilter(e.target.value)}
+                  className="h-11 w-full appearance-none rounded-xl border border-input bg-muted/30 px-3 pr-10"
+                >
+                  <option value="all">{t.get('company.candidates.filters.experience_all')}</option>
+                  <option value="junior">{t.get('company.candidates.experience.junior')}</option>
+                  <option value="mid">{t.get('company.candidates.experience.mid')}</option>
+                  <option value="senior">{t.get('company.candidates.experience.senior')}</option>
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="candidate-filter-match" className="text-xs font-semibold tracking-widest text-muted-foreground">
-                  {t.get('company.candidates.filters.minMatch')}
-                </label>
-                <span className="text-xs font-semibold text-primary">{minMatch}%</span>
+              <label htmlFor="candidate-filter-match" className="text-xs font-semibold tracking-widest text-muted-foreground">
+                {t.get('company.candidates.filters.minMatch')}
+              </label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  value={[minMatch]}
+                  max={100}
+                  step={1}
+                  onValueChange={(v) => setMinMatch(v[0] ?? 0)}
+                />
+                <span className="w-10 text-right text-sm font-semibold text-primary">{minMatch}%</span>
               </div>
-              <input
-                id="candidate-filter-match"
-                type="range"
-                min={0}
-                max={100}
-                value={minMatch}
-                onChange={(e) => setMinMatch(Number(e.target.value))}
-                className="w-full"
-              />
             </div>
-          </div>
-
-          <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="w-full md:w-[380px] relative">
-              <Search className="h-4 w-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
-              <Input
-                id="candidate-search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t.get('company.candidates.search.placeholder')}
-                className="pl-11 rounded-full bg-muted/30 border-muted"
-                aria-label={t.get('company.candidates.search.aria')}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t.get('company.candidates.pagination.summary', { from: shownFrom, to: shownTo })}
-            </p>
           </div>
         </div>
 
@@ -666,26 +682,29 @@ export default function CandidatesPage() {
             <div className="py-12 text-center text-sm text-muted-foreground">{t.get('company.candidates.empty')}</div>
           ) : (
             <div className="divide-y">
-              <div className="hidden md:grid grid-cols-[minmax(0,2fr)_140px_minmax(0,2fr)_180px_180px] gap-4 px-6 py-4 text-xs font-semibold tracking-widest text-muted-foreground bg-muted/20">
+              <div className="hidden md:grid grid-cols-[minmax(0,2fr)_140px_minmax(0,2fr)_180px_80px] gap-4 px-8 py-4 text-xs font-semibold tracking-widest text-muted-foreground bg-muted/20">
                 <span>{t.get('company.candidates.table.headers.candidate')}</span>
                 <span className="text-center">{t.get('company.candidates.table.headers.match')}</span>
                 <span>{t.get('company.candidates.table.headers.skills')}</span>
                 <span>{t.get('company.candidates.table.headers.stage')}</span>
-                <span className="text-right">{t.get('company.candidates.table.headers.actions')}</span>
+                <span className="text-center">{t.get('company.candidates.table.headers.actions')}</span>
               </div>
               {filteredCandidates.map((c) => (
                 <div
                   key={c.id}
-                  className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_140px_minmax(0,2fr)_180px_180px] gap-4 px-4 md:px-6 py-4 items-center"
+                  className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_140px_minmax(0,2fr)_180px_80px] gap-4 px-4 md:px-8 py-5 items-center"
                 >
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">{c.name}</p>
-                    <p className="text-sm text-muted-foreground truncate">{c.desired_role}</p>
-                    {c.job_offer_id ? (
-                      <p className="text-xs text-muted-foreground mt-1 truncate">
-                        {t.get('company.candidates.table.jobPrefix')} {offerTitleById.get(c.job_offer_id) || t.get('company.candidates.table.jobFallback')}
-                      </p>
-                    ) : null}
+                  <div className="flex items-center gap-4 min-w-0">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="text-sm font-semibold text-muted-foreground">
+                        {stripUnsafeChars(c.name).slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
+                      <span className={`absolute bottom-0 left-0 h-3 w-3 rounded-full border-2 border-background ${presenceDot(c.stage)}`} />
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{c.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{c.desired_role}</p>
+                    </div>
                   </div>
 
                   <div className="flex justify-start md:justify-center">
@@ -694,48 +713,30 @@ export default function CandidatesPage() {
 
                   <div className="flex flex-wrap gap-2">
                     {(c.skills || []).slice(0, 3).map((s) => (
-                      <span key={s} className="text-xs px-2 py-1 rounded-md bg-muted border">
+                      <span key={s} className="text-xs px-2 py-1 rounded-md bg-muted/60 border border-muted-foreground/15">
                         {s}
                       </span>
                     ))}
                     {(c.skills || []).length > 3 ? (
-                      <span className="text-xs px-2 py-1 rounded-md bg-muted border">+{(c.skills || []).length - 3}</span>
+                      <span className="text-xs px-2 py-1 rounded-md bg-muted/60 border border-muted-foreground/15">+{(c.skills || []).length - 3}</span>
                     ) : null}
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${stagePill(c.stage)}`}>
+                  <div className="flex items-center">
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold ${stagePill(c.stage)}`}>
+                      <span className="h-2 w-2 rounded-full bg-current opacity-60" />
                       {stageLabel(c.stage, t)}
-                    </span>
-                    <span className="text-xs text-muted-foreground hidden lg:inline">
-                      {experienceLabel(c.experience, t)}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-center">
                     <button
                       type="button"
-                      className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
+                      className="h-10 w-10 rounded-full hover:bg-muted flex items-center justify-center"
                       aria-label={t.get('company.candidates.actions.view')}
                       onClick={() => setDetailsTarget(c)}
                     >
-                      <Eye className="h-4 w-4 text-primary" />
-                    </button>
-                    <button
-                      type="button"
-                      className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                      aria-label={t.get('company.candidates.actions.edit')}
-                      onClick={() => openEdit(c)}
-                    >
-                      <Pencil className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                    <button
-                      type="button"
-                      className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                      aria-label={t.get('company.candidates.actions.delete')}
-                      onClick={() => setDeleteTarget(c)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <Eye className="h-5 w-5 text-primary" />
                     </button>
                   </div>
                 </div>
@@ -744,37 +745,72 @@ export default function CandidatesPage() {
           )}
         </div>
 
-        <div className="border-t p-4 md:p-6 flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={async () => {
-              if (!companyId || pageIndex === 0) return;
-              const nextIndex = Math.max(0, pageIndex - 1);
-              const cursor = pageCursors[nextIndex] ?? null;
-              setPageIndex(nextIndex);
-              await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
-            }}
-            className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center disabled:opacity-50"
-            aria-label={t.get('company.candidates.pagination.prev')}
-            disabled={pageIndex === 0 || loadingList}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              if (!companyId || !hasNextPage) return;
-              const nextIndex = pageIndex + 1;
-              const cursor = pageCursors[nextIndex] ?? candidates[candidates.length - 1]?.created_at ?? null;
-              setPageIndex(nextIndex);
-              await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
-            }}
-            className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center disabled:opacity-50"
-            aria-label={t.get('company.candidates.pagination.next')}
-            disabled={!hasNextPage || loadingList}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+        <div className="border-t px-6 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-muted-foreground">
+            {t.get('company.candidates.pagination.summary', {
+              from: numberFormatter.format(shownFrom),
+              to: numberFormatter.format(shownTo),
+              total: numberFormatter.format(stats.total),
+            })}
+          </p>
+
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pageIndex === 0 || loadingList}
+              onClick={async () => {
+                if (!companyId || pageIndex === 0) return;
+                const nextIndex = Math.max(0, pageIndex - 1);
+                const cursor = pageCursors[nextIndex] ?? null;
+                setPageIndex(nextIndex);
+                await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
+              }}
+            >
+              {t.get('company.candidates.pagination.prev')}
+            </Button>
+
+            <button type="button" className="h-10 w-10 rounded-md bg-primary text-primary-foreground font-semibold">
+              {pageIndex + 1}
+            </button>
+            {hasNextPage ? (
+              <>
+                <button
+                  type="button"
+                  className="h-10 w-10 rounded-md border bg-background hover:bg-muted font-semibold disabled:opacity-50"
+                  disabled={loadingList}
+                  onClick={async () => {
+                    if (!companyId || !hasNextPage) return;
+                    const nextIndex = pageIndex + 1;
+                    const cursor = pageCursors[nextIndex] ?? candidates[candidates.length - 1]?.created_at ?? null;
+                    setPageIndex(nextIndex);
+                    await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
+                  }}
+                >
+                  {pageIndex + 2}
+                </button>
+                <button type="button" className="h-10 w-10 rounded-md border bg-background font-semibold opacity-60" disabled>
+                  {pageIndex + 3}
+                </button>
+                <span className="px-2 text-muted-foreground">…</span>
+              </>
+            ) : null}
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!hasNextPage || loadingList}
+              onClick={async () => {
+                if (!companyId || !hasNextPage) return;
+                const nextIndex = pageIndex + 1;
+                const cursor = pageCursors[nextIndex] ?? candidates[candidates.length - 1]?.created_at ?? null;
+                setPageIndex(nextIndex);
+                await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
+              }}
+            >
+              {t.get('company.candidates.pagination.next')}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -838,12 +874,30 @@ export default function CandidatesPage() {
               {t.get('company.candidates.details.close')}
             </Button>
             {detailsTarget ? (
-              <Link to="/dashboard/empresa/ofertas" className="inline-flex">
-                <Button>
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {t.get('company.candidates.details.goToJobs')}
-                </Button>
-              </Link>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const current = detailsTarget;
+                  setDetailsTarget(null);
+                  openEdit(current);
+                }}
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                {t.get('company.candidates.actions.edit')}
+              </Button>
+            ) : null}
+            {detailsTarget ? (
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  const current = detailsTarget;
+                  setDetailsTarget(null);
+                  setDeleteTarget(current);
+                }}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t.get('company.candidates.actions.delete')}
+              </Button>
             ) : null}
           </DialogFooter>
         </DialogContent>
