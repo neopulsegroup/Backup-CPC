@@ -98,7 +98,7 @@ export const translations = {
       cta: {
         title: 'Ainda precisa de ajuda?',
         subtitle: 'A nossa equipa de suporte está disponível para esclarecer todas as suas dúvidas em tempo real. Escolha o canal da sua preferência.',
-        chat: 'Contactar via Chat',
+        chat: 'Contactar',
         whatsapp: 'WhatsApp Suporte',
       },
     },
@@ -159,7 +159,7 @@ export const translations = {
       title: 'Pronto para começar?',
       subtitle: 'Junte-se à nossa comunidade hoje.',
       register: 'Registe-se Agora',
-      contact: 'Contactar Vendas',
+      contact: 'Contactar',
     },
     footer: {
       tagline: 'Ligando Pessoas e Empresas através de oportunidades significativas e integração sustentável.',
@@ -847,7 +847,7 @@ export const translations = {
       cta: {
         title: 'Still need help?',
         subtitle: 'Our support team is available to answer your questions in real time. Choose your preferred channel.',
-        chat: 'Contact via Chat',
+        chat: 'Contact',
         whatsapp: 'WhatsApp Support',
       },
     },
@@ -908,7 +908,7 @@ export const translations = {
       title: 'Ready to start?',
       subtitle: 'Join our community today.',
       register: 'Register Now',
-      contact: 'Contact Sales',
+      contact: 'Contact',
     },
     footer: {
       tagline: 'Connecting People and Companies through meaningful opportunities and sustainable integration.',
@@ -1598,7 +1598,7 @@ export const translations = {
       cta: {
         title: '¿Aún necesita ayuda?',
         subtitle: 'Nuestro equipo de soporte está disponible para aclarar sus dudas en tiempo real. Elija su canal preferido.',
-        chat: 'Contactar por Chat',
+        chat: 'Contactar',
         whatsapp: 'Soporte WhatsApp',
       },
     },
@@ -1659,7 +1659,7 @@ export const translations = {
       title: '¿Listo para empezar?',
       subtitle: 'Únase a nuestra comunidad hoy.',
       register: 'Regístrese Ahora',
-      contact: 'Contactar Ventas',
+      contact: 'Contactar',
     },
     footer: {
       tagline: 'Conectando Personas y Empresas a través de oportunidades significativas e integración sostenible.',

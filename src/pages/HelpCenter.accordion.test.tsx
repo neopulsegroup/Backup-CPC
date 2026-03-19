@@ -25,7 +25,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
         cta: {
           title: 'Ainda precisa de ajuda?',
           subtitle: 'Texto',
-          chat: 'Contactar via Chat',
+          chat: 'Contactar',
           whatsapp: 'WhatsApp Suporte',
         },
       },
@@ -64,4 +64,3 @@ describe('HelpCenter - FAQ acordeão', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
   });
 });
-

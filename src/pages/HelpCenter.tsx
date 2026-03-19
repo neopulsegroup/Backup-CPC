@@ -146,20 +146,15 @@ export default function HelpCenter() {
       <section className="cpc-section">
         <div className="cpc-container">
           <div className="cpc-card p-10 bg-slate-950 text-white overflow-hidden relative">
-            <div className="relative z-10 max-w-2xl">
+            <div className="relative z-10 max-w-2xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl font-bold">{t.helpCenter.cta.title}</h2>
               <p className="text-white/70 mt-3 text-sm md:text-base">{t.helpCenter.cta.subtitle}</p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild className="gap-2">
                   <Link to="/contacto">
                     <MessageSquareText className="h-4 w-4" />
                     {t.helpCenter.cta.chat}
                   </Link>
-                </Button>
-                <Button asChild variant="secondary" className="gap-2 bg-white/10 text-white hover:bg-white/15">
-                  <a href="https://wa.me/351225088015" target="_blank" rel="noreferrer">
-                    {t.helpCenter.cta.whatsapp}
-                  </a>
                 </Button>
               </div>
             </div>
