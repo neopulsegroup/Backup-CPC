@@ -12,6 +12,7 @@ import {
     where,
     orderBy,
     limit,
+    startAfter,
     getCountFromServer,
     serverTimestamp,
     Timestamp,
@@ -198,7 +199,8 @@ export async function queryDocuments<T>(
     collectionName: string,
     filters: { field: string; operator: WhereFilterOp; value: unknown }[],
     orderByField?: string | { field: string; direction?: 'asc' | 'desc' },
-    limitCount?: number
+    limitCount?: number,
+    startAfterValues?: unknown[]
 ): Promise<T[]> {
     try {
         let q = query(collection(db, collectionName));
@@ -220,6 +222,10 @@ export async function queryDocuments<T>(
         // Apply limit
         if (limitCount) {
             q = query(q, limit(limitCount));
+        }
+
+        if (startAfterValues && startAfterValues.length > 0) {
+            q = query(q, startAfter(...startAfterValues));
         }
 
         const querySnapshot = await withRetry(() => getDocs(q));

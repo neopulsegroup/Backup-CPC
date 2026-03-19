@@ -1,0 +1,1037 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { addDocument, countDocuments, deleteDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Eye,
+  Pencil,
+  Trash2,
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Briefcase,
+  Users,
+  Sparkles,
+} from 'lucide-react';
+import {
+  CandidateFormValues,
+  CandidateStage,
+  ExperienceLevel,
+  csvEscape,
+  formatCPF,
+  formatPhone,
+  normalizeText,
+  stripUnsafeChars,
+  validateCandidate,
+  toCandidatePayload,
+} from './candidatesUtils';
+
+interface CompanyCandidate {
+  id: string;
+  company_id: string;
+  name: string;
+  cpf: string;
+  email: string;
+  phone: string;
+  desired_role: string;
+  experience: ExperienceLevel;
+  skills: string[] | null;
+  job_offer_id: string | null;
+  match_percent: number | null;
+  stage: CandidateStage;
+  created_at: string;
+}
+
+interface JobOfferLite {
+  id: string;
+  title: string;
+}
+
+const PAGE_SIZE = 10;
+
+function downloadBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function getExportTimestamp() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function startOfMonthIso(): string {
+  const d = new Date();
+  const start = new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0);
+  return start.toISOString();
+}
+
+function stageLabel(stage: CandidateStage, t: { get: (k: string) => string }): string {
+  if (stage === 'interview') return t.get('company.candidates.stage.interview');
+  if (stage === 'triage') return t.get('company.candidates.stage.triage');
+  if (stage === 'rejected') return t.get('company.candidates.stage.rejected');
+  return t.get('company.candidates.stage.hired');
+}
+
+function stagePill(stage: CandidateStage): string {
+  if (stage === 'interview') return 'bg-blue-100 text-blue-700';
+  if (stage === 'triage') return 'bg-amber-100 text-amber-700';
+  if (stage === 'rejected') return 'bg-red-100 text-red-700';
+  return 'bg-emerald-100 text-emerald-700';
+}
+
+function experienceLabel(exp: ExperienceLevel, t: { get: (k: string) => string }): string {
+  if (exp === 'junior') return t.get('company.candidates.experience.junior');
+  if (exp === 'mid') return t.get('company.candidates.experience.mid');
+  return t.get('company.candidates.experience.senior');
+}
+
+function clampMatch(value: number): number {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function MatchRing({ value }: { value: number }) {
+  const pct = clampMatch(value);
+  const radius = 18;
+  const stroke = 4;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference * (1 - pct / 100);
+  return (
+    <div className="relative h-12 w-12">
+      <svg viewBox="0 0 48 48" className="h-12 w-12">
+        <circle cx="24" cy="24" r={radius} fill="none" stroke="hsl(var(--muted))" strokeWidth={stroke} />
+        <circle
+          cx="24"
+          cy="24"
+          r={radius}
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth={stroke}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          transform="rotate(-90 24 24)"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-xs font-semibold">{pct}%</span>
+    </div>
+  );
+}
+
+export default function CandidatesPage() {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const { toast } = useToast();
+
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [offers, setOffers] = useState<JobOfferLite[]>([]);
+
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingList, setLoadingList] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [candidates, setCandidates] = useState<CompanyCandidate[]>([]);
+  const [stats, setStats] = useState({ total: 0, newMonth: 0, ideal: 0 });
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [jobFilter, setJobFilter] = useState<string>('all');
+  const [skillsFilter, setSkillsFilter] = useState('');
+  const [experienceFilter, setExperienceFilter] = useState<string>('all');
+  const [minMatch, setMinMatch] = useState(70);
+
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageCursors, setPageCursors] = useState<(string | null)[]>([null]);
+  const [hasNextPage, setHasNextPage] = useState(false);
+
+  const [detailsTarget, setDetailsTarget] = useState<CompanyCandidate | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<'create' | 'edit'>('create');
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof CandidateFormValues, string>>>({});
+  const [formValues, setFormValues] = useState<CandidateFormValues>({
+    name: '',
+    cpf: '',
+    email: '',
+    phone: '',
+    desired_role: '',
+    experience: 'mid',
+    skills: '',
+    job_offer_id: '',
+    match_percent: '',
+    stage: 'triage',
+  });
+  const [editTargetId, setEditTargetId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CompanyCandidate | null>(null);
+
+  const exportingRef = useRef<'csv' | 'xlsx' | null>(null);
+  const xlsxModuleRef = useRef<typeof import('xlsx') | null>(null);
+  const xlsxLoaderRef = useRef<Promise<typeof import('xlsx')> | null>(null);
+
+  useEffect(() => {
+    void bootstrap();
+  }, [user]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    setPageIndex(0);
+    setPageCursors([null]);
+    void fetchOffers(companyId);
+    void fetchStats(companyId);
+    void fetchPage({ companyId, cursor: null, nextPageIndex: 0 });
+  }, [companyId]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    setPageIndex(0);
+    setPageCursors([null]);
+    void fetchStats(companyId);
+    void fetchPage({ companyId, cursor: null, nextPageIndex: 0 });
+  }, [jobFilter, experienceFilter, minMatch]);
+
+  async function bootstrap() {
+    if (!user) return;
+    setLoadingInitial(true);
+    try {
+      const company = await queryDocuments<{ id: string }>('companies', [{ field: 'user_id', operator: '==', value: user.uid }], undefined, 1);
+      setCompanyId(company[0]?.id ?? null);
+    } catch (error) {
+      console.error('Error loading company:', error);
+      setCompanyId(null);
+    } finally {
+      setLoadingInitial(false);
+    }
+  }
+
+  async function fetchOffers(companyIdValue: string) {
+    try {
+      const data = await queryDocuments<JobOfferLite>(
+        'job_offers',
+        [{ field: 'company_id', operator: '==', value: companyIdValue }],
+        { field: 'created_at', direction: 'desc' },
+        100
+      );
+      setOffers(data);
+    } catch (error) {
+      console.error('Error fetching offers:', error);
+      setOffers([]);
+    }
+  }
+
+  async function fetchStats(companyIdValue: string) {
+    try {
+      const monthStart = startOfMonthIso();
+      const filtersBase: { field: string; operator: '==' | '>='; value: unknown }[] = [{ field: 'company_id', operator: '==', value: companyIdValue }];
+      const [total, newMonth, ideal] = await Promise.all([
+        countDocuments('company_candidates', filtersBase),
+        countDocuments('company_candidates', [...filtersBase, { field: 'created_at', operator: '>=', value: monthStart }]),
+        countDocuments('company_candidates', [...filtersBase, { field: 'match_percent', operator: '>=', value: 80 }]),
+      ]);
+      setStats({ total, newMonth, ideal });
+    } catch (error) {
+      console.error('Error fetching candidate stats:', error);
+      setStats({ total: 0, newMonth: 0, ideal: 0 });
+    }
+  }
+
+  function buildFilters(companyIdValue: string) {
+    const filters: { field: string; operator: '==' | '>='; value: unknown }[] = [{ field: 'company_id', operator: '==', value: companyIdValue }];
+    if (jobFilter !== 'all') filters.push({ field: 'job_offer_id', operator: '==', value: jobFilter });
+    if (experienceFilter !== 'all') filters.push({ field: 'experience', operator: '==', value: experienceFilter });
+    if (minMatch > 0) filters.push({ field: 'match_percent', operator: '>=', value: minMatch });
+    return filters;
+  }
+
+  async function fetchPage(args: { companyId: string; cursor: string | null; nextPageIndex: number }) {
+    setLoadingList(true);
+    try {
+      const data = await queryDocuments<CompanyCandidate>(
+        'company_candidates',
+        buildFilters(args.companyId),
+        { field: 'created_at', direction: 'desc' },
+        PAGE_SIZE + 1,
+        args.cursor ? [args.cursor] : undefined
+      );
+      const slice = data.slice(0, PAGE_SIZE);
+      setCandidates(slice);
+      setHasNextPage(data.length > PAGE_SIZE);
+
+      const lastCursor = slice.length ? slice[slice.length - 1].created_at : null;
+      setPageCursors((prev) => {
+        const next = prev.slice(0);
+        next[args.nextPageIndex] = args.cursor;
+        if (next.length === args.nextPageIndex + 1) next.push(lastCursor);
+        return next;
+      });
+    } catch (error) {
+      console.error('Error fetching candidates:', error);
+      setCandidates([]);
+      setHasNextPage(false);
+    } finally {
+      setLoadingList(false);
+    }
+  }
+
+  const filteredCandidates = useMemo(() => {
+    const q = normalizeText(searchQuery);
+    const skillsQ = normalizeText(skillsFilter);
+    const skillTokens = skillsQ ? skillsQ.split(/\s+/g).filter(Boolean) : [];
+    if (!q && skillTokens.length === 0) return candidates;
+    return candidates.filter((c) => {
+      const name = normalizeText(c.name);
+      const role = normalizeText(c.desired_role);
+      const skills = (c.skills || []).map((s) => normalizeText(s));
+      const matchMain = !q || name.includes(q) || role.includes(q);
+      const matchSkills =
+        skillTokens.length === 0 ||
+        skillTokens.every((tok) => skills.some((s) => s.includes(tok)));
+      return matchMain && matchSkills;
+    });
+  }, [candidates, searchQuery, skillsFilter]);
+
+  const shownFrom = pageIndex * PAGE_SIZE + (filteredCandidates.length ? 1 : 0);
+  const shownTo = pageIndex * PAGE_SIZE + filteredCandidates.length;
+
+  function openCreate() {
+    setFormMode('create');
+    setEditTargetId(null);
+    setFormErrors({});
+    setFormValues({
+      name: '',
+      cpf: '',
+      email: '',
+      phone: '',
+      desired_role: '',
+      experience: 'mid',
+      skills: '',
+      job_offer_id: '',
+      match_percent: '',
+      stage: 'triage',
+    });
+    setFormOpen(true);
+  }
+
+  function openEdit(candidate: CompanyCandidate) {
+    setFormMode('edit');
+    setEditTargetId(candidate.id);
+    setFormErrors({});
+    setFormValues({
+      name: candidate.name,
+      cpf: formatCPF(candidate.cpf),
+      email: candidate.email,
+      phone: formatPhone(candidate.phone),
+      desired_role: candidate.desired_role,
+      experience: candidate.experience,
+      skills: (candidate.skills || []).join(', '),
+      job_offer_id: candidate.job_offer_id || '',
+      match_percent: candidate.match_percent !== null && candidate.match_percent !== undefined ? String(candidate.match_percent) : '',
+      stage: candidate.stage,
+    });
+    setFormOpen(true);
+  }
+
+  async function submitForm() {
+    if (!companyId) return;
+    const errs = validateCandidate(formValues, t);
+    setFormErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setSaving(true);
+    try {
+      const payload = toCandidatePayload(companyId, formValues);
+      if (formMode === 'create') {
+        await addDocument('company_candidates', { ...payload, created_at: new Date().toISOString() });
+        toast({ title: t.get('company.candidates.toast.created.title'), description: t.get('company.candidates.toast.created.description') });
+      } else if (editTargetId) {
+        await updateDocument('company_candidates', editTargetId, payload);
+        toast({ title: t.get('company.candidates.toast.updated.title'), description: t.get('company.candidates.toast.updated.description') });
+      }
+      setFormOpen(false);
+      setEditTargetId(null);
+      setFormMode('create');
+      setFormErrors({});
+      setPageIndex(0);
+      setPageCursors([null]);
+      await fetchStats(companyId);
+      await fetchPage({ companyId, cursor: null, nextPageIndex: 0 });
+    } catch (error) {
+      console.error('Error saving candidate:', error);
+      toast({ title: t.get('company.candidates.toast.error.title'), description: t.get('company.candidates.toast.error.description'), variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!companyId || !deleteTarget) return;
+    try {
+      await deleteDocument('company_candidates', deleteTarget.id);
+      toast({ title: t.get('company.candidates.toast.deleted.title'), description: t.get('company.candidates.toast.deleted.description') });
+      setDeleteTarget(null);
+      setPageIndex(0);
+      setPageCursors([null]);
+      await fetchStats(companyId);
+      await fetchPage({ companyId, cursor: null, nextPageIndex: 0 });
+    } catch (error) {
+      console.error('Error deleting candidate:', error);
+      toast({
+        title: t.get('company.candidates.toast.error.title'),
+        description: t.get('company.candidates.toast.error.delete_failed'),
+        variant: 'destructive',
+      });
+    }
+  }
+
+  async function handleExport(format: 'csv' | 'xlsx') {
+    if (exportingRef.current) return;
+    if (filteredCandidates.length === 0) {
+      toast({ title: t.get('company.candidates.export.no_results.title'), description: t.get('company.candidates.export.no_results.description') });
+      return;
+    }
+    if (filteredCandidates.length > 10000) {
+      toast({ title: t.get('company.candidates.export.limit.title'), description: t.get('company.candidates.export.limit.description'), variant: 'destructive' });
+      return;
+    }
+
+    if (format === 'xlsx' && !xlsxModuleRef.current) {
+      exportingRef.current = 'xlsx';
+      try {
+        if (!xlsxLoaderRef.current) xlsxLoaderRef.current = import('xlsx');
+        const mod = await xlsxLoaderRef.current;
+        xlsxModuleRef.current = mod;
+      } catch {
+        toast({ title: t.get('company.candidates.export.error.title'), description: t.get('company.candidates.export.error.xlsx_prepare'), variant: 'destructive' });
+      } finally {
+        exportingRef.current = null;
+      }
+      toast({ title: t.get('company.candidates.export.xlsx_ready.title'), description: t.get('company.candidates.export.xlsx_ready.description') });
+      return;
+    }
+
+    exportingRef.current = format;
+    try {
+      const header = [
+        t.get('company.candidates.export.columns.name'),
+        t.get('company.candidates.export.columns.cpf'),
+        t.get('company.candidates.export.columns.email'),
+        t.get('company.candidates.export.columns.phone'),
+        t.get('company.candidates.export.columns.desired_role'),
+        t.get('company.candidates.export.columns.experience'),
+        t.get('company.candidates.export.columns.skills'),
+      ];
+      const rows: string[][] = new Array(filteredCandidates.length + 1);
+      rows[0] = header;
+      for (let i = 0; i < filteredCandidates.length; i += 1) {
+        const c = filteredCandidates[i];
+        rows[i + 1] = [
+          c.name,
+          formatCPF(c.cpf),
+          c.email,
+          formatPhone(c.phone),
+          c.desired_role,
+          experienceLabel(c.experience, t),
+          (c.skills || []).join(' | '),
+        ];
+      }
+
+      const baseName = `candidatos_export_${getExportTimestamp()}`;
+      if (format === 'csv') {
+        const lines: string[] = new Array(rows.length);
+        for (let i = 0; i < rows.length; i += 1) {
+          const row = rows[i];
+          const cols: string[] = new Array(row.length);
+          for (let j = 0; j < row.length; j += 1) cols[j] = csvEscape(row[j] ?? '');
+          lines[i] = cols.join(',');
+        }
+        const csv = `\uFEFF${lines.join('\r\n')}`;
+        downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${baseName}.csv`);
+      } else {
+        const XLSX = xlsxModuleRef.current;
+        if (!XLSX) throw new Error(t.get('company.candidates.export.error.xlsx_missing'));
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, t.get('company.candidates.title'));
+        const out = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        downloadBlob(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${baseName}.xlsx`);
+      }
+
+      toast({
+        title: t.get('company.candidates.export.done.title'),
+        description: t.get('company.candidates.export.done.description', { count: filteredCandidates.length }),
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : t.get('company.candidates.export.error.generic');
+      toast({ title: t.get('company.candidates.export.error.title'), description: message, variant: 'destructive' });
+    } finally {
+      exportingRef.current = null;
+    }
+  }
+
+  const offerTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const o of offers) map.set(o.id, o.title);
+    return map;
+  }, [offers]);
+
+  if (loadingInitial) {
+    return (
+      <div className="cpc-card p-10 text-center text-sm text-muted-foreground">
+        {t.get('company.candidates.loading')}
+      </div>
+    );
+  }
+
+  if (!companyId) {
+    return (
+      <div className="cpc-card p-10 text-center text-sm text-muted-foreground">
+        {t.get('company.candidates.companyNotFound')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground">
+            <span>{t.get('company.candidates.breadcrumbs.root')}</span>
+            <span className="text-muted-foreground/60">›</span>
+            <span className="text-primary">{t.get('company.candidates.breadcrumbs.current')}</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-4">{t.get('company.candidates.title')}</h1>
+          <p className="text-muted-foreground mt-2">{t.get('company.candidates.subtitle')}</p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button variant="outline" onClick={() => void handleExport('csv')} disabled={loadingList}>
+            <Download className="h-4 w-4 mr-2" />
+            {t.get('company.candidates.export.buttons.csv')}
+          </Button>
+          <Button variant="outline" onClick={() => void handleExport('xlsx')} disabled={loadingList}>
+            <Download className="h-4 w-4 mr-2" />
+            {t.get('company.candidates.export.buttons.xlsx')}
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4 mr-2" />
+            {t.get('company.candidates.actions.new')}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="cpc-card p-5 border-l-4 border-l-cpc-blue">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.kpis.total')}</p>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-3xl font-bold mt-2">{stats.total.toLocaleString('pt-PT')}</p>
+        </div>
+        <div className="cpc-card p-5 border-l-4 border-l-emerald-500">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.kpis.newMonth')}</p>
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-3xl font-bold mt-2">{stats.newMonth.toLocaleString('pt-PT')}</p>
+        </div>
+        <div className="cpc-card p-5 border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.kpis.ideal')}</p>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <p className="text-3xl font-bold mt-2">{stats.ideal.toLocaleString('pt-PT')}</p>
+        </div>
+      </div>
+
+      <div className="cpc-card overflow-hidden">
+        <div className="p-4 md:p-6">
+          <div className="grid gap-4 lg:grid-cols-4">
+            <div className="space-y-2">
+              <label htmlFor="candidate-filter-job" className="text-xs font-semibold tracking-widest text-muted-foreground">
+                {t.get('company.candidates.filters.job')}
+              </label>
+              <select
+                id="candidate-filter-job"
+                value={jobFilter}
+                onChange={(e) => setJobFilter(e.target.value)}
+                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
+              >
+                <option value="all">{t.get('company.candidates.filters.job_all')}</option>
+                {offers.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="candidate-filter-skills" className="text-xs font-semibold tracking-widest text-muted-foreground">
+                {t.get('company.candidates.filters.skills')}
+              </label>
+              <Input
+                id="candidate-filter-skills"
+                value={skillsFilter}
+                onChange={(e) => setSkillsFilter(e.target.value)}
+                placeholder={t.get('company.candidates.filters.skills_placeholder')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="candidate-filter-exp" className="text-xs font-semibold tracking-widest text-muted-foreground">
+                {t.get('company.candidates.filters.experience')}
+              </label>
+              <select
+                id="candidate-filter-exp"
+                value={experienceFilter}
+                onChange={(e) => setExperienceFilter(e.target.value)}
+                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
+              >
+                <option value="all">{t.get('company.candidates.filters.experience_all')}</option>
+                <option value="junior">{t.get('company.candidates.experience.junior')}</option>
+                <option value="mid">{t.get('company.candidates.experience.mid')}</option>
+                <option value="senior">{t.get('company.candidates.experience.senior')}</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="candidate-filter-match" className="text-xs font-semibold tracking-widest text-muted-foreground">
+                  {t.get('company.candidates.filters.minMatch')}
+                </label>
+                <span className="text-xs font-semibold text-primary">{minMatch}%</span>
+              </div>
+              <input
+                id="candidate-filter-match"
+                type="range"
+                min={0}
+                max={100}
+                value={minMatch}
+                onChange={(e) => setMinMatch(Number(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="w-full md:w-[380px] relative">
+              <Search className="h-4 w-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
+              <Input
+                id="candidate-search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t.get('company.candidates.search.placeholder')}
+                className="pl-11 rounded-full bg-muted/30 border-muted"
+                aria-label={t.get('company.candidates.search.aria')}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t.get('company.candidates.pagination.summary', { from: shownFrom, to: shownTo })}
+            </p>
+          </div>
+        </div>
+
+        <div className="border-t">
+          {loadingList ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">{t.get('company.candidates.loading')}</div>
+          ) : filteredCandidates.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">{t.get('company.candidates.empty')}</div>
+          ) : (
+            <div className="divide-y">
+              <div className="hidden md:grid grid-cols-[minmax(0,2fr)_140px_minmax(0,2fr)_180px_180px] gap-4 px-6 py-4 text-xs font-semibold tracking-widest text-muted-foreground bg-muted/20">
+                <span>{t.get('company.candidates.table.headers.candidate')}</span>
+                <span className="text-center">{t.get('company.candidates.table.headers.match')}</span>
+                <span>{t.get('company.candidates.table.headers.skills')}</span>
+                <span>{t.get('company.candidates.table.headers.stage')}</span>
+                <span className="text-right">{t.get('company.candidates.table.headers.actions')}</span>
+              </div>
+              {filteredCandidates.map((c) => (
+                <div
+                  key={c.id}
+                  className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_140px_minmax(0,2fr)_180px_180px] gap-4 px-4 md:px-6 py-4 items-center"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">{c.name}</p>
+                    <p className="text-sm text-muted-foreground truncate">{c.desired_role}</p>
+                    {c.job_offer_id ? (
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {t.get('company.candidates.table.jobPrefix')} {offerTitleById.get(c.job_offer_id) || t.get('company.candidates.table.jobFallback')}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex justify-start md:justify-center">
+                    <MatchRing value={c.match_percent ?? 0} />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {(c.skills || []).slice(0, 3).map((s) => (
+                      <span key={s} className="text-xs px-2 py-1 rounded-md bg-muted border">
+                        {s}
+                      </span>
+                    ))}
+                    {(c.skills || []).length > 3 ? (
+                      <span className="text-xs px-2 py-1 rounded-md bg-muted border">+{(c.skills || []).length - 3}</span>
+                    ) : null}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${stagePill(c.stage)}`}>
+                      {stageLabel(c.stage, t)}
+                    </span>
+                    <span className="text-xs text-muted-foreground hidden lg:inline">
+                      {experienceLabel(c.experience, t)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
+                      aria-label={t.get('company.candidates.actions.view')}
+                      onClick={() => setDetailsTarget(c)}
+                    >
+                      <Eye className="h-4 w-4 text-primary" />
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
+                      aria-label={t.get('company.candidates.actions.edit')}
+                      onClick={() => openEdit(c)}
+                    >
+                      <Pencil className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                    <button
+                      type="button"
+                      className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
+                      aria-label={t.get('company.candidates.actions.delete')}
+                      onClick={() => setDeleteTarget(c)}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t p-4 md:p-6 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!companyId || pageIndex === 0) return;
+              const nextIndex = Math.max(0, pageIndex - 1);
+              const cursor = pageCursors[nextIndex] ?? null;
+              setPageIndex(nextIndex);
+              await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
+            }}
+            className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center disabled:opacity-50"
+            aria-label={t.get('company.candidates.pagination.prev')}
+            disabled={pageIndex === 0 || loadingList}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!companyId || !hasNextPage) return;
+              const nextIndex = pageIndex + 1;
+              const cursor = pageCursors[nextIndex] ?? candidates[candidates.length - 1]?.created_at ?? null;
+              setPageIndex(nextIndex);
+              await fetchPage({ companyId, cursor, nextPageIndex: nextIndex });
+            }}
+            className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center disabled:opacity-50"
+            aria-label={t.get('company.candidates.pagination.next')}
+            disabled={!hasNextPage || loadingList}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <Dialog open={!!detailsTarget} onOpenChange={(open) => { if (!open) setDetailsTarget(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{detailsTarget?.name || t.get('company.candidates.details.title')}</DialogTitle>
+            <DialogDescription>{t.get('company.candidates.details.description')}</DialogDescription>
+          </DialogHeader>
+          {detailsTarget ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border p-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.desired_role')}</p>
+                <p className="mt-1 font-medium">{detailsTarget.desired_role}</p>
+              </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.table.headers.match')}</p>
+                <div className="mt-2 flex items-center gap-3">
+                  <MatchRing value={detailsTarget.match_percent ?? 0} />
+                  <span className="text-sm text-muted-foreground">{t.get('company.candidates.details.matchHelp')}</span>
+                </div>
+              </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.cpf')}</p>
+                <p className="mt-1 font-medium">{formatCPF(detailsTarget.cpf)}</p>
+              </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.phone')}</p>
+                <p className="mt-1 font-medium">{formatPhone(detailsTarget.phone)}</p>
+              </div>
+              <div className="rounded-xl border p-4 md:col-span-2">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.email')}</p>
+                <p className="mt-1 font-medium break-words">{detailsTarget.email}</p>
+              </div>
+              <div className="rounded-xl border p-4 md:col-span-2">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.skills')}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(detailsTarget.skills || []).length ? (
+                    (detailsTarget.skills || []).map((s) => (
+                      <span key={s} className="text-xs px-2 py-1 rounded-md bg-muted border">
+                        {s}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t.get('company.candidates.details.noSkills')}</span>
+                  )}
+                </div>
+              </div>
+              {detailsTarget.job_offer_id ? (
+                <div className="rounded-xl border p-4 md:col-span-2">
+                  <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.filters.job')}</p>
+                  <p className="mt-1 font-medium">
+                    {offerTitleById.get(detailsTarget.job_offer_id) || t.get('company.candidates.table.jobFallback')}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDetailsTarget(null)}>
+              {t.get('company.candidates.details.close')}
+            </Button>
+            {detailsTarget ? (
+              <Link to="/dashboard/empresa/ofertas" className="inline-flex">
+                <Button>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {t.get('company.candidates.details.goToJobs')}
+                </Button>
+              </Link>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={formOpen} onOpenChange={(open) => { if (!open) setFormOpen(false); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {formMode === 'create' ? t.get('company.candidates.form.title_create') : t.get('company.candidates.form.title_edit')}
+            </DialogTitle>
+            <DialogDescription>{t.get('company.candidates.form.description')}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label htmlFor="cand-name" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.name')}
+              </label>
+              <Input
+                id="cand-name"
+                value={formValues.name}
+                onChange={(e) => setFormValues((p) => ({ ...p, name: e.target.value }))}
+                aria-invalid={!!formErrors.name}
+              />
+              {formErrors.name ? <p className="text-xs text-destructive">{formErrors.name}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-cpf" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.cpf')}
+              </label>
+              <Input
+                id="cand-cpf"
+                value={formValues.cpf}
+                onChange={(e) => setFormValues((p) => ({ ...p, cpf: e.target.value }))}
+                aria-invalid={!!formErrors.cpf}
+              />
+              {formErrors.cpf ? <p className="text-xs text-destructive">{formErrors.cpf}</p> : null}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="cand-email" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.email')}
+              </label>
+              <Input
+                id="cand-email"
+                value={formValues.email}
+                onChange={(e) => setFormValues((p) => ({ ...p, email: e.target.value }))}
+                aria-invalid={!!formErrors.email}
+              />
+              {formErrors.email ? <p className="text-xs text-destructive">{formErrors.email}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-phone" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.phone')}
+              </label>
+              <Input
+                id="cand-phone"
+                value={formValues.phone}
+                onChange={(e) => setFormValues((p) => ({ ...p, phone: e.target.value }))}
+                aria-invalid={!!formErrors.phone}
+              />
+              {formErrors.phone ? <p className="text-xs text-destructive">{formErrors.phone}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-role" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.desired_role')}
+              </label>
+              <Input
+                id="cand-role"
+                value={formValues.desired_role}
+                onChange={(e) => setFormValues((p) => ({ ...p, desired_role: e.target.value }))}
+                aria-invalid={!!formErrors.desired_role}
+              />
+              {formErrors.desired_role ? <p className="text-xs text-destructive">{formErrors.desired_role}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-exp" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.experience')}
+              </label>
+              <select
+                id="cand-exp"
+                value={formValues.experience}
+                onChange={(e) => setFormValues((p) => ({ ...p, experience: e.target.value as ExperienceLevel }))}
+                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
+                aria-invalid={!!formErrors.experience}
+              >
+                <option value="junior">{t.get('company.candidates.experience.junior')}</option>
+                <option value="mid">{t.get('company.candidates.experience.mid')}</option>
+                <option value="senior">{t.get('company.candidates.experience.senior')}</option>
+              </select>
+              {formErrors.experience ? <p className="text-xs text-destructive">{formErrors.experience}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-stage" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.stage')}
+              </label>
+              <select
+                id="cand-stage"
+                value={formValues.stage}
+                onChange={(e) => setFormValues((p) => ({ ...p, stage: e.target.value as CandidateStage }))}
+                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
+                aria-invalid={!!formErrors.stage}
+              >
+                <option value="triage">{t.get('company.candidates.stage.triage')}</option>
+                <option value="interview">{t.get('company.candidates.stage.interview')}</option>
+                <option value="rejected">{t.get('company.candidates.stage.rejected')}</option>
+                <option value="hired">{t.get('company.candidates.stage.hired')}</option>
+              </select>
+              {formErrors.stage ? <p className="text-xs text-destructive">{formErrors.stage}</p> : null}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label htmlFor="cand-skills" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.skills')}
+              </label>
+              <Input
+                id="cand-skills"
+                value={formValues.skills}
+                onChange={(e) => setFormValues((p) => ({ ...p, skills: e.target.value }))}
+                placeholder={t.get('company.candidates.form.placeholders.skills')}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-job" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.job_offer')}
+              </label>
+              <select
+                id="cand-job"
+                value={formValues.job_offer_id}
+                onChange={(e) => setFormValues((p) => ({ ...p, job_offer_id: e.target.value }))}
+                className="h-11 w-full px-3 rounded-xl border border-input bg-background"
+              >
+                <option value="">{t.get('company.candidates.form.placeholders.job_offer')}</option>
+                {offers.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="cand-match" className="text-sm font-medium">
+                {t.get('company.candidates.form.labels.match')}
+              </label>
+              <Input
+                id="cand-match"
+                value={formValues.match_percent}
+                onChange={(e) => setFormValues((p) => ({ ...p, match_percent: e.target.value }))}
+                placeholder="0-100"
+                aria-invalid={!!formErrors.match_percent}
+              />
+              {formErrors.match_percent ? <p className="text-xs text-destructive">{formErrors.match_percent}</p> : null}
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setFormOpen(false)} disabled={saving}>
+              {t.get('company.candidates.form.buttons.cancel')}
+            </Button>
+            <Button onClick={() => void submitForm()} disabled={saving}>
+              {t.get('company.candidates.form.buttons.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.get('company.candidates.delete.title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.get('company.candidates.delete.description', { name: deleteTarget?.name || '' })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={saving}>{t.get('company.candidates.delete.buttons.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmDelete()} disabled={saving}>
+              {t.get('company.candidates.delete.buttons.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

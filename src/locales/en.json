@@ -1624,13 +1624,19 @@
       "backToDashboard": "Back to dashboard",
       "title": "New job posting",
       "subtitle": "Fill in the job details. After submission, it will be reviewed by the CPC team.",
+      "editTitle": "Edit job",
+      "editSubtitle": "Update the job details.",
       "toast": {
         "createdTitle": "Job created!",
-        "createdDesc": "Your job has been submitted for review."
+        "createdDesc": "Your job has been submitted for review.",
+        "updatedTitle": "Job updated!",
+        "updatedDesc": "Your changes have been saved."
       },
       "errors": {
         "companyNotFoundTitle": "Error",
         "companyNotFoundDesc": "Company profile not found.",
+        "loadFailedTitle": "Error",
+        "loadFailedDesc": "Could not load this job for editing.",
         "createFailedTitle": "Error",
         "createFailedDesc": "Could not create the job. Please try again."
       },
@@ -1663,6 +1669,7 @@
       "actions": {
         "cancel": "Cancel",
         "saving": "Saving...",
+        "save": "Save changes",
         "publish": "Publish job"
       }
     },
@@ -1670,19 +1677,74 @@
       "backToDashboard": "Back to dashboard",
       "title": "My jobs",
       "subtitle": "Manage your job postings",
+      "manageTitle": "My Jobs",
+      "manageSubtitle": "Manage, filter, and track your published jobs.",
       "actions": {
-        "newOffer": "New job"
+        "newOffer": "New job",
+        "publishNew": "Publish new job",
+        "viewCandidates": "View candidates",
+        "edit": "Edit",
+        "pause": "Pause",
+        "resume": "Resume",
+        "close": "Close"
+      },
+      "kpis": {
+        "total": "TOTAL",
+        "active": "ACTIVE",
+        "paused": "PAUSED",
+        "closed": "CLOSED"
+      },
+      "searchPlaceholder": "Search by title or location",
+      "searchAria": "Search jobs",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "in_review": "In review",
+        "paused": "Paused",
+        "closed": "Closed",
+        "dateFrom": "FROM",
+        "dateTo": "TO",
+        "sort": "SORT",
+        "sortAria": "Sort jobs",
+        "sortNewest": "Newest",
+        "sortOldest": "Oldest"
       },
       "status": {
         "active": "Active",
         "pending_review": "In review",
         "closed": "Closed",
-        "rejected": "Rejected"
+        "rejected": "Rejected",
+        "paused": "Paused",
+        "other": "Unknown status"
       },
       "empty": {
         "title": "No jobs",
         "subtitle": "You haven't published any job postings yet.",
-        "cta": "Create your first job"
+        "cta": "Create your first job",
+        "filtered": "No jobs found for the selected filters."
+      },
+      "loading": "Loading jobs...",
+      "table": {
+        "caption": "Published jobs list",
+        "headers": {
+          "title": "Job",
+          "published": "Created",
+          "status": "Status",
+          "applications": "Candidates",
+          "actions": "Actions"
+        },
+        "candidatesLabel": "candidates"
+      },
+      "pagination": {
+        "summary": "Showing {from}–{to} of {total}",
+        "prev": "Previous page",
+        "next": "Next page"
+      },
+      "toast": {
+        "updatedTitle": "Status updated",
+        "updatedDesc": "The job was updated successfully.",
+        "updateErrorTitle": "Error",
+        "updateErrorDesc": "Could not update the job status."
       },
       "applicationsCount": "{count} applications"
     },
@@ -1719,6 +1781,175 @@
           "date": "Date",
           "coverLetter": "Cover letter"
         }
+      }
+    },
+    "candidates": {
+      "loading": "Loading candidates...",
+      "companyNotFound": "Company profile not found.",
+      "breadcrumbs": {
+        "root": "CANDIDATES",
+        "current": "CANDIDATE MANAGEMENT"
+      },
+      "title": "Candidate Management",
+      "subtitle": "List, filter and manage your candidate database.",
+      "kpis": {
+        "total": "TOTAL CANDIDATES",
+        "newMonth": "NEW THIS MONTH",
+        "ideal": "IDEAL MATCHES"
+      },
+      "filters": {
+        "job": "FILTER BY JOB",
+        "job_all": "All Jobs",
+        "skills": "SKILLS",
+        "skills_placeholder": "Ex: React, Figma...",
+        "experience": "EXPERIENCE",
+        "experience_all": "Any level",
+        "minMatch": "MIN MATCH (%)"
+      },
+      "search": {
+        "placeholder": "Search by name or role",
+        "aria": "Search candidates"
+      },
+      "table": {
+        "headers": {
+          "candidate": "CANDIDATE / ROLE",
+          "match": "MATCH",
+          "skills": "SKILLS",
+          "stage": "STATUS",
+          "actions": "ACTION"
+        },
+        "jobPrefix": "Job:",
+        "jobFallback": "Job"
+      },
+      "pagination": {
+        "summary": "Showing {from}-{to}",
+        "prev": "Previous",
+        "next": "Next"
+      },
+      "empty": "No candidates for the current filters.",
+      "stage": {
+        "triage": "In triage",
+        "interview": "Interview scheduled",
+        "rejected": "Rejected",
+        "hired": "Hired"
+      },
+      "experience": {
+        "junior": "Junior",
+        "mid": "Mid",
+        "senior": "Senior"
+      },
+      "actions": {
+        "new": "New Candidate",
+        "view": "View details",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "form": {
+        "title_create": "Create candidate",
+        "title_edit": "Edit candidate",
+        "description": "Fill required fields and save your changes.",
+        "labels": {
+          "name": "Name *",
+          "cpf": "CPF *",
+          "email": "Email *",
+          "phone": "Phone *",
+          "desired_role": "Desired role *",
+          "experience": "Experience *",
+          "skills": "Skills",
+          "job_offer": "Linked job",
+          "match": "Match (%)",
+          "stage": "Status *"
+        },
+        "placeholders": {
+          "skills": "Ex: React, Node.js, TypeScript",
+          "job_offer": "None"
+        },
+        "buttons": {
+          "cancel": "Cancel",
+          "save": "Save"
+        },
+        "errors": {
+          "name": "Enter the name (min. 2 characters).",
+          "cpf": "Invalid CPF.",
+          "email": "Invalid email.",
+          "phone": "Invalid phone.",
+          "desired_role": "Enter the desired role.",
+          "experience": "Select experience.",
+          "stage": "Select status.",
+          "match": "Match must be between 0 and 100."
+        }
+      },
+      "delete": {
+        "title": "Confirm deletion",
+        "description": "Are you sure you want to delete candidate {name}?",
+        "buttons": {
+          "cancel": "Cancel",
+          "confirm": "Delete"
+        }
+      },
+      "toast": {
+        "created": {
+          "title": "Candidate created",
+          "description": "The candidate was added successfully."
+        },
+        "updated": {
+          "title": "Candidate updated",
+          "description": "Changes saved successfully."
+        },
+        "deleted": {
+          "title": "Candidate deleted",
+          "description": "The candidate was removed successfully."
+        },
+        "error": {
+          "title": "Error",
+          "description": "Could not complete the operation.",
+          "delete_failed": "Could not delete the candidate."
+        }
+      },
+      "export": {
+        "buttons": {
+          "csv": "Export CSV",
+          "xlsx": "Export Excel"
+        },
+        "columns": {
+          "name": "Name",
+          "cpf": "CPF",
+          "email": "Email",
+          "phone": "Phone",
+          "desired_role": "Desired role",
+          "experience": "Experience",
+          "skills": "Skills"
+        },
+        "no_results": {
+          "title": "No results",
+          "description": "There are no candidates to export with the current filters."
+        },
+        "limit": {
+          "title": "Limit exceeded",
+          "description": "Refine filters to export up to 10,000 records."
+        },
+        "xlsx_ready": {
+          "title": "Excel ready",
+          "description": "Excel exporter prepared. Click again to export."
+        },
+        "done": {
+          "title": "Export complete",
+          "description": "{count} candidates exported."
+        },
+        "error": {
+          "title": "Export error",
+          "generic": "Could not export.",
+          "xlsx_prepare": "Could not prepare the Excel exporter.",
+          "xlsx_missing": "XLSX module unavailable."
+        }
+      },
+      "details": {
+        "title": "Candidate details",
+        "description": "Registered information and skills.",
+        "matchHelp": "Match indicator (0-100).",
+        "noSkills": "No skills registered.",
+        "close": "Close",
+        "goToJobs": "View Jobs"
       }
     },
     "candidate": {

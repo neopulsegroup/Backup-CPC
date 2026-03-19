@@ -13,6 +13,92 @@ O **Portal Conecta Caminhos** é uma plataforma digital desenvolvida para facili
 ### Para Empresas
 *   **Registo e Perfil**: Criação de conta empresarial com validação de NIF e dados de contato.
 *   **Publicação de Oportunidades**: Ferramentas para divulgar vagas e conectar-se com talentos.
+*   **Gestão de Candidatos**: Cadastro, edição, eliminação, filtros, exportação (CSV/Excel) e visualização detalhada.
+
+## 👥 Módulo de Candidatos (Dashboard • Empresa)
+
+Rota: **`/dashboard/empresa/candidatos`**  
+Página: [CandidatesPage.tsx](file:///Users/renatomenezes/Desktop/Projetos/Portal-CPC/app/Backup/Backup-CPC-main/src/pages/dashboard/company/CandidatesPage.tsx)
+
+### Estrutura de dados (Firestore)
+
+Coleção: **`company_candidates`**
+
+Campos principais:
+* `company_id` (string) — ID do documento em `companies`
+* `name` (string)
+* `cpf` (string) — armazenado apenas com dígitos
+* `email` (string)
+* `phone` (string)
+* `desired_role` (string)
+* `experience` (`junior | mid | senior`)
+* `skills` (string[]) — lista normalizada (deduplicada)
+* `job_offer_id` (string | null) — associação opcional com `job_offers`
+* `match_percent` (number | null) — 0–100
+* `stage` (`triage | interview | rejected | hired`)
+* `created_at` (string ISO)
+* `updatedAt` (timestamp opcional)
+
+### Diagrama de classes
+
+```mermaid
+classDiagram
+  class Company {
+    +string id
+    +string user_id
+  }
+  class JobOffer {
+    +string id
+    +string company_id
+    +string title
+    +string status
+    +string created_at
+  }
+  class CompanyCandidate {
+    +string id
+    +string company_id
+    +string name
+    +string cpf
+    +string email
+    +string phone
+    +string desired_role
+    +Experience experience
+    +string[] skills
+    +string? job_offer_id
+    +number? match_percent
+    +Stage stage
+    +string created_at
+    +timestamp? updatedAt
+  }
+  Company "1" --> "many" JobOffer : company_id
+  Company "1" --> "many" CompanyCandidate : company_id
+  CompanyCandidate "0..1" --> "1" JobOffer : job_offer_id
+```
+
+### Fluxo de dados (CRUD + filtros + exportação)
+
+```mermaid
+flowchart TD
+  UI[CandidatesPage] -->|resolve companyId| CO[companies where user_id == uid]
+  UI -->|listar/paginar| Q1[query company_candidates by company_id + order created_at]
+  UI -->|filtrar localmente| F1[search (nome/cargo) + skills + experiência + match + vaga]
+  UI -->|criar| C1[addDocument company_candidates]
+  UI -->|editar| U1[updateDocument company_candidates/{id}]
+  UI -->|eliminar| D1[deleteDocument company_candidates/{id}]
+  UI -->|export CSV| E1[gera arquivo CSV no browser]
+  UI -->|export Excel| E2[import lazy xlsx + gera .xlsx]
+```
+
+### Segurança (inputs e regras)
+
+* Sanitização: remoção de caracteres de controlo, normalização de email/telefone e armazenamento de CPF apenas com dígitos.
+* Validação: campos obrigatórios, email válido, CPF válido (dígitos verificadores), telefone mínimo, `match_percent` 0–100.
+* Proteção contra SQL injection: não há SQL no backend (Firestore). Ainda assim, os inputs são sanitizados e as operações são feitas por APIs tipadas (`addDocument`, `updateDocument`, `deleteDocument`) e regras de segurança.
+* Regras Firestore: [firestore.rules](file:///Users/renatomenezes/Desktop/Projetos/Portal-CPC/app/Backup/Backup-CPC-main/firestore.rules) inclui permissões para `company_candidates` e valida o vínculo `companies.user_id == request.auth.uid`.
+
+### Testes
+
+* Testes unitários: [CandidatesPage.test.ts](file:///Users/renatomenezes/Desktop/Projetos/Portal-CPC/app/Backup/Backup-CPC-main/src/pages/dashboard/company/CandidatesPage.test.ts)
 
 ### Funcionalidades Transversais
 *   **Autenticação Segura**: Sistema de login e registo robusto via Firebase Auth.

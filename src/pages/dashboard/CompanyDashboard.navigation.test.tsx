@@ -21,7 +21,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
     const translations: Record<string, string> = {
       'company.menu.title': 'Menu Empresa',
       'company.menu.overview': 'Visão geral',
-      'company.menu.offers': 'Ofertas',
+      'company.menu.offers': 'Minhas Vagas',
       'company.menu.applications': 'Candidaturas',
       'company.menu.new_offer': 'Nova Oferta',
       'company.menu.candidates': 'Candidatos',
@@ -78,7 +78,7 @@ describe('CompanyDashboard - navegação e estrutura', () => {
     expect(screen.getByText('Mensagens', { selector: 'p' })).toBeInTheDocument();
 
     expect(screen.getByText('Minhas ofertas')).toBeInTheDocument();
-    const offersLink = screen.getByRole('link', { name: 'Ofertas' });
+    const offersLink = screen.getByRole('link', { name: 'Minhas Vagas' });
     expect(offersLink.className).toContain('bg-primary');
 
     const user = userEvent.setup();
@@ -88,7 +88,7 @@ describe('CompanyDashboard - navegação e estrutura', () => {
       expect(screen.getByText('Criar oferta')).toBeInTheDocument();
     });
     expect(screen.getByRole('link', { name: 'Nova Oferta' }).className).toContain('bg-primary');
-    expect(screen.getByRole('link', { name: 'Ofertas' }).className).not.toContain('bg-primary');
+    expect(screen.getByRole('link', { name: 'Minhas Vagas' }).className).not.toContain('bg-primary');
 
     await user.click(screen.getByRole('link', { name: 'Perfil' }));
     expect(await screen.findByRole('heading', { name: 'Perfil da Empresa' })).toBeInTheDocument();

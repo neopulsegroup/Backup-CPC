@@ -33,6 +33,7 @@ import CreateJobPage from './company/CreateJobPage';
 import MyJobsPage from './company/MyJobsPage';
 import JobApplicationsPage from './company/JobApplicationsPage';
 import CandidateProfilePage from './company/CandidateProfilePage';
+import CandidatesPage from './company/CandidatesPage';
 
 function normalizeText(value?: string | null): string {
   if (!value) return '';
@@ -707,7 +708,7 @@ export default function CompanyDashboard() {
                 <Route path="ofertas/:jobId/candidaturas" element={<JobApplicationsPage />} />
                 <Route
                   path="candidatos"
-                  element={<div className="cpc-card p-8 text-center text-sm text-muted-foreground">{t.get('company.common.soon')}</div>}
+                  element={<CandidatesPage />}
                 />
                 <Route path="candidatos/:candidateId" element={<CandidateProfilePage />} />
               </Routes>

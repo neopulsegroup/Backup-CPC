@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { addDocument, queryDocuments } from '@/integrations/firebase/firestore';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { addDocument, getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,13 @@ import { ArrowLeft, Save } from 'lucide-react';
 export default function CreateJobPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const { toast } = useToast();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editJobId, setEditJobId] = useState<string | null>(null);
+  const [existingStatus, setExistingStatus] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -27,8 +30,14 @@ export default function CreateJobPage() {
   });
 
   useEffect(() => {
+    setEditJobId(searchParams.get('edit'));
     fetchCompany();
-  }, [user]);
+  }, [user, searchParams]);
+
+  useEffect(() => {
+    if (!companyId || !editJobId) return;
+    void fetchOfferForEdit({ companyId, jobId: editJobId });
+  }, [companyId, editJobId]);
 
   async function fetchCompany() {
     if (!user) return;
@@ -42,6 +51,52 @@ export default function CreateJobPage() {
 
     if (data[0]?.id) {
       setCompanyId(data[0].id);
+    }
+  }
+
+  async function fetchOfferForEdit(args: { companyId: string; jobId: string }) {
+    try {
+      const offer = await getDocument<{
+        id: string;
+        company_id?: string;
+        title?: string;
+        description?: string | null;
+        location?: string | null;
+        sector?: string | null;
+        contract_type?: string | null;
+        salary_range?: string | null;
+        requirements?: string | null;
+        status?: string;
+      }>('job_offers', args.jobId);
+
+      if (!offer || offer.company_id !== args.companyId) {
+        toast({
+          title: t.get('company.createJob.errors.loadFailedTitle'),
+          description: t.get('company.createJob.errors.loadFailedDesc'),
+          variant: 'destructive',
+        });
+        navigate('/dashboard/empresa/ofertas');
+        return;
+      }
+
+      setExistingStatus(offer.status ?? null);
+      setForm({
+        title: offer.title ?? '',
+        description: offer.description ?? '',
+        location: offer.location ?? '',
+        sector: offer.sector ?? '',
+        contract_type: offer.contract_type ?? 'full_time',
+        salary_range: offer.salary_range ?? '',
+        requirements: offer.requirements ?? '',
+      });
+    } catch (error) {
+      console.error('Error loading offer for edit:', error);
+      toast({
+        title: t.get('company.createJob.errors.loadFailedTitle'),
+        description: t.get('company.createJob.errors.loadFailedDesc'),
+        variant: 'destructive',
+      });
+      navigate('/dashboard/empresa/ofertas');
     }
   }
 
@@ -60,26 +115,44 @@ export default function CreateJobPage() {
     setLoading(true);
 
     try {
-      await addDocument('job_offers', {
-        company_id: companyId,
-        title: form.title,
-        description: form.description || null,
-        location: form.location || null,
-        sector: form.sector || null,
-        contract_type: form.contract_type || null,
-        salary_range: form.salary_range || null,
-        requirements: form.requirements || null,
-        status: 'pending_review',
-        created_at: new Date().toISOString(),
-      });
+      if (editJobId) {
+        await updateDocument('job_offers', editJobId, {
+          title: form.title,
+          description: form.description || null,
+          location: form.location || null,
+          sector: form.sector || null,
+          contract_type: form.contract_type || null,
+          salary_range: form.salary_range || null,
+          requirements: form.requirements || null,
+          status: existingStatus ?? 'pending_review',
+        });
 
-      toast({
-        title: t.get('company.createJob.toast.createdTitle'),
-        description: t.get('company.createJob.toast.createdDesc'),
-      });
+        toast({
+          title: t.get('company.createJob.toast.updatedTitle'),
+          description: t.get('company.createJob.toast.updatedDesc'),
+        });
+      } else {
+        await addDocument('job_offers', {
+          company_id: companyId,
+          title: form.title,
+          description: form.description || null,
+          location: form.location || null,
+          sector: form.sector || null,
+          contract_type: form.contract_type || null,
+          salary_range: form.salary_range || null,
+          requirements: form.requirements || null,
+          status: 'pending_review',
+          created_at: new Date().toISOString(),
+        });
+
+        toast({
+          title: t.get('company.createJob.toast.createdTitle'),
+          description: t.get('company.createJob.toast.createdDesc'),
+        });
+      }
       navigate('/dashboard/empresa/ofertas');
     } catch (error) {
-      console.error('Error creating job:', error);
+      console.error('Error saving job:', error);
       toast({
         title: t.get('company.createJob.errors.createFailedTitle'),
         description: t.get('company.createJob.errors.createFailedDesc'),
@@ -101,9 +174,11 @@ export default function CreateJobPage() {
       </Link>
 
       <div className="max-w-2xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">{t.get('company.createJob.title')}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">
+          {editJobId ? t.get('company.createJob.editTitle') : t.get('company.createJob.title')}
+        </h1>
         <p className="text-muted-foreground mb-8">
-          {t.get('company.createJob.subtitle')}
+          {editJobId ? t.get('company.createJob.editSubtitle') : t.get('company.createJob.subtitle')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -200,7 +275,7 @@ export default function CreateJobPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  {t.get('company.createJob.actions.publish')}
+                  {editJobId ? t.get('company.createJob.actions.save') : t.get('company.createJob.actions.publish')}
                 </>
               )}
             </Button>

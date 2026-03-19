@@ -82,6 +82,16 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/job_offers/$(jobId));
     }
 
+    function companyDoc(companyId) {
+      return get(/databases/$(database)/documents/companies/$(companyId));
+    }
+
+    function companyOwnerByCompanyId(companyId) {
+      return isCompany()
+        && exists(/databases/$(database)/documents/companies/$(companyId))
+        && companyDoc(companyId).data.user_id == request.auth.uid;
+    }
+
     // Users collection
     match /users/{userId} {
       allow read: if (isAuthenticated() && isOwner(userId)) || isCpcStaff();
@@ -135,12 +145,12 @@ service cloud.firestore {
         (
           resource.data.status == 'active' ||
           isCpcStaff() ||
-          (isCompany() && resource.data.company_id == request.auth.uid)
+          (isCompany() && companyOwnerByCompanyId(resource.data.company_id))
         );
-      allow create: if isCompany() &&
-        request.resource.data.company_id == request.auth.uid;
+      allow create: if isCompany()
+        && companyOwnerByCompanyId(request.resource.data.company_id);
       allow update: if isCpcStaff() ||
-        (isCompany() && resource.data.company_id == request.auth.uid);
+        (isCompany() && companyOwnerByCompanyId(resource.data.company_id));
       allow delete: if isCpcStaff();
     }
 
@@ -151,7 +161,7 @@ service cloud.firestore {
         (
           isCompany() &&
           jobOffer(resource.data.job_id).exists() &&
-          jobOffer(resource.data.job_id).data.company_id == request.auth.uid
+          companyOwnerByCompanyId(jobOffer(resource.data.job_id).data.company_id)
         );
       allow create: if isAccountEnabled() &&
         request.resource.data.applicant_id == request.auth.uid &&
@@ -160,9 +170,33 @@ service cloud.firestore {
         (
           isCompany() &&
           jobOffer(resource.data.job_id).exists() &&
-          jobOffer(resource.data.job_id).data.company_id == request.auth.uid
+          companyOwnerByCompanyId(jobOffer(resource.data.job_id).data.company_id)
         );
       allow delete: if isCpcStaff();
+    }
+
+    match /company_candidates/{candidateId} {
+      allow read: if isCpcStaff() || (isCompany() && companyOwnerByCompanyId(resource.data.company_id));
+      allow create: if isCompany()
+        && companyOwnerByCompanyId(request.resource.data.company_id)
+        && request.resource.data.keys().hasAll(['company_id', 'name', 'cpf', 'email', 'phone', 'desired_role', 'experience', 'stage', 'created_at'])
+        && request.resource.data.keys().hasOnly([
+          'company_id',
+          'name',
+          'cpf',
+          'email',
+          'phone',
+          'desired_role',
+          'experience',
+          'skills',
+          'job_offer_id',
+          'match_percent',
+          'stage',
+          'created_at',
+          'updatedAt'
+        ]);
+      allow update: if isCpcStaff() || (isCompany() && companyOwnerByCompanyId(resource.data.company_id));
+      allow delete: if isCpcStaff() || (isCompany() && companyOwnerByCompanyId(resource.data.company_id));
     }
 
     // Trails and modules (content)

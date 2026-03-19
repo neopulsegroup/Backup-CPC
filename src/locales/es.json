@@ -1624,13 +1624,19 @@
       "backToDashboard": "Volver al panel",
       "title": "Nueva oferta de empleo",
       "subtitle": "Completa los detalles de la oferta. Tras enviarla, el equipo CPC la revisará.",
+      "editTitle": "Editar vacante",
+      "editSubtitle": "Actualiza los detalles de la vacante.",
       "toast": {
         "createdTitle": "¡Oferta creada!",
-        "createdDesc": "Tu oferta se ha enviado para revisión."
+        "createdDesc": "Tu oferta se ha enviado para revisión.",
+        "updatedTitle": "¡Vacante actualizada!",
+        "updatedDesc": "Los cambios se han guardado correctamente."
       },
       "errors": {
         "companyNotFoundTitle": "Error",
         "companyNotFoundDesc": "No se encontró el perfil de empresa.",
+        "loadFailedTitle": "Error",
+        "loadFailedDesc": "No se pudo cargar esta vacante para editarla.",
         "createFailedTitle": "Error",
         "createFailedDesc": "No se pudo crear la oferta. Inténtalo de nuevo."
       },
@@ -1663,6 +1669,7 @@
       "actions": {
         "cancel": "Cancelar",
         "saving": "Guardando...",
+        "save": "Guardar cambios",
         "publish": "Publicar oferta"
       }
     },
@@ -1670,19 +1677,74 @@
       "backToDashboard": "Volver al panel",
       "title": "Mis ofertas",
       "subtitle": "Gestiona tus ofertas de empleo",
+      "manageTitle": "Mis vacantes",
+      "manageSubtitle": "Gestiona, filtra y sigue tus vacantes publicadas.",
       "actions": {
-        "newOffer": "Nueva oferta"
+        "newOffer": "Nueva oferta",
+        "publishNew": "Publicar nueva vacante",
+        "viewCandidates": "Ver candidatos",
+        "edit": "Editar",
+        "pause": "Pausar",
+        "resume": "Reanudar",
+        "close": "Cerrar"
+      },
+      "kpis": {
+        "total": "TOTAL",
+        "active": "ACTIVAS",
+        "paused": "PAUSADAS",
+        "closed": "CERRADAS"
+      },
+      "searchPlaceholder": "Buscar por título o ubicación",
+      "searchAria": "Buscar vacantes",
+      "filters": {
+        "all": "Todas",
+        "active": "Activas",
+        "in_review": "En revisión",
+        "paused": "Pausadas",
+        "closed": "Cerradas",
+        "dateFrom": "DESDE",
+        "dateTo": "HASTA",
+        "sort": "ORDENAR",
+        "sortAria": "Ordenar vacantes",
+        "sortNewest": "Más recientes",
+        "sortOldest": "Más antiguas"
       },
       "status": {
         "active": "Activa",
         "pending_review": "En revisión",
         "closed": "Cerrada",
-        "rejected": "Rechazada"
+        "rejected": "Rechazada",
+        "paused": "Pausada",
+        "other": "Estado desconocido"
       },
       "empty": {
         "title": "Sin ofertas",
         "subtitle": "Aún no has publicado ninguna oferta de empleo.",
-        "cta": "Crear primera oferta"
+        "cta": "Crear primera oferta",
+        "filtered": "No se encontraron vacantes para los filtros seleccionados."
+      },
+      "loading": "Cargando vacantes...",
+      "table": {
+        "caption": "Lista de vacantes publicadas",
+        "headers": {
+          "title": "Vacante",
+          "published": "Creada",
+          "status": "Estado",
+          "applications": "Candidatos",
+          "actions": "Acciones"
+        },
+        "candidatesLabel": "candidatos"
+      },
+      "pagination": {
+        "summary": "Mostrando {from}–{to} de {total}",
+        "prev": "Página anterior",
+        "next": "Página siguiente"
+      },
+      "toast": {
+        "updatedTitle": "Estado actualizado",
+        "updatedDesc": "La vacante se actualizó correctamente.",
+        "updateErrorTitle": "Error",
+        "updateErrorDesc": "No se pudo actualizar el estado de la vacante."
       },
       "applicationsCount": "{count} candidaturas"
     },
@@ -1719,6 +1781,175 @@
           "date": "Fecha",
           "coverLetter": "Carta de presentación"
         }
+      }
+    },
+    "candidates": {
+      "loading": "Cargando candidatos...",
+      "companyNotFound": "Perfil de empresa no encontrado.",
+      "breadcrumbs": {
+        "root": "CANDIDATOS",
+        "current": "GESTIÓN DE CANDIDATOS"
+      },
+      "title": "Gestión de Candidatos",
+      "subtitle": "Lista, filtra y gestiona tu base de candidatos.",
+      "kpis": {
+        "total": "TOTAL CANDIDATOS",
+        "newMonth": "NUEVOS ESTE MES",
+        "ideal": "MATCHES IDEALES"
+      },
+      "filters": {
+        "job": "FILTRAR POR VACANTE",
+        "job_all": "Todas las Vacantes",
+        "skills": "COMPETENCIAS",
+        "skills_placeholder": "Ej: React, Figma...",
+        "experience": "EXPERIENCIA",
+        "experience_all": "Cualquier nivel",
+        "minMatch": "MÍNIMO MATCH (%)"
+      },
+      "search": {
+        "placeholder": "Buscar por nombre o cargo",
+        "aria": "Buscar candidatos"
+      },
+      "table": {
+        "headers": {
+          "candidate": "CANDIDATO / CARGO",
+          "match": "MATCH",
+          "skills": "COMPETENCIAS",
+          "stage": "ESTADO",
+          "actions": "ACCIÓN"
+        },
+        "jobPrefix": "Vacante:",
+        "jobFallback": "Vacante"
+      },
+      "pagination": {
+        "summary": "Mostrando {from}-{to}",
+        "prev": "Anterior",
+        "next": "Siguiente"
+      },
+      "empty": "No hay candidatos con los filtros actuales.",
+      "stage": {
+        "triage": "En evaluación",
+        "interview": "Entrevista programada",
+        "rejected": "Rechazado",
+        "hired": "Contratado"
+      },
+      "experience": {
+        "junior": "Junior",
+        "mid": "Intermedio",
+        "senior": "Senior"
+      },
+      "actions": {
+        "new": "Nuevo Candidato",
+        "view": "Ver detalles",
+        "edit": "Editar",
+        "delete": "Eliminar"
+      },
+      "form": {
+        "title_create": "Crear candidato",
+        "title_edit": "Editar candidato",
+        "description": "Completa los campos obligatorios y guarda los cambios.",
+        "labels": {
+          "name": "Nombre *",
+          "cpf": "CPF *",
+          "email": "Email *",
+          "phone": "Teléfono *",
+          "desired_role": "Cargo deseado *",
+          "experience": "Experiencia *",
+          "skills": "Competencias",
+          "job_offer": "Vacante vinculada",
+          "match": "Match (%)",
+          "stage": "Estado *"
+        },
+        "placeholders": {
+          "skills": "Ej: React, Node.js, TypeScript",
+          "job_offer": "Ninguna"
+        },
+        "buttons": {
+          "cancel": "Cancelar",
+          "save": "Guardar"
+        },
+        "errors": {
+          "name": "Introduce el nombre (mín. 2 caracteres).",
+          "cpf": "CPF inválido.",
+          "email": "Email inválido.",
+          "phone": "Teléfono inválido.",
+          "desired_role": "Introduce el cargo deseado.",
+          "experience": "Selecciona la experiencia.",
+          "stage": "Selecciona el estado.",
+          "match": "El match debe estar entre 0 y 100."
+        }
+      },
+      "delete": {
+        "title": "Confirmar eliminación",
+        "description": "¿Seguro que deseas eliminar al candidato {name}?",
+        "buttons": {
+          "cancel": "Cancelar",
+          "confirm": "Eliminar"
+        }
+      },
+      "toast": {
+        "created": {
+          "title": "Candidato creado",
+          "description": "El candidato se agregó correctamente."
+        },
+        "updated": {
+          "title": "Candidato actualizado",
+          "description": "Cambios guardados correctamente."
+        },
+        "deleted": {
+          "title": "Candidato eliminado",
+          "description": "El candidato se eliminó correctamente."
+        },
+        "error": {
+          "title": "Error",
+          "description": "No se pudo completar la operación.",
+          "delete_failed": "No se pudo eliminar al candidato."
+        }
+      },
+      "export": {
+        "buttons": {
+          "csv": "Exportar CSV",
+          "xlsx": "Exportar Excel"
+        },
+        "columns": {
+          "name": "Nombre",
+          "cpf": "CPF",
+          "email": "Email",
+          "phone": "Teléfono",
+          "desired_role": "Cargo deseado",
+          "experience": "Experiencia",
+          "skills": "Competencias"
+        },
+        "no_results": {
+          "title": "Sin resultados",
+          "description": "No hay candidatos para exportar con los filtros actuales."
+        },
+        "limit": {
+          "title": "Límite excedido",
+          "description": "Refina los filtros para exportar hasta 10.000 registros."
+        },
+        "xlsx_ready": {
+          "title": "Excel listo",
+          "description": "Exportador Excel preparado. Haz clic de nuevo para exportar."
+        },
+        "done": {
+          "title": "Exportación completada",
+          "description": "Se exportaron {count} candidatos."
+        },
+        "error": {
+          "title": "Error al exportar",
+          "generic": "No se pudo exportar.",
+          "xlsx_prepare": "No se pudo preparar el exportador Excel.",
+          "xlsx_missing": "Módulo XLSX no disponible."
+        }
+      },
+      "details": {
+        "title": "Detalles del candidato",
+        "description": "Información y competencias registradas.",
+        "matchHelp": "Indicador de match (0-100).",
+        "noSkills": "Sin competencias registradas.",
+        "close": "Cerrar",
+        "goToJobs": "Ver Vacantes"
       }
     },
     "candidate": {
