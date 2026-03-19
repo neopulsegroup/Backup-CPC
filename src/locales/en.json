@@ -1,0 +1,1755 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "howItWorks": "How It Works",
+    "contact": "Contacts",
+    "login": "Login",
+    "register": "Register",
+    "dashboard": "Dashboard",
+    "logout": "Logout"
+  },
+  "header": {
+    "logoAlt": "CPC logo",
+    "taglineLine1": "Connecting",
+    "taglineLine2": "People & Companies"
+  },
+  "about": {
+    "title": "About Portal CPC",
+    "subtitle": "Learn about our mission and the values that drive us.",
+    "mission": "Our Mission",
+    "missionText": "To facilitate the socio-professional integration of migrants in Portugal, creating sustainable bridges between talent and opportunity.",
+    "missionQuote": "CPC was born from the need to create bridges between migrants and the Portuguese labor market, offering a complete path of training, support and integration.",
+    "values": "Our Values",
+    "areas": "Target Areas"
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "subtitle": "A structured path to your success.",
+    "steps": {
+      "step1": {
+        "title": "Specialized Training",
+        "description": "Technical and cultural training."
+      },
+      "step2": {
+        "title": "Close Support",
+        "description": "Mentoring and legal/social support."
+      },
+      "step3": {
+        "title": "Market Integration",
+        "description": "Direct connection to partner companies."
+      }
+    },
+    "ctaTitle": "Ready to start your journey?",
+    "ctaSubtitle": "Register for free and start your integration journey today."
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We are here to help with any questions.",
+    "info": {
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "hours": "Hours"
+    },
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "message": "Message",
+      "submit": "Send Message",
+      "success": "Message sent successfully!",
+      "sent": "Message Sent!",
+      "sentSubtitle": "We will get in touch soon.",
+      "sendAnother": "Send another message",
+      "placeholderName": "Your name",
+      "placeholderEmail": "example@email.com",
+      "placeholderMessage": "How can we help?"
+    },
+    "faqTitle": "Frequently Asked Questions",
+    "faqs": [
+      {
+        "q": "Is the service free?",
+        "a": "Yes, all CPC services are completely free for migrants."
+      },
+      {
+        "q": "Do I need documents to register?",
+        "a": "No documents are required to create an account. Documentation will be requested as needed during the process."
+      },
+      {
+        "q": "In what languages can I receive support?",
+        "a": "We offer support in Portuguese, English, and other languages through cultural mediators."
+      }
+    ]
+  },
+  "helpCenter": {
+    "title": "How can we help?",
+    "searchPlaceholder": "Search by topics, keywords or questions...",
+    "frequentTopicsLabel": "Popular topics:",
+    "frequentTopics": [
+      "Appointments",
+      "Work Visa",
+      "AIMA"
+    ],
+    "categories": {
+      "migrants": {
+        "title": "For Migrants",
+        "items": [
+          "Integration Trails",
+          "Appointments",
+          "Job Search"
+        ]
+      },
+      "companies": {
+        "title": "For Companies",
+        "items": [
+          "Job Management",
+          "Candidate Screening",
+          "Legal Compliance"
+        ]
+      },
+      "support": {
+        "title": "Technical Support",
+        "items": [
+          "Login Issues",
+          "Access & Permissions",
+          "Account Recovery"
+        ]
+      },
+      "legal": {
+        "title": "Legal Questions",
+        "items": [
+          "Visas & Residency",
+          "AIMA & Documentation",
+          "Worker Rights"
+        ]
+      }
+    },
+    "popular": {
+      "title": "Popular Articles",
+      "subtitle": "The most searched answers by our community in one place.",
+      "viewAll": "View all articles",
+      "articles": {
+        "profileUpdate": "How do I update my profile?",
+        "freeForMigrants": "Is the platform free for migrants?",
+        "validateApplication": "How do I validate an application?"
+      }
+    },
+    "noResults": "No articles found for your search.",
+    "cta": {
+      "title": "Still need help?",
+      "subtitle": "Our support team is available to answer your questions in real time. Choose your preferred channel.",
+      "chat": "Contact",
+      "whatsapp": "WhatsApp Support"
+    }
+  },
+  "comingSoon": {
+    "title": "We are building something new for you",
+    "subtitle": "This feature is under development to ensure the best socio-professional integration experience",
+    "features": {
+      "findTalent": "Find Talent",
+      "findWork": "Find Work",
+      "training": "Training Catalog",
+      "terms": "Terms of Service"
+    },
+    "actions": {
+      "backHome": "Back to Home",
+      "contact": "Contact Support"
+    }
+  },
+  "hero": {
+    "title": "Uniting Talent",
+    "titleHighlight": "Without Borders",
+    "subtitle": "A platform for socio-professional integration, connecting migrants with technical teams and visionary companies ready to grow together.",
+    "iAm": "I am a",
+    "migrant": "Migrant",
+    "company": "Company"
+  },
+  "stats": {
+    "professionals": "Connected Professionals",
+    "companies": "Partner Companies",
+    "success": "Success Rate",
+    "trails": "Training Programs"
+  },
+  "process": {
+    "badge": "Our Process",
+    "title": "How Portal CPC works",
+    "subtitle": "We simplify the journey, for both talent and organizations, across three fundamental pillars of success.",
+    "step1": {
+      "title": "Specialized Training",
+      "description": "Access to technical workshops, language courses, and soft skills training adapted to current market demands."
+    },
+    "step2": {
+      "title": "Personalized Support",
+      "description": "Dedicated mentors guide you through legal frameworks, cultural integration, and career planning stages."
+    },
+    "step3": {
+      "title": "Professional Integration",
+      "description": "Direct connection to a network of partner companies seeking diverse talent to enrich their teams."
+    }
+  },
+  "features": {
+    "title": "More than just a job portal",
+    "description": "Portal CPC was born from the conviction that diversity drives innovation. We are building a bridge where human potential meets opportunity, regardless of origin.",
+    "item1": "Ethical recruitment practices",
+    "item2": "Sustainable career development",
+    "item3": "Community-based support network",
+    "cta": "Learn more about our mission"
+  },
+  "cta": {
+    "title": "Ready to start?",
+    "subtitle": "Join our community today.",
+    "register": "Register Now",
+    "contact": "Contact"
+  },
+  "footer": {
+    "logoAlt": "CPC logo",
+    "tagline": "Connecting People and Companies through meaningful opportunities and sustainable integration.",
+    "column1": "PLATFORM",
+    "column2": "SUPPORT",
+    "column3": "CONTACTS",
+    "findTalent": "Find Talent",
+    "findWork": "Find Work",
+    "training": "Training Catalog",
+    "pricing": "Pricing",
+    "help": "Help Center",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookie Policy",
+    "rights": "All rights reserved",
+    "coFunded": "Co-funded by:",
+    "supportLogosAlt": "Portugal Inovação Social, Algarve 2030, Portugal 2030, European Union",
+    "manageCookies": "Manage cookies",
+    "copyright": "© {year} Portal CPC. All rights reserved.",
+    "contacts": {
+      "email": "geral@cibea.eu",
+      "phone": "+351 225 088 015",
+      "location": "Algarve (Portugal)"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "errorTitle": "Error",
+    "validationTitle": "Validation",
+    "notFoundTitle": "Not found",
+    "save": "Save",
+    "create": "Create",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "next": "Next",
+    "back": "Back",
+    "submit": "Submit",
+    "yes": "Yes",
+    "no": "No",
+    "languages": {
+      "pt": "Portuguese",
+      "en": "English",
+      "es": "Spanish"
+    }
+  },
+  "auth": {
+    "selectRole": "Select your profile",
+    "subtitleAccountSelection": "Choose the type of account that best suits you",
+    "hasAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot your password?",
+    "welcomeBack": "Welcome back!",
+    "selectProfileError": "Please select your profile",
+    "passwordMismatch": "Passwords do not match",
+    "passwordLengthError": "Password must be at least 6 characters long",
+    "accountCreated": "Account created successfully!",
+    "backToSelection": "Back to profile selection",
+    "registerAs": "Register as:",
+    "loginError": "Incorrect email or password",
+    "accessDeniedBlockedTitle": "Account blocked",
+    "accessDeniedBlockedDescription": "Your access is blocked and you cannot sign in at this time.",
+    "accessDeniedDisabledTitle": "Account disabled",
+    "accessDeniedDisabledDescription": "Your access is disabled and you cannot sign in at this time.",
+    "accessDeniedContactAdmin": "Please contact the system administrator for more information.",
+    "accessDeniedBlockedToast": "Account blocked. Please contact the system administrator.",
+    "accessDeniedDisabledToast": "Account disabled. Please contact the system administrator.",
+    "companyName": "Company Name",
+    "fullName": "Full Name",
+    "placeholderCompany": "Your company",
+    "placeholderName": "Your name",
+    "nif": "Tax ID (NIF)",
+    "placeholderNif": "Tax Identification Number",
+    "roles": {
+      "migrant": "Migrant",
+      "migrantDesc": "Person seeking integration",
+      "company": "Company",
+      "companyDesc": "Company or employer"
+    }
+  },
+  "triage": {
+    "title": "Initial Triage",
+    "subtitle": "Answer a few questions so we can personalize your support.",
+    "start": "Start Triage",
+    "next": "Next",
+    "back": "Back",
+    "confirm": "Confirm",
+    "loading": "Saving answers...",
+    "success": "Triage completed successfully!",
+    "error": "An error occurred while saving your answers.",
+    "step_count": "Step {current} of {total}",
+    "select_placeholder": "Select an option",
+    "steps": {
+      "personal_data": "Personal Data",
+      "contacts": "Contacts",
+      "location": "Location",
+      "pre_arrival_general": "General Information",
+      "pre_arrival_legal": "Legal Situation",
+      "pre_arrival_cultural": "Cultural Preparation",
+      "pre_arrival_expectations": "Motivation and Expectations",
+      "post_arrival_integration": "Integration",
+      "post_arrival_autonomy": "Autonomy",
+      "post_arrival_needs": "Basic Needs",
+      "psychological_support": "Psychological Support",
+      "professional_profile": "Socio-professional Profile"
+    },
+    "questions": {
+      "birth_date": "Date of Birth",
+      "gender": "Gender",
+      "nationality": "Nationality",
+      "origin_country": "Country of Origin",
+      "languages": "Languages Spoken",
+      "phone": "Phone/WhatsApp",
+      "contact_preference": "Contact Preference",
+      "is_in_portugal": "Are you already in Portugal?",
+      "current_country": "Which country are you currently in?",
+      "arrival_date": "Do you plan to come to Portugal in the next:",
+      "visa_started": "Have you already started a visa process?",
+      "visa_stage": "At what stage are you?",
+      "knowledge_level": "How do you rate your knowledge about Portugal?",
+      "cultural_program_interest": "Would you be interested in a cultural preparation program?",
+      "portuguese_level": "What is your current level of Portuguese?",
+      "portuguese_classes_interest": "Would you be interested in Portuguese classes?",
+      "motivation": "Main reason why you want to come to Portugal:",
+      "doubts": "What are your main doubts?",
+      "challenges": "What main challenges do you anticipate?",
+      "why_portugal": "Why Portugal?",
+      "desired_support": "What kind of support would you like to receive?",
+      "arrival_date_pt": "When did you arrive in Portugal?",
+      "legal_status": "Legal status in Portugal:",
+      "daily_autonomy": "How do you rate your daily autonomy?",
+      "communication_comfort": "How comfortable do you feel communicating?",
+      "social_norms": "How familiar are you with social norms?",
+      "language_level": "What is your level of Portuguese?",
+      "housing_status": "Do you already have stable housing?",
+      "bank_account": "Do you already have a bank account?",
+      "sns_registered": "Are you already registered in the SNS?",
+      "identified_needs": "What needs do you identify at this moment?",
+      "emotional_wellbeing": "How do you rate your emotional well-being?",
+      "wants_psych_support": "Would you like to receive psychological support?",
+      "education_level": "What is your level of education?",
+      "education_validation_interest": "Interested in validating diplomas or certifications in Portugal?",
+      "professional_interests": "What are your professional areas of interest?",
+      "professional_experience": "Relevant professional experience (brief description):",
+      "expectations_12_months": "What do you hope to achieve in Portugal in the first 12 months?",
+      "life_in_3_years": "How do you imagine your life in Portugal in 3 years?",
+      "success_signs": "What would be signs for you that the move is going well?",
+      "basic_services": "Do you already have connection to basic services (water, electricity, gas)?",
+      "work_status": "What is your current professional status?"
+    },
+    "placeholders": {
+      "current_country": "Ex: Brazil, Angola...",
+      "arrival_date_pt": "Ex: January 2024",
+      "professional_experience": "Briefly describe your experience..."
+    },
+    "options": {
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "other_prefer_not_say": "Other / Prefer not to say"
+      },
+      "contact_preference": {
+        "email": "Email",
+        "phone": "Phone",
+        "whatsapp": "WhatsApp"
+      },
+      "languages": {
+        "portuguese": "Portuguese",
+        "english": "English",
+        "french": "French",
+        "spanish": "Spanish",
+        "other": "Other"
+      },
+      "is_in_portugal": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "is_in_portugal_desc": {
+        "yes": "I already reside in national territory",
+        "no": "I am still abroad"
+      },
+      "arrival_date": {
+        "3_months": "3 months",
+        "6_months": "6 months",
+        "12_months": "1 year",
+        "no_date": "No date yet"
+      },
+      "visa_started": {
+        "yes": "Yes",
+        "no": "No",
+        "dont_know_how": "I don't know how to start"
+      },
+      "visa_stage": {
+        "gathering_docs": "Gathering documents",
+        "submitted": "Request submitted",
+        "waiting": "Waiting for appointment",
+        "other": "Other"
+      },
+      "knowledge_level": {
+        "none": "None",
+        "little": "Little",
+        "reasonable": "Reasonable",
+        "good": "Good",
+        "very_good": "Very Good"
+      },
+      "cultural_program_interest": {
+        "yes": "Yes",
+        "no": "No",
+        "maybe": "Maybe"
+      },
+      "portuguese_level": {
+        "none": "None",
+        "basic": "Basic",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "fluent": "Fluent/Native"
+      },
+      "portuguese_classes_interest": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "motivation": {
+        "work": "Work",
+        "study": "Studies",
+        "family": "Family Reunification",
+        "security": "Security/Asylum",
+        "other": "Other"
+      },
+      "challenges": {
+        "housing": "Housing",
+        "job_search": "Job Search",
+        "culture": "Cultural Adaptation",
+        "language": "Language",
+        "legal": "Legal Processes",
+        "other": "Other"
+      },
+      "why_portugal": {
+        "work_conditions": "Work Conditions",
+        "security": "Security",
+        "reputation": "Country Reputation",
+        "migration_ease": "Migration Ease",
+        "other": "Other"
+      },
+      "desired_support": {
+        "visa_info": "Visa Information",
+        "cost_of_living": "Cost of Living",
+        "regions_info": "Regions Information",
+        "job_support": "Job Support",
+        "housing_suggestions": "Housing Suggestions",
+        "emotional_support": "Emotional Support",
+        "cultural_training": "Cultural Training",
+        "language_training": "Language Classes"
+      },
+      "legal_status": {
+        "regularized": "Regularized",
+        "pending": "In Process",
+        "not_regularized": "Not Regularized",
+        "refugee": "Refugee Status"
+      },
+      "daily_autonomy": {
+        "1": "Very Low",
+        "2": "Low",
+        "3": "Medium",
+        "4": "High",
+        "5": "Very High"
+      },
+      "communication_comfort": {
+        "1": "Not Comfortable",
+        "2": "A Little Comfortable",
+        "3": "Moderate",
+        "4": "Comfortable",
+        "5": "Very Comfortable"
+      },
+      "social_norms": {
+        "1": "Not Familiar",
+        "2": "A Little Familiar",
+        "3": "Reasonable",
+        "4": "Familiar",
+        "5": "Very Familiar"
+      },
+      "language_level": {
+        "none": "None",
+        "basic": "Basic",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "native": "Native"
+      },
+      "housing_status": {
+        "stable": "Stable (Owned/Rented)",
+        "temporary": "Temporary (Hostel/Friends)",
+        "precarious": "Precarious",
+        "homeless": "Homeless",
+        "searching": "Searching"
+      },
+      "bank_account": {
+        "yes": "Yes",
+        "no": "No",
+        "needs_help": "I need help opening"
+      },
+      "sns_registered": {
+        "yes": "Yes",
+        "no": "No",
+        "dont_know_how": "I don't know how"
+      },
+      "basic_services": {
+        "yes": "Yes",
+        "no_help": "No / Need support",
+        "other": "Other"
+      },
+      "identified_needs": {
+        "housing": "Housing",
+        "food": "Food",
+        "health": "Health",
+        "employment": "Employment",
+        "legal_info": "Legal Information",
+        "psychological": "Psychological Support",
+        "other": "Other"
+      },
+      "emotional_wellbeing": {
+        "1": "Very Bad",
+        "2": "Bad",
+        "3": "Reasonable",
+        "4": "Good",
+        "5": "Very Good"
+      },
+      "wants_psych_support": {
+        "yes": "Yes",
+        "no": "No",
+        "maybe": "Maybe in the future"
+      },
+      "education_validation_interest": {
+        "yes": "Yes",
+        "no": "No"
+      },
+      "education_level": {
+        "basic": "Basic Education",
+        "secondary": "Secondary Education",
+        "technical": "Technical Education",
+        "bachelor": "Bachelor's",
+        "master": "Master's",
+        "phd": "PhD",
+        "other": "Other"
+      },
+      "professional_interests": {
+        "tourism": "Tourism",
+        "catering": "Catering",
+        "construction": "Construction",
+        "agriculture": "Agriculture",
+        "technology": "Technology",
+        "social_services": "Social Services",
+        "education": "Education",
+        "health": "Health",
+        "cleaning": "Cleaning",
+        "logistics": "Logistics",
+        "transport": "Transport",
+        "beauty": "Beauty",
+        "other": "Other"
+      },
+      "work_status": {
+        "employed": "Employed",
+        "unemployed_seeking": "Unemployed seeking work",
+        "student": "Student",
+        "other": "Other"
+      }
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "overview": "Overview",
+    "overview_desc": "Personalized summary of your integration",
+    "urgencies": "Urgencies",
+    "interests": "Interests",
+    "overall_progress": "Overall Progress",
+    "trails": "Trails",
+    "sessions": "Sessions",
+    "profile": "Profile",
+    "messages": "Messages",
+    "upcomingSessions": "Appointments",
+    "notifications": "Notifications",
+    "no_notifications": "No notifications",
+    "no_sessions": "No scheduled sessions",
+    "support_request": "Support Request",
+    "support_desc": "Create an urgent request for immediate needs",
+    "new_support_request": "New urgent request",
+    "sharedFiles": "Files",
+    "employment": "Employment",
+    "startTrail": "Explore trails",
+    "completeCv": "Complete CV",
+    "needs_profile": "Needs Profile",
+    "view_all": "View All",
+    "training_trails": "Training Trails",
+    "no_trails": "No trails started",
+    "employment_area": "Employment Area",
+    "view_vacancies": "View Vacancies",
+    "communication": "Communication",
+    "chat_prompt": "Messages with CPC Team",
+    "write_message": "Write message",
+    "send": "Send",
+    "book_session_action": "Book Session",
+    "start_trail_action": "Start Training Trail",
+    "complete_cv_action": "Complete CV",
+    "history_reports": "History & Reports",
+    "sessions_done": "Sessions completed",
+    "modules_done": "Modules completed",
+    "applications": "Applications",
+    "progress_report": "Progress report",
+    "settings": "Settings",
+    "language": "Language",
+    "accessibility_mode": "Accessibility mode (high contrast)",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "type": "Type",
+    "description": "Description",
+    "status_concluded": "Completed",
+    "status_scheduled": "Scheduled",
+    "status_pending": "Pending",
+    "date": "Date",
+    "time": "Time",
+    "session_types": {
+      "mediador": "Mediator",
+      "jurista": "Lawyer",
+      "psicologa": "Psychologist"
+    },
+    "support_types": {
+      "juridico": "Legal",
+      "psicologico": "Psychological",
+      "habitacional": "Housing",
+      "necessidades": "Basic needs"
+    }
+  },
+  "sidebar": {
+    "sections": {
+      "settings": "Settings",
+      "messages": "Messages"
+    }
+  },
+  "messagesPage": {
+    "title": "Conversations",
+    "newAction": "New",
+    "hintPrefix": "Companies reply via",
+    "hintPathLabel": "Company Dashboard → Messages",
+    "emptyConversations": "No conversations. Create a new conversation to get started.",
+    "conversationFallbackTitle": "Conversation",
+    "noMessagesPreview": "No messages",
+    "selectConversation": "Select a conversation to view messages.",
+    "onlineNow": "Online now",
+    "today": "TODAY",
+    "noMessagesInConversation": "No messages in this conversation.",
+    "composePlaceholder": "Type your message here...",
+    "aria": {
+      "videoCall": "Video call",
+      "call": "Call",
+      "moreOptions": "More options",
+      "add": "Add",
+      "emoji": "Emoji",
+      "send": "Send"
+    },
+    "dialog": {
+      "title": "New conversation",
+      "recipientEmailLabel": "Recipient email (company or team)",
+      "recipientEmailLabelUser": "User email",
+      "emailPlaceholder": "email@domain.com"
+    },
+    "auth": {
+      "signInToAccess": "Sign in to access messages.",
+      "noPermission": "You don't have permission to access messages."
+    },
+    "errors": {
+      "loadConversations": "Couldn't load conversations.",
+      "loadMessages": "Couldn't load messages.",
+      "sendMessage": "Couldn't send the message.",
+      "createConversation": "Couldn't create the conversation."
+    },
+    "validation": {
+      "emailValid": "Enter a valid email.",
+      "noUserWithEmail": "No user exists with that email.",
+      "emailDifferent": "Choose an email different from yours."
+    },
+    "toast": {
+      "conversationCreatedTitle": "Conversation created",
+      "conversationCreatedDesc": "The new conversation was created successfully."
+    }
+  },
+  "migrant": {
+    "menu": {
+      "title": "Migrant Menu"
+    }
+  },
+  "policies": {
+    "common": {
+      "platform": "CPC Platform",
+      "lastUpdated": "Last update: {date}",
+      "contacts": {
+        "companyLine": "Praticus – Formação e Serviços de Apoio às Empresas, Lda. NIF: 503 650 498",
+        "addressLine": "Rua Francisco Carqueja, 179, 2.º Dto, 4350-185 Porto",
+        "email": "geral@oportoforte.com"
+      }
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "sections": {
+        "intro": {
+          "title": "1. Introduction",
+          "p1": "This Cookie Policy explains how the CPC Platform uses cookies and similar technologies when users access the website or use the digital services provided through the platform.",
+          "p2": "This policy is drafted in accordance with:",
+          "list": [
+            "Regulation (EU) 2016/679 – General Data Protection Regulation (GDPR)",
+            "Directive 2002/58/EC (ePrivacy Directive) on privacy and electronic communications",
+            "applicable national legislation on data protection."
+          ],
+          "p3": "By using the CPC Platform, users may consent to the use of certain cookies as described in this policy."
+        },
+        "what": {
+          "title": "2. What are cookies",
+          "p1": "Cookies are small text files stored on the user’s device (computer, tablet, or smartphone) when visiting a website or using a digital platform.",
+          "p2": "These files allow the system to recognize the user’s device and remember certain information about their use of the platform, such as preferences, active session, or browsing settings.",
+          "p3": "Cookies can be classified according to:",
+          "list": [
+            "their origin (first-party or third-party cookies)",
+            "their duration (session or persistent cookies)",
+            "their purpose."
+          ]
+        },
+        "types": {
+          "title": "3. Types of cookies used by the CPC Platform",
+          "p1": "The CPC Platform uses the following categories of cookies:",
+          "necessary": {
+            "title": "3.1 Strictly Necessary Cookies",
+            "p1": "These cookies are essential for the platform to operate and cannot be disabled in the platform’s systems. They allow, for example:",
+            "list": [
+              "authentication and session management after login",
+              "access to restricted areas of the platform",
+              "secure operation of the system",
+              "navigation between pages and features",
+              "management of appointments and platform services"
+            ],
+            "p2": "Without these cookies, some essential platform features may not be available.",
+            "baseLegal": "Legal basis: Article 6(1)(f) GDPR – legitimate interest, related to the technical operation of the service requested by the user."
+          },
+          "analytics": {
+            "title": "3.2 Performance and Analytics Cookies",
+            "p1": "These cookies collect information about how users use the platform. The information collected may include:",
+            "list": [
+              "most visited pages",
+              "time spent on pages",
+              "navigation errors or difficulties",
+              "platform usage patterns"
+            ],
+            "p2": "These data are used exclusively for statistical purposes and to improve the platform’s operation and user experience. Whenever possible, these data are processed in an anonymized or aggregated form.",
+            "baseLegal": "Legal basis: user consent (Article 6(1)(a) GDPR)."
+          },
+          "personalization": {
+            "title": "3.3 Personalization Cookies",
+            "p1": "These cookies allow remembering user preferences and adapting the platform user experience. They may be used to:",
+            "list": [
+              "save language preferences",
+              "adapt content to the user profile",
+              "present recommended learning tracks",
+              "improve navigation within the platform"
+            ],
+            "baseLegal": "Legal basis: user consent (Article 6(1)(a) GDPR)."
+          },
+          "thirdParty": {
+            "title": "3.4 Third-Party Cookies",
+            "p1": "Some CPC Platform features may integrate services provided by third parties, such as:",
+            "list": [
+              "video platforms or learning content",
+              "usage analytics tools",
+              "communication or support systems"
+            ],
+            "p2": "These services may install their own cookies on the user’s device. The CPC Platform does not directly control how these cookies are used by third parties. Users are encouraged to consult the privacy policies of those entities.",
+            "baseLegal": "Legal basis: user consent (Article 6(1)(a) GDPR)."
+          }
+        },
+        "duration": {
+          "title": "4. Cookie duration",
+          "p1": "Cookies used on the CPC Platform may have different durations:",
+          "sessionTitle": "Session cookies",
+          "sessionBody": "They are temporary and remain active only during the browsing session. They are automatically deleted when the user closes the browser.",
+          "persistentTitle": "Persistent cookies",
+          "persistentBody": "They remain stored on the user’s device for a defined period or until they are manually deleted."
+        },
+        "consent": {
+          "title": "5. Consent management",
+          "p1": "Under the GDPR and the ePrivacy Directive, cookies that are not strictly necessary will only be used after the user’s explicit consent.",
+          "p2": "When accessing the CPC Platform for the first time, the user may:",
+          "list": [
+            "accept all cookies",
+            "reject non-essential cookies",
+            "configure cookie preferences."
+          ],
+          "p3": "The user can change preferences at any time through the cookie settings available on the platform."
+        },
+        "manage": {
+          "title": "6. How to manage or disable cookies",
+          "p1": "Users can control or delete cookies through their web browser settings. Most browsers allow you to:",
+          "list": [
+            "view stored cookies",
+            "delete existing cookies",
+            "block future cookies",
+            "set preferences for specific websites."
+          ],
+          "p2": "Disabling some cookies may affect the proper functioning of the platform.",
+          "p3Prefix": "Additional information about managing cookies can be found at:"
+        },
+        "dataProtection": {
+          "title": "7. Personal data protection",
+          "p1": "Whenever cookies may involve processing personal data, such processing will be carried out in accordance with the General Data Protection Regulation (GDPR) and the CPC Platform Privacy Policy.",
+          "p2": "Data collected through cookies will not be used to directly identify users, except when necessary for the operation of the requested service."
+        },
+        "rights": {
+          "title": "8. User rights",
+          "p1": "Under the GDPR, users have the right to:",
+          "list": [
+            "access their personal data",
+            "request rectification of incorrect data",
+            "request deletion of their data",
+            "restrict the processing of their data",
+            "object to processing where applicable",
+            "withdraw previously given consent."
+          ],
+          "p2": "The exercise of these rights can be requested through the contacts indicated in the platform’s Privacy Policy."
+        },
+        "changes": {
+          "title": "9. Changes to the Cookie Policy",
+          "p1": "The CPC Platform may update this Cookie Policy whenever necessary to reflect legal, technical, or operational changes. Whenever relevant changes are made, users will be informed through the platform."
+        },
+        "contacts": {
+          "title": "10. Contacts",
+          "p1": "For any questions related to this Cookie Policy or the processing of personal data, users can contact:"
+        }
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": {
+        "intro": {
+          "title": "1. Introdução",
+          "p1": "A proteção dos dados pessoais é uma prioridade para a Plataforma CPC. Esta Política de Privacidade explica como recolhemos, utilizamos, armazenamos e protegemos os dados pessoais dos utilizadores da plataforma.",
+          "p2": "A Plataforma CPC é um sistema digital destinado a apoiar processos de capacitação, integração socioprofissional e ligação ao emprego, incluindo o acesso a conteúdos formativos, agendamento de sessões de apoio técnico e ligação entre migrantes e entidades empregadoras.",
+          "p3": "Esta política está em conformidade com:",
+          "list": [
+            "Regulamento (UE) 2016/679 — Regulamento Geral sobre a Proteção de Dados (RGPD / GDPR)",
+            "legislação nacional aplicável em matéria de proteção de dados",
+            "princípios de transparência e responsabilidade no tratamento de dados pessoais."
+          ],
+          "p4": "Ao utilizar a Plataforma CPC, o utilizador aceita as práticas descritas nesta política."
+        },
+        "controller": {
+          "title": "2. Responsável pelo tratamento de dados",
+          "p1": "O responsável pelo tratamento de dados pessoais é:",
+          "dpoTitle": "Encarregado de Proteção de Dados (DPO)",
+          "dpoEmailPrefix": "Email:"
+        },
+        "purposes": {
+          "title": "3. Finalidade do tratamento de dados",
+          "p1": "Os dados pessoais são recolhidos e tratados para permitir o funcionamento e prestação dos serviços disponibilizados pela Plataforma CPC. As principais finalidades incluem:",
+          "accountManagementTitle": "Gestão de contas de utilizador",
+          "accountManagementList": [
+            "criação e gestão de contas de utilizadores",
+            "autenticação e acesso à plataforma",
+            "gestão de perfis (migrantes, equipa CPC e empresas)"
+          ],
+          "screeningTitle": "Triagem inicial e acompanhamento",
+          "screeningList": [
+            "avaliação inicial de necessidades",
+            "orientação para serviços de apoio",
+            "acompanhamento técnico por mediadores, juristas ou psicólogos"
+          ],
+          "trainingTitle": "Capacitação e formação",
+          "trainingList": [
+            "acesso a trilhas formativas",
+            "registo de progresso em conteúdos educativos",
+            "avaliação de aprendizagem"
+          ],
+          "schedulingTitle": "Agendamento de serviços",
+          "schedulingList": [
+            "marcação e gestão de sessões de apoio",
+            "comunicação entre utilizadores e equipa CPC"
+          ],
+          "jobInsertionTitle": "Inserção socioprofissional",
+          "jobInsertionList": [
+            "criação de perfil profissional",
+            "candidatura a oportunidades de emprego",
+            "ligação entre migrantes e entidades empregadoras"
+          ],
+          "communicationTitle": "Comunicação e notificações",
+          "communicationList": [
+            "envio de notificações relacionadas com a conta",
+            "lembretes de sessões e atividades",
+            "comunicação institucional relacionada com o projeto"
+          ],
+          "improvementTitle": "Melhoria da plataforma",
+          "improvementList": [
+            "análise de utilização",
+            "melhoria da experiência do utilizador",
+            "monitorização do desempenho do sistema."
+          ]
+        },
+        "dataCategories": {
+          "title": "4. Categorias de dados pessoais recolhidos",
+          "p1": "Dependendo da utilização da plataforma, podem ser recolhidos diferentes tipos de dados pessoais.",
+          "identificationTitle": "Dados de identificação",
+          "identificationList": [
+            "nome",
+            "endereço de email",
+            "número de telefone",
+            "país de origem"
+          ],
+          "profileIntegrationTitle": "Dados de perfil e integração",
+          "profileIntegrationList": [
+            "idioma",
+            "competências profissionais",
+            "interesses profissionais",
+            "experiência de trabalho",
+            "formação"
+          ],
+          "screeningTitle": "Dados relacionados com a triagem inicial",
+          "screeningList": [
+            "situação laboral",
+            "situação habitacional",
+            "necessidades de apoio",
+            "interesses formativos"
+          ],
+          "platformUsageTitle": "Dados de utilização da plataforma",
+          "platformUsageList": [
+            "progresso nas trilhas formativas",
+            "histórico de sessões e agendamentos",
+            "candidaturas a oportunidades de emprego"
+          ],
+          "technicalTitle": "Dados técnicos",
+          "technicalList": [
+            "endereço IP",
+            "tipo de navegador",
+            "dispositivo utilizado",
+            "dados de navegação na plataforma"
+          ],
+          "p2": "Sempre que possível, apenas são recolhidos os dados estritamente necessários para a prestação do serviço."
+        },
+        "legalBasis": {
+          "title": "5. Base legal para o tratamento de dados",
+          "p1": "O tratamento de dados pessoais na Plataforma CPC baseia-se nas seguintes bases legais previstas no RGPD:",
+          "list": [
+            "Execução de um serviço solicitado pelo utilizador (Artigo 6.º, n.º 1, alínea b)",
+            "Consentimento do utilizador (Artigo 6.º, n.º 1, alínea a)",
+            "Cumprimento de obrigações legais (Artigo 6.º, n.º 1, alínea c)",
+            "Interesse legítimo (Artigo 6.º, n.º 1, alínea f)"
+          ]
+        },
+        "sharing": {
+          "title": "6. Partilha de dados",
+          "p1": "Os dados pessoais podem ser partilhados apenas quando necessário para a execução das finalidades descritas. Os dados podem ser partilhados com:",
+          "items": {
+            "team": {
+              "label": "Equipa CPC",
+              "desc": "Mediadores, técnicos, juristas, psicólogos e gestores de caso responsáveis pelo acompanhamento dos utilizadores."
+            },
+            "employers": {
+              "label": "Entidades empregadoras",
+              "desc": "Apenas quando o utilizador decide candidatar-se a oportunidades de emprego."
+            },
+            "providers": {
+              "label": "Prestadores de serviços tecnológicos",
+              "desc": "Fornecedores de infraestrutura digital, alojamento, ferramentas de comunicação ou análise."
+            }
+          },
+          "p2": "Todos os prestadores de serviços estão sujeitos a acordos de confidencialidade e proteção de dados. Os dados não são vendidos nem utilizados para fins comerciais externos."
+        },
+        "internationalTransfers": {
+          "title": "7. Transferências internacionais de dados",
+          "p1": "Sempre que dados pessoais sejam tratados fora do Espaço Económico Europeu (EEE), serão aplicadas salvaguardas adequadas, conforme previsto no RGPD, incluindo:",
+          "list": [
+            "decisões de adequação da Comissão Europeia",
+            "cláusulas contratuais-tipo",
+            "mecanismos equivalentes de proteção de dados."
+          ]
+        },
+        "retention": {
+          "title": "8. Período de conservação dos dados",
+          "p1": "Os dados pessoais são conservados apenas pelo período necessário para cumprir as finalidades para as quais foram recolhidos. Em geral:",
+          "list": [
+            "dados de contas de utilizador são mantidos enquanto a conta estiver ativa",
+            "dados relacionados com o projeto podem ser mantidos pelo período exigido por normas de auditoria de financiamento europeu",
+            "após esse período, os dados serão eliminados ou anonimizados."
+          ]
+        },
+        "security": {
+          "title": "9. Segurança dos dados",
+          "p1": "A Plataforma CPC implementa medidas técnicas e organizacionais adequadas para proteger os dados pessoais contra:",
+          "list1": [
+            "acesso não autorizado",
+            "perda ou destruição acidental",
+            "alteração indevida",
+            "divulgação não autorizada."
+          ],
+          "p2": "Estas medidas incluem:",
+          "list2": [
+            "controlo de acesso por perfil de utilizador",
+            "sistemas de autenticação segura",
+            "proteção da infraestrutura tecnológica",
+            "monitorização de segurança."
+          ]
+        },
+        "dataSubjectRights": {
+          "title": "10. Direitos dos titulares dos dados",
+          "p1": "Nos termos do RGPD, os utilizadores têm os seguintes direitos:",
+          "list": [
+            "direito de acesso aos seus dados pessoais",
+            "direito de retificação de dados incorretos",
+            "direito ao apagamento dos dados (\"direito a ser esquecido\")",
+            "direito à limitação do tratamento",
+            "direito de oposição ao tratamento",
+            "direito à portabilidade dos dados",
+            "direito de retirar o consentimento a qualquer momento."
+          ],
+          "p2": "Para exercer estes direitos, o utilizador pode contactar a entidade responsável através dos contactos indicados nesta política."
+        },
+        "complaints": {
+          "title": "11. Reclamações",
+          "p1": "Os utilizadores têm o direito de apresentar reclamação junto da autoridade de controlo competente em matéria de proteção de dados. Em Portugal, a autoridade competente é:",
+          "authority": "Comissão Nacional de Proteção de Dados (CNPD)"
+        },
+        "changes": {
+          "title": "12. Alterações à Política de Privacidade",
+          "p1": "Esta Política de Privacidade pode ser atualizada periodicamente para refletir alterações legais, técnicas ou operacionais. Sempre que ocorrerem alterações relevantes, os utilizadores serão informados através da plataforma ou por outros meios adequados."
+        },
+        "contacts": {
+          "title": "13. Contactos",
+          "p1": "Para qualquer questão relacionada com esta Política de Privacidade ou com o tratamento de dados pessoais, pode contactar:"
+        }
+      }
+    }
+  },
+  "cookieConsent": {
+    "banner": {
+      "title": "We use cookies to improve your experience",
+      "descriptionPrefix": "The CPC Platform uses essential cookies to ensure the system works and optional cookies to improve the browsing experience, analyze platform usage, and personalize content. You can accept all cookies, reject optional cookies, or configure your preferences. For more information, see our",
+      "and": "and",
+      "descriptionSuffix": ".",
+      "actions": {
+        "rejectOptional": "Reject optional cookies",
+        "configure": "Configure preferences",
+        "acceptAll": "Accept all"
+      }
+    },
+    "dialog": {
+      "title": "Cookie Preferences",
+      "description": "You can choose which types of cookies you allow on the CPC Platform. Some cookies are essential for the system to work and cannot be disabled.",
+      "actions": {
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all",
+        "rejectOptional": "Reject optional",
+        "acceptAll": "Accept all",
+        "save": "Save preferences"
+      }
+    },
+    "sections": {
+      "common": {
+        "controlTitle": "Control",
+        "controlHint": "Enable / Disable"
+      },
+      "necessary": {
+        "title": "Strictly Necessary Cookies",
+        "alwaysActiveTitle": "Always active",
+        "alwaysActiveStatus": "Status: Active (cannot be disabled)",
+        "alwaysActiveAriaLabel": "Strictly necessary cookies (always active)",
+        "description": "These cookies are essential for the platform to work and enable basic features such as:",
+        "items": {
+          "login": "login and authentication",
+          "secureNavigation": "secure navigation",
+          "restrictedAreas": "access to restricted areas",
+          "sessionManagement": "session management",
+          "coreFeatures": "use of the platform’s core features."
+        },
+        "footer": "Without these cookies, the platform cannot function properly."
+      },
+      "analytics": {
+        "title": "Performance and Analytics Cookies",
+        "ariaLabel": "Performance and analytics cookies",
+        "description": "These cookies help us understand how users interact with the platform. They allow us to analyze, for example:",
+        "items": {
+          "mostVisitedPages": "most visited pages",
+          "timeOnSite": "time spent",
+          "systemPerformance": "system performance",
+          "technicalErrors": "possible technical errors."
+        },
+        "footer": "The information collected is aggregated and used only to improve the platform."
+      },
+      "personalization": {
+        "title": "Personalization Cookies",
+        "ariaLabel": "Personalization cookies",
+        "description": "These cookies allow adapting the browsing experience to the user’s preferences. They can be used to:",
+        "items": {
+          "preferredLanguage": "remember preferred language",
+          "relevantContent": "show relevant content",
+          "recommendedTracks": "recommend learning tracks",
+          "userExperience": "improve the user experience."
+        }
+      },
+      "externalServices": {
+        "title": "External Services Cookies",
+        "ariaLabel": "External services cookies",
+        "description": "Some platform features may integrate external services, such as:",
+        "items": {
+          "videoPlatforms": "video platforms for learning content",
+          "communicationTools": "communication tools",
+          "analyticsTools": "usage analytics tools."
+        },
+        "footer": "These services may use their own cookies."
+      }
+    }
+  },
+  "cpc": {
+    "menu": {
+      "title": "CPC Menu",
+      "user_fallback": "User",
+      "overview": "Overview",
+      "migrants": "Migrants",
+      "agenda": "Agenda",
+      "applications": "Applications",
+      "offers": "Offers",
+      "trails": "Trails",
+      "team": "Team",
+      "profile": "Profile",
+      "messages": "Messages"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your account details and contact preferences.",
+      "actions": {
+        "edit": "Edit"
+      },
+      "sections": {
+        "photo": "PHOTO",
+        "info": "INFORMATION"
+      },
+      "labels": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "phone": "Phone"
+      },
+      "placeholders": {
+        "phone": "e.g. +351 910 000 000"
+      },
+      "photo": {
+        "changeAriaLabel": "Change photo",
+        "invalidFormatTitle": "Invalid format",
+        "invalidFormatDesc": "Use JPG, PNG or GIF.",
+        "tooLargeTitle": "File too large",
+        "tooLargeDesc": "Limit is 5MB.",
+        "updatedTitle": "Photo updated",
+        "updatedDesc": "Your profile photo has been updated.",
+        "updateError": "Couldn't update the photo."
+      },
+      "validation": {
+        "nameRequired": "Name is required.",
+        "phoneInvalid": "Phone number is not valid."
+      },
+      "toast": {
+        "updatedTitle": "Profile updated",
+        "updatedDesc": "Changes were saved successfully."
+      },
+      "errors": {
+        "loadNoPermission": "You don't have permission to load your profile.",
+        "loadGeneric": "Couldn't load your profile.",
+        "saveNoPermissionTitle": "No permission",
+        "saveNoPermissionDesc": "Couldn't save the changes.",
+        "saveGeneric": "Couldn't save the changes."
+      }
+    },
+    "dashboard": {
+      "welcome": "Welcome",
+      "today_summary": "Today, {date}"
+    },
+    "kpi": {
+      "migrants": "MIGRANTS",
+      "sessions": "SESSIONS",
+      "applications": "APPLICATIONS",
+      "offers_active": "OFFERS",
+      "offers_pending": "PENDING",
+      "pending": "PENDING",
+      "change": {
+        "stable": "Stable",
+        "new": "New"
+      }
+    },
+    "relative": {
+      "minutes": "{count} min ago",
+      "hours": "{count} h ago",
+      "days": "{count} d ago"
+    },
+    "actions": {
+      "view_all": "View all",
+      "actions": "Actions",
+      "back": "Back"
+    },
+    "recentMigrants": {
+      "title": "Recent migrants",
+      "empty": "No recent migrants",
+      "status": {
+        "pending_docs": "Pending docs",
+        "in_review": "In review",
+        "complete": "Complete"
+      }
+    },
+    "sessions": {
+      "title": "Sessions",
+      "view_agenda": "View agenda",
+      "empty": "No scheduled sessions",
+      "empty_subtitle": "Create a new session to organize the agenda.",
+      "new_session": "New session",
+      "status": {
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "in_progress": "In progress",
+        "scheduled": "Scheduled"
+      }
+    },
+    "quickActions": {
+      "title": "Quick actions",
+      "subtitle": "Shortcuts to the most common tasks.",
+      "new_migrant": "New migrant",
+      "new_migrant_subtitle": "Register and track a new case.",
+      "agenda": "Agenda",
+      "agenda_subtitle": "View and manage team sessions.",
+      "manage_trails": "Trails",
+      "manage_trails_subtitle": "Create and edit training trails.",
+      "create_offer": "Offers",
+      "create_offer_subtitle": "Manage pending job offers."
+    },
+    "capacity": {
+      "center": "CPC Center",
+      "title": "Team capacity"
+    },
+    "soon": "Coming soon",
+    "teamOnDuty": {
+      "title": "Team on duty",
+      "today": "Today",
+      "tickets": "{count} tickets"
+    },
+    "team": {
+      "title": "Team",
+      "subtitle": "Team management with filters, roles and access status",
+      "user_fallback": "User",
+      "roles": {
+        "admin": "Admin",
+        "manager": "Manager",
+        "coordinator": "Coordinator",
+        "mediator": "Mediator",
+        "lawyer": "Lawyer",
+        "psychologist": "Psychologist",
+        "trainer": "Trainer"
+      },
+      "actions": {
+        "add": "Add new",
+        "filter": "Filter",
+        "edit": "Edit",
+        "deactivate": "Deactivate",
+        "reactivate": "Reactivate",
+        "create_user": "Create user",
+        "save_changes": "Save changes",
+        "saving": "Saving..."
+      },
+      "search": {
+        "label": "Search",
+        "placeholder": "Name or email"
+      },
+      "role": {
+        "label": "Role",
+        "all": "All"
+      },
+      "status": {
+        "label": "Status",
+        "all": "All",
+        "active": "Active",
+        "inactive": "Inactive",
+        "active_label": "Active",
+        "inactive_label": "Inactive"
+      },
+      "sort": {
+        "label": "Sort",
+        "name": "Name",
+        "role": "Role",
+        "status": "Status"
+      },
+      "summary": {
+        "label": "Summary",
+        "users": "{count} users"
+      },
+      "empty": {
+        "title": "No users found",
+        "subtitle": "Adjust the filters or the search."
+      },
+      "dialogs": {
+        "add_title": "Add new user",
+        "edit_title": "Edit user"
+      },
+      "fields": {
+        "name": "Name",
+        "email": "Email",
+        "password": "Password",
+        "profile": "Role",
+        "name_placeholder": "Full name",
+        "email_placeholder": "email@domain.com",
+        "password_placeholder": "Minimum 6 characters"
+      },
+      "errors": {
+        "required_fields": "Fill in name, email and password.",
+        "name_required": "Name is required.",
+        "load_failed": "Error loading users.",
+        "create_failed": "Error creating user.",
+        "update_failed": "Error updating user.",
+        "update_state_failed": "Error updating user status.",
+        "no_permission": "No permission to manage users. Admin only."
+      }
+    },
+    "migrantsAdmin": {
+      "title": "Migrants",
+      "subtitle": "Full list with filters and profile access",
+      "fallback_migrant": "Migrant",
+      "legal": {
+        "regular": "Regular",
+        "irregular": "Irregular",
+        "pending": "Pending"
+      },
+      "work": {
+        "employed": "Employed",
+        "unemployed": "Unemployed",
+        "informal": "Informal"
+      },
+      "language": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "urgencies": {
+        "legal": "Legal",
+        "psychological": "Psychological",
+        "housing": "Housing"
+      },
+      "filters": {
+        "search": {
+          "label": "Search",
+          "placeholder": "Name",
+          "action": "Filter"
+        },
+        "legal": {
+          "label": "Legal status",
+          "all": "All"
+        },
+        "work": {
+          "label": "Work status",
+          "all": "All"
+        },
+        "language": {
+          "label": "Language level",
+          "all": "All"
+        },
+        "urgencies": {
+          "label": "Urgencies",
+          "all": "All"
+        }
+      },
+      "empty": {
+        "title": "No migrants found",
+        "subtitle": "Adjust the filters or the search."
+      },
+      "badges": {
+        "blocked": "Blocked"
+      },
+      "load": {
+        "error_title": "Loading failed",
+        "generic_error": "Could not load the migrant list."
+      },
+      "stats": {
+        "urgencies": "{count} urgencies",
+        "upcoming_sessions": "{count} upcoming sessions",
+        "avg_progress": "{count}% average progress"
+      },
+      "actions": {
+        "view_profile": "View profile",
+        "triage": "Initial triage",
+        "block": "Block",
+        "activate": "Activate",
+        "delete": "Delete"
+      },
+      "delete": {
+        "confirm": {
+          "title": "Confirm deletion",
+          "description": "You are about to permanently delete {name} and all associated records. This action cannot be undone."
+        },
+        "buttons": {
+          "confirm": "Confirm",
+          "cancel": "Cancel"
+        },
+        "no_permission": {
+          "title": "No permission",
+          "description": "Your user does not have permission to delete migrants."
+        },
+        "success": {
+          "title": "Migrant deleted",
+          "description": "{name} has been deleted successfully."
+        },
+        "error": {
+          "title": "Deletion failed",
+          "generic": "Could not delete the migrant record.",
+          "not_persisted": "Deletion was not persisted. Check Firestore rules/permissions to allow delete.",
+          "permission_denied": "Permission denied in Firestore. Check the rules and deploy your changes."
+        }
+      },
+      "triageDialog": {
+        "title": "Initial triage — {name}",
+        "empty": "This migrant has no recorded answers for the initial triage yet."
+      },
+      "export": {
+        "button": "Export list",
+        "formats": {
+          "csv": "CSV",
+          "xlsx": "XLSX"
+        },
+        "columns": {
+          "name": "Name",
+          "email": "Email",
+          "birth_date": "Birth date",
+          "nationality": "Nationality",
+          "legal_status": "Migration status",
+          "arrival_date": "Arrival date"
+        },
+        "no_permission": {
+          "title": "No permission",
+          "description": "Your user does not have permission to export the migrant list."
+        },
+        "xlsx_ready": {
+          "title": "XLSX export ready",
+          "description": "Click “XLSX” again to generate the file."
+        },
+        "xlsx_missing_module": "The XLSX module is not available.",
+        "xlsx_prepare_error": "Could not prepare the XLSX exporter. Please try again.",
+        "no_results": {
+          "title": "No results",
+          "description": "There are no migrants to export with the current filters."
+        },
+        "limit_exceeded": {
+          "title": "Limit exceeded",
+          "description": "Export supports up to 10,000 records. Refine the filters to reduce the list."
+        },
+        "done": {
+          "title": "Export completed",
+          "description": "{count} records exported successfully."
+        },
+        "warning": {
+          "title": "Warning",
+          "description": "{count} invalid email(s) were exported as —."
+        },
+        "error_title": "Export error",
+        "generic_error": "Error exporting migrant list."
+      }
+    },
+    "pages": {
+      "applications": {
+        "title": "Submitted applications",
+        "empty": "No applications in this period"
+      },
+      "offers": {
+        "title": "Offers pending approval",
+        "empty": "No pending offers",
+        "status_pending": "Pending approval"
+      }
+    }
+  },
+  "cpcTranslations": {
+    "title": "Translations",
+    "subtitle": "Manage translations (PT/EN/ES), validate completeness and publish a new cached version.",
+    "no_permission": "You do not have permission to manage translations.",
+    "actions": {
+      "validate": "Validate",
+      "publish": "Publish ({count})"
+    },
+    "search": {
+      "label": "Search by key",
+      "placeholder": "E.g.: dashboard.overview"
+    },
+    "settings": {
+      "enabled": "Remote overrides enabled",
+      "version": "Version: {version}"
+    },
+    "runtimeMissing": {
+      "title": "Missing keys (runtime)",
+      "clear": "Clear log",
+      "cleared": "Log cleared."
+    },
+    "table": {
+      "key": "Key"
+    },
+    "validation": {
+      "title": "Translation validation",
+      "hint": "Missing content should be filled (in code or via overrides) before publishing.",
+      "incomplete_draft": "{count} draft keys are incomplete (fill PT/EN/ES)."
+    },
+    "publish": {
+      "nothing_to_publish": "There are no changes to publish.",
+      "success": "Translations published. Version {version}."
+    }
+  },
+  "company": {
+    "menu": {
+      "title": "Company Menu",
+      "user_fallback": "User",
+      "overview": "Overview",
+      "offers": "Jobs",
+      "applications": "Applications",
+      "new_offer": "New Job",
+      "candidates": "Candidates",
+      "profile": "Profile",
+      "messages": "Messages",
+      "sections": {
+        "settings": "Settings",
+        "messages": "Messages"
+      }
+    },
+    "dashboard": {
+      "welcome": "Welcome,",
+      "summary": "Dashboard summary on {date}"
+    },
+    "common": {
+      "viewAll": "View all",
+      "soon": "Coming soon.",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{count} days ago",
+      "weeksAgo": "{count} weeks ago"
+    },
+    "status": {
+      "active": "Active",
+      "in_review": "In review",
+      "new": "New",
+      "viewed": "Viewed",
+      "in_analysis": "Under review"
+    },
+    "profile": {
+      "breadcrumbs": {
+        "settings": "SETTINGS",
+        "companyProfile": "COMPANY PROFILE"
+      },
+      "title": "Company Profile",
+      "description": "Manage your organization's identity and legal information.",
+      "logoSection": "LOGO",
+      "logoRecommendation": "Recommended: SVG or transparent PNG (512×512px).",
+      "changeLogo": "Change logo",
+      "accountVerification": {
+        "title": "Account verification",
+        "description": "Legal information (Name and Tax ID) can only be changed by contacting support to ensure fiscal security."
+      },
+      "legalInfoTitle": "Legal information",
+      "contactLocationTitle": "Contact and location",
+      "labels": {
+        "legalName": "LEGAL NAME",
+        "taxId": "TAX ID",
+        "activityArea": "BUSINESS AREA",
+        "fiscalAddress": "FISCAL ADDRESS",
+        "phone": "PHONE",
+        "corporateEmail": "CORPORATE EMAIL",
+        "notes": "NOTES"
+      },
+      "placeholders": {
+        "notes": "Optional"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saveChanges": "Save changes"
+      }
+    },
+    "messages": {
+      "title": "Conversations",
+      "newCount": "{count} NEW",
+      "filters": {
+        "all": "All",
+        "candidates": "Candidates",
+        "technicians": "Staff"
+      },
+      "onlineNow": "Online now",
+      "today": "TODAY",
+      "messagePlaceholder": "Write your message here...",
+      "aria": {
+        "videoCall": "Video call",
+        "call": "Call",
+        "moreOptions": "More options",
+        "add": "Add",
+        "emoji": "Emoji",
+        "send": "Send"
+      },
+      "sample": {
+        "message1": "Hi Ricardo! I'd like to know if there is any update regarding my application for the Product Manager role.",
+        "message2": "Hi Maria, good morning! Yes, the technical team finished reviewing your portfolio and we were very impressed. We'd like to schedule the next interview.",
+        "message3": "That's great news! I confirm my availability for any time next Thursday or Friday afternoon."
+      }
+    },
+    "home": {
+      "stats": {
+        "activeOffers": "Active jobs",
+        "receivedApplications": "Applications received",
+        "viewedCandidates": "Viewed candidates",
+        "hires": "Hires"
+      },
+      "activeJobsTitle": "Active jobs",
+      "applicationsCount": "{count} applications",
+      "recentApplicationsTitle": "Recent applications",
+      "promo": {
+        "title": "Find the best candidates",
+        "description": "Post jobs and access a pool of qualified and motivated candidates",
+        "cta": "Create job"
+      }
+    },
+    "createJob": {
+      "backToDashboard": "Back to dashboard",
+      "title": "New job posting",
+      "subtitle": "Fill in the job details. After submission, it will be reviewed by the CPC team.",
+      "toast": {
+        "createdTitle": "Job created!",
+        "createdDesc": "Your job has been submitted for review."
+      },
+      "errors": {
+        "companyNotFoundTitle": "Error",
+        "companyNotFoundDesc": "Company profile not found.",
+        "createFailedTitle": "Error",
+        "createFailedDesc": "Could not create the job. Please try again."
+      },
+      "form": {
+        "sectionTitle": "Job details",
+        "labels": {
+          "title": "Job title *",
+          "description": "Description",
+          "location": "Location",
+          "sector": "Sector",
+          "contractType": "Contract type",
+          "salaryRange": "Salary range",
+          "requirements": "Requirements"
+        },
+        "placeholders": {
+          "title": "E.g.: Cleaner",
+          "description": "Describe responsibilities and tasks...",
+          "location": "E.g.: Lisbon",
+          "sector": "E.g.: Services, Logistics",
+          "salaryRange": "E.g.: €900 - €1100/month",
+          "requirements": "List the required qualifications..."
+        },
+        "contractTypes": {
+          "full_time": "Full-time",
+          "part_time": "Part-time",
+          "temporary": "Temporary",
+          "internship": "Internship"
+        }
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "publish": "Publish job"
+      }
+    },
+    "offers": {
+      "backToDashboard": "Back to dashboard",
+      "title": "My jobs",
+      "subtitle": "Manage your job postings",
+      "actions": {
+        "newOffer": "New job"
+      },
+      "status": {
+        "active": "Active",
+        "pending_review": "In review",
+        "closed": "Closed",
+        "rejected": "Rejected"
+      },
+      "empty": {
+        "title": "No jobs",
+        "subtitle": "You haven't published any job postings yet.",
+        "cta": "Create your first job"
+      },
+      "applicationsCount": "{count} applications"
+    },
+    "applications": {
+      "unknownApplicant": "Unknown",
+      "backToOffers": "Back to jobs",
+      "title": "Applications: {title}",
+      "count": "{count} application(s) received",
+      "empty": {
+        "title": "No applications",
+        "subtitle": "This job hasn't received any applications yet."
+      },
+      "appliedOn": "Applied on {date}",
+      "selectPrompt": "Select an application to view details",
+      "status": {
+        "submitted": "New",
+        "reviewing": "Under review",
+        "interview": "Interview",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "reviewing": "Under review",
+        "interview": "Interview",
+        "accept": "Accept",
+        "reject": "Reject"
+      },
+      "details": {
+        "title": "Application details",
+        "updateStatus": "Update status:",
+        "labels": {
+          "candidate": "Candidate",
+          "email": "Email",
+          "date": "Date",
+          "coverLetter": "Cover letter"
+        }
+      }
+    },
+    "candidate": {
+      "fallbackName": "Candidate",
+      "fallbackOfferTitle": "Job",
+      "notFound": "Candidate not found",
+      "back": "Back",
+      "backToDashboard": "Back to dashboard",
+      "resume": {
+        "title": "Resume",
+        "iframeTitle": "Resume",
+        "openInNewWindow": "Open resume in a new tab",
+        "notAvailable": "Resume not available. Ask the candidate to send their resume.",
+        "useDemo": "Use demo resume"
+      },
+      "sessions": {
+        "title": "Appointments",
+        "empty": "No appointments recorded.",
+        "status": "Status: {status}",
+        "defaultStatus": "Scheduled"
+      },
+      "trails": {
+        "title": "Watched tracks",
+        "empty": "No track progress.",
+        "completed": "Completed",
+        "modulesProgress": "{completed}/{total} modules"
+      },
+      "applications": {
+        "title": "Applications",
+        "empty": "No applications recorded for this candidate."
+      }
+    }
+  }
+}

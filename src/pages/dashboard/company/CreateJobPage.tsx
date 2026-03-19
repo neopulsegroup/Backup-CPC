@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { addDocument, queryDocuments } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +12,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 export default function CreateJobPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,8 +50,8 @@ export default function CreateJobPage() {
 
     if (!companyId) {
       toast({
-        title: 'Erro',
-        description: 'Perfil de empresa não encontrado.',
+        title: t.get('company.createJob.errors.companyNotFoundTitle'),
+        description: t.get('company.createJob.errors.companyNotFoundDesc'),
         variant: 'destructive',
       });
       return;
@@ -72,15 +74,15 @@ export default function CreateJobPage() {
       });
 
       toast({
-        title: 'Oferta criada!',
-        description: 'A sua oferta foi submetida para revisão.',
+        title: t.get('company.createJob.toast.createdTitle'),
+        description: t.get('company.createJob.toast.createdDesc'),
       });
       navigate('/dashboard/empresa/ofertas');
     } catch (error) {
       console.error('Error creating job:', error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível criar a oferta. Tente novamente.',
+        title: t.get('company.createJob.errors.createFailedTitle'),
+        description: t.get('company.createJob.errors.createFailedDesc'),
         variant: 'destructive',
       });
     } finally {
@@ -95,23 +97,23 @@ export default function CreateJobPage() {
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <ArrowLeft className="h-4 w-4 mr-1" />
-        Voltar ao painel
+        {t.get('company.createJob.backToDashboard')}
       </Link>
 
       <div className="max-w-2xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">Nova Oferta de Emprego</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-2">{t.get('company.createJob.title')}</h1>
         <p className="text-muted-foreground mb-8">
-          Preencha os detalhes da oferta. Após submissão, será revista pela equipa CPC.
+          {t.get('company.createJob.subtitle')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="cpc-card p-6 space-y-4">
-            <h2 className="font-semibold">Informações da Oferta</h2>
+            <h2 className="font-semibold">{t.get('company.createJob.form.sectionTitle')}</h2>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Título do Cargo *</label>
+              <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.title')}</label>
               <Input
-                placeholder="Ex: Auxiliar de Limpeza"
+                placeholder={t.get('company.createJob.form.placeholders.title')}
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 required
@@ -119,9 +121,9 @@ export default function CreateJobPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Descrição</label>
+              <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.description')}</label>
               <Textarea
-                placeholder="Descreva as responsabilidades e tarefas do cargo..."
+                placeholder={t.get('company.createJob.form.placeholders.description')}
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 rows={4}
@@ -130,18 +132,18 @@ export default function CreateJobPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Localização</label>
+                <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.location')}</label>
                 <Input
-                  placeholder="Ex: Lisboa"
+                  placeholder={t.get('company.createJob.form.placeholders.location')}
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Setor</label>
+                <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.sector')}</label>
                 <Input
-                  placeholder="Ex: Serviços, Logística"
+                  placeholder={t.get('company.createJob.form.placeholders.sector')}
                   value={form.sector}
                   onChange={(e) => setForm({ ...form, sector: e.target.value })}
                 />
@@ -150,23 +152,23 @@ export default function CreateJobPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Tipo de Contrato</label>
+                <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.contractType')}</label>
                 <select
                   value={form.contract_type}
                   onChange={(e) => setForm({ ...form, contract_type: e.target.value })}
                   className="w-full px-4 py-2 rounded-lg border border-input bg-background"
                 >
-                  <option value="full_time">Tempo Inteiro</option>
-                  <option value="part_time">Part-time</option>
-                  <option value="temporary">Temporário</option>
-                  <option value="internship">Estágio</option>
+                  <option value="full_time">{t.get('company.createJob.form.contractTypes.full_time')}</option>
+                  <option value="part_time">{t.get('company.createJob.form.contractTypes.part_time')}</option>
+                  <option value="temporary">{t.get('company.createJob.form.contractTypes.temporary')}</option>
+                  <option value="internship">{t.get('company.createJob.form.contractTypes.internship')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Faixa Salarial</label>
+                <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.salaryRange')}</label>
                 <Input
-                  placeholder="Ex: 900€ - 1100€/mês"
+                  placeholder={t.get('company.createJob.form.placeholders.salaryRange')}
                   value={form.salary_range}
                   onChange={(e) => setForm({ ...form, salary_range: e.target.value })}
                 />
@@ -174,9 +176,9 @@ export default function CreateJobPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Requisitos</label>
+              <label className="text-sm font-medium mb-2 block">{t.get('company.createJob.form.labels.requirements')}</label>
               <Textarea
-                placeholder="Liste os requisitos e qualificações necessárias..."
+                placeholder={t.get('company.createJob.form.placeholders.requirements')}
                 value={form.requirements}
                 onChange={(e) => setForm({ ...form, requirements: e.target.value })}
                 rows={4}
@@ -190,15 +192,15 @@ export default function CreateJobPage() {
               variant="outline"
               onClick={() => navigate('/dashboard/empresa')}
             >
-              Cancelar
+              {t.get('company.createJob.actions.cancel')}
             </Button>
             <Button type="submit" disabled={loading || !form.title}>
               {loading ? (
-                'A guardar...'
+                t.get('company.createJob.actions.saving')
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Publicar Oferta
+                  {t.get('company.createJob.actions.publish')}
                 </>
               )}
             </Button>

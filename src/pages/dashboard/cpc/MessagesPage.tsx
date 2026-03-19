@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -50,6 +51,7 @@ function getInitials(value?: string | null): string {
 
 export default function CPCMessagesPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -86,12 +88,12 @@ export default function CPCMessagesPage() {
         });
       },
       onError: () => {
-        setError('Não foi possível carregar as conversas.');
+        setError(t.messagesPage.errors.loadConversations);
         setLoading(false);
       },
     });
     return () => unsubscribe();
-  }, [user?.uid]);
+  }, [t.messagesPage.errors.loadConversations, user?.uid]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -114,12 +116,12 @@ export default function CPCMessagesPage() {
         setMessagesLoading(false);
       },
       onError: () => {
-        setMessagesError('Não foi possível carregar as mensagens.');
+        setMessagesError(t.messagesPage.errors.loadMessages);
         setMessagesLoading(false);
       },
     });
     return () => unsubscribe();
-  }, [activeConversationId, user?.uid]);
+  }, [activeConversationId, t.messagesPage.errors.loadMessages, user?.uid]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' });
@@ -149,7 +151,7 @@ export default function CPCMessagesPage() {
         updatedAt: serverTimestamp(),
       });
     } catch {
-      toast({ title: 'Erro', description: 'Não foi possível enviar a mensagem.', variant: 'destructive' });
+      toast({ title: t.common.errorTitle, description: t.messagesPage.errors.sendMessage, variant: 'destructive' });
       setCompose(text);
     }
   }
@@ -157,7 +159,7 @@ export default function CPCMessagesPage() {
   async function createConversation() {
     if (!user?.uid) return;
     if (!isValidEmail(newEmail)) {
-      toast({ title: 'Validação', description: 'Insira um email válido.', variant: 'destructive' });
+      toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailValid, variant: 'destructive' });
       return;
     }
 
@@ -166,17 +168,17 @@ export default function CPCMessagesPage() {
       const users = await queryDocuments<UserRow>('users', [{ field: 'email', operator: '==', value: newEmail.trim() }], undefined, 1);
       const target = users[0];
       if (!target?.id) {
-        toast({ title: 'Não encontrado', description: 'Não existe utilizador com esse email.', variant: 'destructive' });
+        toast({ title: t.common.notFoundTitle, description: t.messagesPage.validation.noUserWithEmail, variant: 'destructive' });
         return;
       }
       if (target.id === user.uid) {
-        toast({ title: 'Validação', description: 'Escolha um email diferente do seu.', variant: 'destructive' });
+        toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailDifferent, variant: 'destructive' });
         return;
       }
 
       const id = await addDocument('conversations', {
         participants: [user.uid, target.id],
-        title: target.name || target.email || 'Conversa',
+        title: target.name || target.email || t.messagesPage.conversationFallbackTitle,
         last_message_text: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -184,9 +186,9 @@ export default function CPCMessagesPage() {
       setNewOpen(false);
       setNewEmail('');
       setActiveConversationId(id);
-      toast({ title: 'Conversa criada', description: 'A nova conversa foi criada com sucesso.' });
+      toast({ title: t.messagesPage.toast.conversationCreatedTitle, description: t.messagesPage.toast.conversationCreatedDesc });
     } catch {
-      toast({ title: 'Erro', description: 'Não foi possível criar a conversa.', variant: 'destructive' });
+      toast({ title: t.common.errorTitle, description: t.messagesPage.errors.createConversation, variant: 'destructive' });
     } finally {
       setCreating(false);
     }
@@ -195,7 +197,7 @@ export default function CPCMessagesPage() {
   if (!user?.uid) {
     return (
       <div className="cpc-card p-8 text-center text-sm text-muted-foreground">
-        Inicie sessão para aceder às mensagens.
+        {t.messagesPage.auth.signInToAccess}
       </div>
     );
   }
@@ -222,23 +224,23 @@ export default function CPCMessagesPage() {
         <div className="grid lg:grid-cols-[360px_minmax(0,1fr)] min-h-[640px]">
           <div className="p-6">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold tracking-tight">Conversas</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{t.messagesPage.title}</h1>
               <Button size="sm" onClick={() => setNewOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nova
+                {t.messagesPage.newAction}
               </Button>
             </div>
 
             <div className="mt-6 space-y-2">
               {conversations.length === 0 ? (
                 <div className="cpc-card p-6 text-center text-sm text-muted-foreground">
-                  Sem conversas. Crie uma nova conversa para começar.
+                  {t.messagesPage.emptyConversations}
                 </div>
               ) : (
                 conversations.map((conversation) => {
                   const isActive = conversation.id === activeConversationId;
-                  const title = conversation.title || 'Conversa';
-                  const last = conversation.last_message_text || 'Sem mensagens';
+                  const title = conversation.title || t.messagesPage.conversationFallbackTitle;
+                  const last = conversation.last_message_text || t.messagesPage.noMessagesPreview;
                   return (
                     <button
                       key={conversation.id}
@@ -268,7 +270,7 @@ export default function CPCMessagesPage() {
           <div className="border-t lg:border-t-0 lg:border-l bg-muted/20">
             {!activeConversation ? (
               <div className="p-10 text-center text-sm text-muted-foreground">
-                Selecione uma conversa para ver as mensagens.
+                {t.messagesPage.selectConversation}
               </div>
             ) : (
               <>
@@ -281,11 +283,11 @@ export default function CPCMessagesPage() {
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold truncate">{activeConversation.title || 'Conversa'}</p>
+                        <p className="font-semibold truncate">{activeConversation.title || t.messagesPage.conversationFallbackTitle}</p>
                         <p className="text-sm text-muted-foreground truncate">
                           <span className="inline-flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            Online agora
+                            {t.messagesPage.onlineNow}
                           </span>
                         </p>
                       </div>
@@ -295,21 +297,21 @@ export default function CPCMessagesPage() {
                       <button
                         type="button"
                         className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                        aria-label="Videochamada"
+                        aria-label={t.messagesPage.aria.videoCall}
                       >
                         <Video className="h-4 w-4 text-muted-foreground" />
                       </button>
                       <button
                         type="button"
                         className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                        aria-label="Chamada"
+                        aria-label={t.messagesPage.aria.call}
                       >
                         <Phone className="h-4 w-4 text-muted-foreground" />
                       </button>
                       <button
                         type="button"
                         className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                        aria-label="Mais opções"
+                        aria-label={t.messagesPage.aria.moreOptions}
                       >
                         <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
                       </button>
@@ -320,7 +322,7 @@ export default function CPCMessagesPage() {
                 <div className="p-6 space-y-6 overflow-auto">
                   <div className="flex items-center justify-center">
                     <span className="text-xs font-semibold tracking-widest text-muted-foreground bg-background px-4 py-2 rounded-full border">
-                      HOJE
+                      {t.messagesPage.today}
                     </span>
                   </div>
 
@@ -332,7 +334,7 @@ export default function CPCMessagesPage() {
                     <div className="cpc-card p-6 text-center text-sm text-muted-foreground">{messagesError}</div>
                   ) : messages.length === 0 ? (
                     <div className="cpc-card p-6 text-center text-sm text-muted-foreground">
-                      Sem mensagens nesta conversa.
+                      {t.messagesPage.noMessagesInConversation}
                     </div>
                   ) : (
                     messages.map((m) => {
@@ -362,21 +364,21 @@ export default function CPCMessagesPage() {
                     <button
                       type="button"
                       className="h-11 w-11 rounded-2xl bg-muted hover:bg-muted/80 flex items-center justify-center"
-                      aria-label="Adicionar"
+                      aria-label={t.messagesPage.aria.add}
                     >
                       <CirclePlus className="h-5 w-5 text-muted-foreground" />
                     </button>
                     <button
                       type="button"
                       className="h-11 w-11 rounded-2xl bg-muted hover:bg-muted/80 flex items-center justify-center"
-                      aria-label="Emoji"
+                      aria-label={t.messagesPage.aria.emoji}
                     >
                       <Smile className="h-5 w-5 text-muted-foreground" />
                     </button>
 
                     <div className="relative flex-1">
                       <Input
-                        placeholder="Escreva a sua mensagem aqui..."
+                        placeholder={t.messagesPage.composePlaceholder}
                         className="h-12 rounded-full pl-12 pr-14 bg-muted/30 border-muted"
                         value={compose}
                         onChange={(e) => setCompose(e.target.value)}
@@ -394,7 +396,7 @@ export default function CPCMessagesPage() {
                         <button
                           type="button"
                           className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
-                          aria-label="Enviar"
+                          aria-label={t.messagesPage.aria.send}
                           onClick={() => void send()}
                         >
                           <Send className="h-4 w-4" />
@@ -412,20 +414,20 @@ export default function CPCMessagesPage() {
       <Dialog open={newOpen} onOpenChange={(open) => (creating ? null : setNewOpen(open))}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nova conversa</DialogTitle>
+            <DialogTitle>{t.messagesPage.dialog.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Email do utilizador</p>
-              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@dominio.com" />
+              <p className="text-sm text-muted-foreground">{t.messagesPage.dialog.recipientEmailLabelUser}</p>
+              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.messagesPage.dialog.emailPlaceholder} />
             </div>
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button onClick={() => void createConversation()} disabled={creating}>
                 {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessagesSquare className="h-4 w-4 mr-2" />}
-                Criar
+                {t.common.create}
               </Button>
             </div>
           </div>

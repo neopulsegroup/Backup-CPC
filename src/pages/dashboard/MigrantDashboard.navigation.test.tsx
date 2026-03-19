@@ -17,7 +17,27 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/contexts/LanguageContext', () => ({
   useLanguage: () => ({
     language: 'pt',
-    t: { dashboard: { book_session_action: '', start_trail_action: '', complete_cv_action: '', submit: '', description: '' }, get: (k: string) => k },
+    t: {
+      dashboard: { book_session_action: '', start_trail_action: '', complete_cv_action: '', submit: '', description: '' },
+      get: (k: string) => {
+        const dict: Record<string, string> = {
+          'dashboard.overview': 'Visão geral',
+          'dashboard.sessions': 'Sessões',
+          'dashboard.employment': 'Emprego',
+          'dashboard.trails': 'Trilhas',
+          'dashboard.profile': 'Perfil',
+          'dashboard.messages': 'Mensagens',
+          'migrant.menu.title': 'Menu Migrante',
+          'cpc.menu.user_fallback': 'Utilizador',
+          'sidebar.sections.settings': 'Definições',
+          'sidebar.sections.messages': 'Mensagens',
+          'dashboard.welcome': 'Bem-vindo(a)',
+          'dashboard.overview_desc': 'Resumo personalizado da sua integração',
+          'auth.roles.migrant': 'Pessoa Migrante',
+        };
+        return dict[k] ?? k;
+      },
+    },
   }),
 }));
 

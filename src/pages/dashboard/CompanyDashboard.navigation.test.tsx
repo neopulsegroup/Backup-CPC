@@ -17,7 +17,33 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 
 vi.mock('@/contexts/LanguageContext', () => ({
-  useLanguage: () => ({ language: 'pt', t: { get: (k: string) => k } }),
+  useLanguage: () => {
+    const translations: Record<string, string> = {
+      'company.menu.title': 'Menu Empresa',
+      'company.menu.overview': 'Visão geral',
+      'company.menu.offers': 'Ofertas',
+      'company.menu.applications': 'Candidaturas',
+      'company.menu.new_offer': 'Nova Oferta',
+      'company.menu.candidates': 'Candidatos',
+      'company.menu.profile': 'Perfil',
+      'company.menu.messages': 'Mensagens',
+      'company.menu.sections.settings': 'Definições',
+      'company.menu.sections.messages': 'Mensagens',
+      'company.profile.title': 'Perfil da Empresa',
+      'company.messages.title': 'Conversas',
+    };
+
+    return {
+      language: 'pt',
+      t: {
+        get: (k: string, vars?: Record<string, unknown>) => {
+          const template = translations[k] ?? k;
+          if (!vars) return template;
+          return Object.entries(vars).reduce((acc, [key, value]) => acc.replaceAll(`{${key}}`, String(value)), template);
+        },
+      },
+    };
+  },
 }));
 
 vi.mock('./company/CreateJobPage', () => ({

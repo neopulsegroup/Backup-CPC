@@ -53,34 +53,36 @@ function deriveNameFromEmail(email?: string | null): string {
 }
 
 function CompanyProfilePage() {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-muted-foreground">
-          <span>DEFINIÇÕES</span>
+          <span>{t.get('company.profile.breadcrumbs.settings')}</span>
           <span className="text-muted-foreground/60">›</span>
-          <span className="text-primary">PERFIL DA EMPRESA</span>
+          <span className="text-primary">{t.get('company.profile.breadcrumbs.companyProfile')}</span>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-4">Perfil da Empresa</h1>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mt-4">{t.get('company.profile.title')}</h1>
         <p className="text-muted-foreground mt-2">
-          Gerencie a identidade e informações legais da sua organização.
+          {t.get('company.profile.description')}
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-6">
           <div className="cpc-card p-6">
-            <p className="text-xs font-semibold tracking-widest text-muted-foreground text-center">LOGOTIPO</p>
+            <p className="text-xs font-semibold tracking-widest text-muted-foreground text-center">{t.get('company.profile.logoSection')}</p>
             <div className="mt-6">
               <div className="mx-auto h-40 w-40 rounded-2xl border-2 border-dashed border-muted-foreground/25 bg-muted/30 flex items-center justify-center">
                 <div className="h-24 w-24 rounded-xl bg-background shadow-sm border" />
               </div>
               <p className="text-sm text-muted-foreground mt-6 text-center">
-                Recomendado: SVG ou PNG transparente (512×512px).
+                {t.get('company.profile.logoRecommendation')}
               </p>
               <button type="button" className="mt-4 w-full text-sm font-medium text-primary hover:underline">
-                Alterar Logotipo
+                {t.get('company.profile.changeLogo')}
               </button>
             </div>
           </div>
@@ -91,9 +93,9 @@ function CompanyProfilePage() {
                 <Check className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <p className="font-semibold">Verificação de Conta</p>
+                <p className="font-semibold">{t.get('company.profile.accountVerification.title')}</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  As informações legais (Nome e NIF) só podem ser alteradas mediante contacto com o suporte para garantir a segurança fiscal.
+                  {t.get('company.profile.accountVerification.description')}
                 </p>
               </div>
             </div>
@@ -107,22 +109,22 @@ function CompanyProfilePage() {
                 <Building2 className="h-4 w-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-semibold text-lg">Informações Legais</p>
+                <p className="font-semibold text-lg">{t.get('company.profile.legalInfoTitle')}</p>
               </div>
             </div>
           </div>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">NOME LEGAL</label>
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.legalName')}</label>
               <Input defaultValue="Empresa Inovação Digital, Lda" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">NIF (NÚMERO DE CONTRIBUINTE)</label>
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.taxId')}</label>
               <Input defaultValue="500 000 000" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">ÁREA DE ATIVIDADE</label>
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.activityArea')}</label>
               <Input defaultValue="Tecnologia e Software" />
             </div>
           </div>
@@ -131,33 +133,33 @@ function CompanyProfilePage() {
             <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
               <MapPin className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="font-semibold text-lg">Contacto e Localização</p>
+            <p className="font-semibold text-lg">{t.get('company.profile.contactLocationTitle')}</p>
           </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">MORADA FISCAL</label>
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.fiscalAddress')}</label>
               <Input defaultValue="Avenida da Liberdade, nº 100, 4º Esq" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">CONTACTO TELEFÓNICO</label>
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.phone')}</label>
               <Input defaultValue="+351 910 000 000" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">EMAIL CORPORATIVO</label>
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.corporateEmail')}</label>
               <Input defaultValue="geral@empresa.pt" />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">NOTAS</label>
-              <Textarea placeholder="Opcional" className="min-h-28" />
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.notes')}</label>
+              <Textarea placeholder={t.get('company.profile.placeholders.notes')} className="min-h-28" />
             </div>
           </div>
 
           <div className="mt-10 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
-            <Button variant="outline">Cancelar</Button>
+            <Button variant="outline">{t.get('company.profile.actions.cancel')}</Button>
             <Button>
               <Check className="h-4 w-4 mr-2" />
-              Guardar Alterações
+              {t.get('company.profile.actions.saveChanges')}
             </Button>
           </div>
         </div>
@@ -176,6 +178,8 @@ type CompanyConversation = {
 };
 
 function CompanyMessagesPage() {
+  const { t } = useLanguage();
+
   const conversations: CompanyConversation[] = useMemo(
     () => [
       {
@@ -219,21 +223,21 @@ function CompanyMessagesPage() {
       <div className="grid lg:grid-cols-[360px_minmax(0,1fr)] min-h-[640px]">
         <div className="p-6">
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold tracking-tight">Conversas</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{t.get('company.messages.title')}</h1>
             <span className="text-xs font-semibold tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full">
-              4 NOVAS
+              {t.get('company.messages.newCount', { count: 4 })}
             </span>
           </div>
 
           <div className="flex items-center gap-2 mt-5">
             <button type="button" className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm">
-              Todas
+              {t.get('company.messages.filters.all')}
             </button>
             <button type="button" className="px-4 py-2 rounded-full bg-muted text-sm hover:bg-muted/80">
-              Candidatos
+              {t.get('company.messages.filters.candidates')}
             </button>
             <button type="button" className="px-4 py-2 rounded-full bg-muted text-sm hover:bg-muted/80">
-              Técnicos
+              {t.get('company.messages.filters.technicians')}
             </button>
           </div>
 
@@ -288,7 +292,7 @@ function CompanyMessagesPage() {
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{activeConversation?.name}</p>
                   <p className="text-sm text-muted-foreground truncate">
-                    {activeConversation?.subtitle} <span className="mx-1">•</span> Online agora
+                    {activeConversation?.subtitle} <span className="mx-1">•</span> {t.get('company.messages.onlineNow')}
                   </p>
                 </div>
               </div>
@@ -297,21 +301,21 @@ function CompanyMessagesPage() {
                 <button
                   type="button"
                   className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                  aria-label="Videochamada"
+                  aria-label={t.get('company.messages.aria.videoCall')}
                 >
                   <Video className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
                   type="button"
                   className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                  aria-label="Chamada"
+                  aria-label={t.get('company.messages.aria.call')}
                 >
                   <Phone className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <button
                   type="button"
                   className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                  aria-label="Mais opções"
+                  aria-label={t.get('company.messages.aria.moreOptions')}
                 >
                   <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -322,7 +326,7 @@ function CompanyMessagesPage() {
           <div className="p-6 space-y-6">
             <div className="flex items-center justify-center">
               <span className="text-xs font-semibold tracking-widest text-muted-foreground bg-background px-4 py-2 rounded-full border">
-                HOJE
+                {t.get('company.messages.today')}
               </span>
             </div>
 
@@ -331,13 +335,13 @@ function CompanyMessagesPage() {
                 <span className="text-sm font-semibold text-muted-foreground">MO</span>
               </div>
               <div className="rounded-3xl bg-background border px-6 py-4 text-sm leading-relaxed">
-                Olá Ricardo! Gostaria de saber se já existe alguma atualização relativamente à minha candidatura para a vaga de Gestora de Produto.
+                {t.get('company.messages.sample.message1')}
               </div>
             </div>
 
             <div className="flex items-start gap-3 max-w-2xl ml-auto justify-end">
               <div className="rounded-3xl bg-primary text-primary-foreground px-6 py-4 text-sm leading-relaxed">
-                Olá Maria, bom dia! Sim, a equipa técnica terminou a revisão do seu portfólio e ficámos muito impressionados. Gostaríamos de agendar a próxima entrevista.
+                {t.get('company.messages.sample.message2')}
               </div>
             </div>
 
@@ -346,7 +350,7 @@ function CompanyMessagesPage() {
                 <span className="text-sm font-semibold text-muted-foreground">MO</span>
               </div>
               <div className="rounded-3xl bg-background border px-6 py-4 text-sm leading-relaxed">
-                Isso são ótimas notícias! Olá, confirmo a minha disponibilidade para qualquer horário na próxima quinta ou sexta-feira à tarde.
+                {t.get('company.messages.sample.message3')}
               </div>
             </div>
           </div>
@@ -356,21 +360,21 @@ function CompanyMessagesPage() {
               <button
                 type="button"
                 className="h-11 w-11 rounded-2xl bg-muted hover:bg-muted/80 flex items-center justify-center"
-                aria-label="Adicionar"
+                aria-label={t.get('company.messages.aria.add')}
               >
                 <CirclePlus className="h-5 w-5 text-muted-foreground" />
               </button>
               <button
                 type="button"
                 className="h-11 w-11 rounded-2xl bg-muted hover:bg-muted/80 flex items-center justify-center"
-                aria-label="Emoji"
+                aria-label={t.get('company.messages.aria.emoji')}
               >
                 <Smile className="h-5 w-5 text-muted-foreground" />
               </button>
 
               <div className="relative flex-1">
                 <Input
-                  placeholder="Escreva a sua mensagem aqui..."
+                  placeholder={t.get('company.messages.messagePlaceholder')}
                   className="h-12 rounded-full pl-12 pr-14 bg-muted/30 border-muted"
                 />
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-3">
@@ -380,7 +384,7 @@ function CompanyMessagesPage() {
                   <button
                     type="button"
                     className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
-                    aria-label="Enviar"
+                    aria-label={t.get('company.messages.aria.send')}
                   >
                     <Send className="h-4 w-4" />
                   </button>
@@ -395,11 +399,13 @@ function CompanyMessagesPage() {
 }
 
 function CompanyHome() {
+  const { t } = useLanguage();
+
   const stats = [
-    { label: 'Ofertas Ativas', value: 3, icon: Briefcase },
-    { label: 'Candidaturas Recebidas', value: 12, icon: FileText },
-    { label: 'Candidatos Visualizados', value: 8, icon: Eye },
-    { label: 'Contratações', value: 2, icon: CheckCircle },
+    { label: t.get('company.home.stats.activeOffers'), value: 3, icon: Briefcase },
+    { label: t.get('company.home.stats.receivedApplications'), value: 12, icon: FileText },
+    { label: t.get('company.home.stats.viewedCandidates'), value: 8, icon: Eye },
+    { label: t.get('company.home.stats.hires'), value: 2, icon: CheckCircle },
   ];
 
   const activeJobs = [
@@ -408,7 +414,7 @@ function CompanyHome() {
       title: 'Auxiliar de Limpeza',
       location: 'Lisboa',
       applications: 5,
-      status: 'Ativa',
+      status: 'active',
       postedDate: '25 Nov',
     },
     {
@@ -416,7 +422,7 @@ function CompanyHome() {
       title: 'Operador de Armazém',
       location: 'Sintra',
       applications: 4,
-      status: 'Ativa',
+      status: 'active',
       postedDate: '20 Nov',
     },
     {
@@ -424,30 +430,35 @@ function CompanyHome() {
       title: 'Assistente Administrativo',
       location: 'Lisboa',
       applications: 3,
-      status: 'Em revisão',
+      status: 'in_review',
       postedDate: '15 Nov',
     },
   ];
 
   const recentCandidates = [
-    { id: 1, name: 'Maria Silva', position: 'Auxiliar de Limpeza', date: '02 Dez', status: 'Novo' },
-    { id: 2, name: 'Ahmed Hassan', position: 'Operador de Armazém', date: '01 Dez', status: 'Visualizado' },
-    { id: 3, name: 'Ana Pereira', position: 'Auxiliar de Limpeza', date: '30 Nov', status: 'Em análise' },
+    { id: 1, name: 'Maria Silva', position: 'Auxiliar de Limpeza', date: '02 Dez', status: 'new' },
+    { id: 2, name: 'Ahmed Hassan', position: 'Operador de Armazém', date: '01 Dez', status: 'viewed' },
+    { id: 3, name: 'Ana Pereira', position: 'Auxiliar de Limpeza', date: '30 Nov', status: 'in_analysis' },
   ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Ativa':
+      case 'active':
         return 'bg-green-100 text-green-700';
-      case 'Em revisão':
+      case 'in_review':
         return 'bg-yellow-100 text-yellow-700';
-      case 'Novo':
+      case 'new':
         return 'bg-blue-100 text-blue-700';
-      case 'Visualizado':
+      case 'viewed':
+      case 'in_analysis':
         return 'bg-muted text-muted-foreground';
       default:
         return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const getStatusLabel = (status: string) => {
+    return t.get(`company.status.${status}`);
   };
 
   return (
@@ -475,10 +486,10 @@ function CompanyHome() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-semibold flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-primary" />
-              Ofertas Ativas
+              {t.get('company.home.activeJobsTitle')}
             </h2>
             <Link to="/dashboard/empresa/ofertas" className="text-sm text-primary hover:underline">
-              Ver todas
+              {t.get('company.common.viewAll')}
             </Link>
           </div>
 
@@ -492,12 +503,12 @@ function CompanyHome() {
                 <div>
                   <p className="font-medium">{job.title}</p>
                   <p className="text-sm text-muted-foreground">
-                    {job.location} • {job.applications} candidaturas
+                    {job.location} • {t.get('company.home.applicationsCount', { count: job.applications })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(job.status)}`}>
-                    {job.status}
+                    {getStatusLabel(job.status)}
                   </span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </div>
@@ -511,10 +522,10 @@ function CompanyHome() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-semibold flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              Candidaturas Recentes
+              {t.get('company.home.recentApplicationsTitle')}
             </h2>
             <Link to="/dashboard/empresa/candidatos" className="text-sm text-primary hover:underline">
-              Ver todas
+              {t.get('company.common.viewAll')}
             </Link>
           </div>
 
@@ -536,7 +547,7 @@ function CompanyHome() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(candidate.status)}`}>
-                    {candidate.status}
+                    {getStatusLabel(candidate.status)}
                   </span>
                 </div>
               </Link>
@@ -548,15 +559,15 @@ function CompanyHome() {
         <div className="cpc-card p-6 xl:col-span-2 cpc-gradient-bg text-primary-foreground">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold">Encontre os melhores candidatos</h3>
+              <h3 className="text-lg font-semibold">{t.get('company.home.promo.title')}</h3>
               <p className="opacity-90 text-sm">
-                Publique ofertas e aceda a uma bolsa de candidatos qualificados e motivados
+                {t.get('company.home.promo.description')}
               </p>
             </div>
             <Link to="/dashboard/empresa/nova-oferta">
               <Button variant="hero-outline" size="lg">
                 <Plus className="mr-2 h-5 w-5" />
-                Criar Oferta
+                {t.get('company.home.promo.cta')}
               </Button>
             </Link>
           </div>
@@ -569,7 +580,7 @@ function CompanyHome() {
 export default function CompanyDashboard() {
   const location = useLocation();
   const { profile, user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isHome = location.pathname === '/dashboard/empresa' || location.pathname === '/dashboard/empresa/';
 
   const displayName = (() => {
@@ -584,22 +595,22 @@ export default function CompanyDashboard() {
       normalizedName.length === 0 ||
       normalizedName === normalizedRole ||
       ['empresa', 'company', 'utilizador', 'user', 'admin'].includes(normalizedName);
-    return isGeneric ? (derivedFromEmail || 'Utilizador') : rawName;
+    return isGeneric ? (derivedFromEmail || t.get('company.menu.user_fallback')) : rawName;
   })();
 
   const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
   const longDateFormatter = new Intl.DateTimeFormat(locale);
 
   const sidebarItemsMain = [
-    { to: '/dashboard/empresa', label: 'Visão geral', icon: TrendingUp },
-    { to: '/dashboard/empresa/ofertas', label: 'Ofertas', icon: Briefcase },
-    { to: '/dashboard/empresa/candidaturas', label: 'Candidaturas', icon: FileText },
-    { to: '/dashboard/empresa/nova-oferta', label: 'Nova Oferta', icon: Plus },
-    { to: '/dashboard/empresa/candidatos', label: 'Candidatos', icon: Users },
+    { to: '/dashboard/empresa', label: t.get('company.menu.overview'), icon: TrendingUp },
+    { to: '/dashboard/empresa/ofertas', label: t.get('company.menu.offers'), icon: Briefcase },
+    { to: '/dashboard/empresa/candidaturas', label: t.get('company.menu.applications'), icon: FileText },
+    { to: '/dashboard/empresa/nova-oferta', label: t.get('company.menu.new_offer'), icon: Plus },
+    { to: '/dashboard/empresa/candidatos', label: t.get('company.menu.candidates'), icon: Users },
   ];
 
-  const sidebarItemsProfile = [{ to: '/dashboard/empresa/perfil', label: 'Perfil', icon: Building2 }];
-  const sidebarItemsMessages = [{ to: '/dashboard/empresa/mensagens', label: 'Mensagens', icon: MessagesSquare }];
+  const sidebarItemsProfile = [{ to: '/dashboard/empresa/perfil', label: t.get('company.menu.profile'), icon: Building2 }];
+  const sidebarItemsMessages = [{ to: '/dashboard/empresa/mensagens', label: t.get('company.menu.messages'), icon: MessagesSquare }];
 
   return (
     <Layout>
@@ -608,7 +619,7 @@ export default function CompanyDashboard() {
           <div className="grid lg:grid-cols-[250px_minmax(0,1fr)] gap-6">
             <aside className="cpc-card p-4 h-fit lg:sticky lg:top-24">
               <div className="mb-4 px-2">
-                <p className="text-sm text-muted-foreground">Menu Empresa</p>
+                <p className="text-sm text-muted-foreground">{t.get('company.menu.title')}</p>
                 <p className="font-semibold">{displayName}</p>
               </div>
 
@@ -628,7 +639,7 @@ export default function CompanyDashboard() {
                 ))}
 
                 <div className="pt-4 mt-4 border-t">
-                  <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">Definições</p>
+                  <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.menu.sections.settings')}</p>
                   <div className="mt-2 space-y-1">
                     {sidebarItemsProfile.map((item) => (
                       <NavLink
@@ -646,7 +657,7 @@ export default function CompanyDashboard() {
                 </div>
 
                 <div className="pt-4 mt-4 border-t">
-                  <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">Mensagens</p>
+                  <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.menu.sections.messages')}</p>
                   <div className="mt-2 space-y-1">
                     {sidebarItemsMessages.map((item) => (
                       <NavLink
@@ -670,16 +681,17 @@ export default function CompanyDashboard() {
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
                   <div>
                     <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                      Bem-vindo(a), <span className="text-primary">{displayName}</span>
+                      {t.get('company.dashboard.welcome')}{' '}
+                      <span className="text-primary">{displayName}</span>
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Resumo do seu painel em {longDateFormatter.format(new Date())}
+                      {t.get('company.dashboard.summary', { date: longDateFormatter.format(new Date()) })}
                     </p>
                   </div>
                   <Link to="/dashboard/empresa/nova-oferta" className="shrink-0">
                     <Button>
                       <Plus className="mr-2 h-4 w-4" />
-                      Nova Oferta
+                      {t.get('company.menu.new_offer')}
                     </Button>
                   </Link>
                 </div>
@@ -695,7 +707,7 @@ export default function CompanyDashboard() {
                 <Route path="ofertas/:jobId/candidaturas" element={<JobApplicationsPage />} />
                 <Route
                   path="candidatos"
-                  element={<div className="cpc-card p-8 text-center text-sm text-muted-foreground">Em breve.</div>}
+                  element={<div className="cpc-card p-8 text-center text-sm text-muted-foreground">{t.get('company.common.soon')}</div>}
                 />
                 <Route path="candidatos/:candidateId" element={<CandidateProfilePage />} />
               </Routes>

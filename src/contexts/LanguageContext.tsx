@@ -38,6 +38,10 @@ function safeLocalStorageSet(key: string, value: string) {
   }
 }
 
+function isLanguage(value: unknown): value is Language {
+  return value === 'pt' || value === 'en' || value === 'es';
+}
+
 function trackMissingKey(lang: Language, path: string) {
   const raw = safeLocalStorageGet('cpc-i18n-missing');
   const parsed = safeJsonParse<Record<string, Record<string, number>>>(raw) ?? {};
@@ -95,12 +99,13 @@ function createTranslationProxy(args: {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     const stored = safeLocalStorageGet('cpc-language');
-    return (stored as Language) || 'pt';
+    return isLanguage(stored) ? stored : 'pt';
   });
 
   const setLanguage = useCallback((lang: Language) => {
-    setLanguageState(lang);
-    safeLocalStorageSet('cpc-language', lang);
+    const next = isLanguage(lang) ? lang : 'pt';
+    setLanguageState(next);
+    safeLocalStorageSet('cpc-language', next);
   }, []);
 
   const [settings, setSettings] = useState<{ enabled: boolean; version: number }>(() => ({

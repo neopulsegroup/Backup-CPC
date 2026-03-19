@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { User, Mail, Phone, ArrowLeft, FileText, Briefcase, Calendar, ExternalLink, BookOpen, CheckCircle, Clock } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Profile {
   user_id: string;
@@ -26,6 +27,7 @@ interface ApplicationSummary {
 export default function CandidateProfilePage() {
   const { candidateId } = useParams();
   const { profile: viewerProfile } = useAuth();
+  const { language, t } = useLanguage();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [applications, setApplications] = useState<ApplicationSummary[]>([]);
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export default function CandidateProfilePage() {
       if (prof) {
         setProfile({
           user_id: candidateId,
-          name: prof.name || 'Candidato',
+          name: prof.name || t.get('company.candidate.fallbackName'),
           email: prof.email || '',
           phone: prof.phone ?? null,
           avatar_url: prof.avatar_url ?? null,
@@ -77,7 +79,7 @@ export default function CandidateProfilePage() {
 
         const summaries: ApplicationSummary[] = apps.map(a => ({
           id: a.id,
-          job_title: jobsById.get(a.job_id)?.title || 'Oferta',
+          job_title: jobsById.get(a.job_id)?.title || t.get('company.candidate.fallbackOfferTitle'),
           created_at: a.created_at,
           status: a.status,
         }));
@@ -128,7 +130,7 @@ export default function CandidateProfilePage() {
       '2': { user_id: '2', name: 'Ahmed Hassan', email: 'ahmed.hassan@example.com', phone: '+351 910 000 002', avatar_url: null },
       '3': { user_id: '3', name: 'Ana Pereira', email: 'ana.pereira@example.com', phone: '+351 910 000 003', avatar_url: null },
     };
-    return demos[id] || { user_id: id, name: 'Candidato', email: 'candidato@example.com', phone: null, avatar_url: null };
+    return demos[id] || { user_id: id, name: t.get('company.candidate.fallbackName'), email: 'candidato@example.com', phone: null, avatar_url: null };
   }
 
   function getDemoResume(id: string): string | null {
@@ -155,10 +157,13 @@ export default function CandidateProfilePage() {
         <div className="cpc-section">
           <div className="cpc-container">
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Candidato não encontrado</p>
-          <Link to={viewerProfile?.role === 'company' ? "/dashboard/empresa" : "/dashboard/cpc"} className="text-primary hover:underline mt-2 inline-block">
-            Voltar
-          </Link>
+              <p className="text-muted-foreground">{t.get('company.candidate.notFound')}</p>
+              <Link
+                to={viewerProfile?.role === 'company' ? "/dashboard/empresa" : "/dashboard/cpc"}
+                className="text-primary hover:underline mt-2 inline-block"
+              >
+                {t.get('company.candidate.back')}
+              </Link>
             </div>
           </div>
         </div>
@@ -166,13 +171,15 @@ export default function CandidateProfilePage() {
     );
   }
 
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+
   return (
     <Layout>
       <div className="cpc-section">
         <div className="cpc-container">
           <Link to={viewerProfile?.role === 'company' ? "/dashboard/empresa" : "/dashboard/cpc"} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Voltar ao painel
+            {t.get('company.candidate.backToDashboard')}
           </Link>
 
           <div className="grid lg:grid-cols-3 gap-6">
@@ -193,28 +200,28 @@ export default function CandidateProfilePage() {
               </Card>
 
               <Card className="p-6">
-                <h2 className="font-semibold mb-4 flex items-center gap-2"><FileText className="h-5 w-5" /> Currículo</h2>
+                <h2 className="font-semibold mb-4 flex items-center gap-2"><FileText className="h-5 w-5" /> {t.get('company.candidate.resume.title')}</h2>
                 {resumeUrl ? (
                   <div className="space-y-4">
                     <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden">
-                      <iframe src={resumeUrl} className="w-full h-full" title="Currículo" />
+                      <iframe src={resumeUrl} className="w-full h-full" title={t.get('company.candidate.resume.iframeTitle')} />
                     </div>
                     <a href={resumeUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
                       <ExternalLink className="h-4 w-4" />
-                      Abrir CV em nova janela
+                      {t.get('company.candidate.resume.openInNewWindow')}
                     </a>
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    Currículo não disponível. Solicite o envio do CV ao candidato.
+                    {t.get('company.candidate.resume.notAvailable')}
                   </div>
                 )}
               </Card>
 
               <Card className="p-6">
-                <h2 className="font-semibold mb-4 flex items-center gap-2"><Calendar className="h-5 w-5" /> Marcações</h2>
+                <h2 className="font-semibold mb-4 flex items-center gap-2"><Calendar className="h-5 w-5" /> {t.get('company.candidate.sessions.title')}</h2>
                 {sessions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem marcações registadas.</p>
+                  <p className="text-sm text-muted-foreground">{t.get('company.candidate.sessions.empty')}</p>
                 ) : (
                   <div className="space-y-3">
                     {sessions.map((s) => (
@@ -225,11 +232,11 @@ export default function CandidateProfilePage() {
                           </div>
                           <div>
                             <p className="font-medium">{s.session_type}</p>
-                            <p className="text-xs text-muted-foreground">Status: {s.status || 'Agendada'}</p>
+                            <p className="text-xs text-muted-foreground">{t.get('company.candidate.sessions.status', { status: s.status || t.get('company.candidate.sessions.defaultStatus') })}</p>
                           </div>
                         </div>
                         <div className="text-right text-xs">
-                          <p className="font-medium">{new Date(s.scheduled_date).toLocaleDateString('pt-PT')}</p>
+                          <p className="font-medium">{new Date(s.scheduled_date).toLocaleDateString(locale)}</p>
                           <p className="text-muted-foreground">{s.scheduled_time}</p>
                         </div>
                       </div>
@@ -239,27 +246,29 @@ export default function CandidateProfilePage() {
               </Card>
 
               <Card className="p-6">
-                <h2 className="font-semibold mb-4 flex items-center gap-2"><BookOpen className="h-5 w-5" /> Trilhas Assistidas</h2>
+                <h2 className="font-semibold mb-4 flex items-center gap-2"><BookOpen className="h-5 w-5" /> {t.get('company.candidate.trails.title')}</h2>
                 {progress.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem progresso em trilhas.</p>
+                  <p className="text-sm text-muted-foreground">{t.get('company.candidate.trails.empty')}</p>
                 ) : (
                   <div className="space-y-3">
                     {progress.map((p) => {
-                      const t = trails[p.trail_id];
+                      const trail = trails[p.trail_id];
                       const isCompleted = p.completed_at !== null;
                       const percent = p.progress_percent || 0;
-                      const total = t?.modules_count || 0;
+                      const total = trail?.modules_count || 0;
                       const completed = p.modules_completed || 0;
                       return (
                         <Link key={p.trail_id} to={`/dashboard/migrante/trilhas/${p.trail_id}`} className="block p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
                           <div className="flex items-center justify-between mb-2">
-                            <p className="font-medium text-sm">{t?.title || p.trail_id}</p>
+                            <p className="font-medium text-sm">{trail?.title || p.trail_id}</p>
                             {isCompleted ? (
                               <span className="text-xs text-green-600 flex items-center gap-1">
-                                <CheckCircle className="h-4 w-4" /> Completa
+                                <CheckCircle className="h-4 w-4" /> {t.get('company.candidate.trails.completed')}
                               </span>
                             ) : (
-                              <span className="text-xs text-muted-foreground">{completed}/{total} módulos</span>
+                              <span className="text-xs text-muted-foreground">
+                                {t.get('company.candidate.trails.modulesProgress', { completed, total })}
+                              </span>
                             )}
                           </div>
                           <Progress value={percent} className="h-2" />
@@ -273,9 +282,9 @@ export default function CandidateProfilePage() {
 
             <div className="space-y-6">
               <Card className="p-6">
-                <h2 className="font-semibold mb-4 flex items-center gap-2"><Briefcase className="h-5 w-5" /> Candidaturas</h2>
+                <h2 className="font-semibold mb-4 flex items-center gap-2"><Briefcase className="h-5 w-5" /> {t.get('company.candidate.applications.title')}</h2>
                 {applications.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Sem candidaturas registadas para este candidato.</p>
+                  <p className="text-sm text-muted-foreground">{t.get('company.candidate.applications.empty')}</p>
                 ) : (
                   <div className="space-y-3">
                     {applications.map(app => (
@@ -283,7 +292,7 @@ export default function CandidateProfilePage() {
                         <p className="font-medium">{app.job_title}</p>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                           <Calendar className="h-3 w-3" />
-                          {new Date(app.created_at).toLocaleDateString('pt-PT')}
+                          {new Date(app.created_at).toLocaleDateString(locale)}
                         </p>
                       </div>
                     ))}
@@ -296,7 +305,7 @@ export default function CandidateProfilePage() {
                   const demo = getDemoResume(profile.user_id);
                   setResumeUrl(demo);
                 }
-              }}>Usar CV de demonstração</Button>
+              }}>{t.get('company.candidate.resume.useDemo')}</Button>
             </div>
           </div>
         </div>

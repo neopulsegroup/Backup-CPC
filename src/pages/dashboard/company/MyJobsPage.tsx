@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { countDocuments, queryDocuments } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import {
   Plus,
@@ -24,6 +25,7 @@ interface JobOffer {
 
 export default function MyJobsPage() {
   const { user } = useAuth();
+  const { language, t } = useLanguage();
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,13 +67,13 @@ export default function MyJobsPage() {
   const getStatusConfig = (status: string) => {
     switch (status) {
       case 'active':
-        return { label: 'Ativa', color: 'bg-green-100 text-green-700' };
+        return { label: t.get('company.offers.status.active'), color: 'bg-green-100 text-green-700' };
       case 'pending_review':
-        return { label: 'Em revisão', color: 'bg-yellow-100 text-yellow-700' };
+        return { label: t.get('company.offers.status.pending_review'), color: 'bg-yellow-100 text-yellow-700' };
       case 'closed':
-        return { label: 'Fechada', color: 'bg-muted text-muted-foreground' };
+        return { label: t.get('company.offers.status.closed'), color: 'bg-muted text-muted-foreground' };
       case 'rejected':
-        return { label: 'Rejeitada', color: 'bg-red-100 text-red-700' };
+        return { label: t.get('company.offers.status.rejected'), color: 'bg-red-100 text-red-700' };
       default:
         return { label: status, color: 'bg-muted text-muted-foreground' };
     }
@@ -82,11 +84,14 @@ export default function MyJobsPage() {
     const posted = new Date(date);
     const diffDays = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return 'Hoje';
-    if (diffDays === 1) return 'Ontem';
-    if (diffDays < 7) return `Há ${diffDays} dias`;
-    return `Há ${Math.floor(diffDays / 7)} semanas`;
+    if (diffDays === 0) return t.get('company.common.today');
+    if (diffDays === 1) return t.get('company.common.yesterday');
+    if (diffDays < 7) return t.get('company.common.daysAgo', { count: diffDays });
+    return t.get('company.common.weeksAgo', { count: Math.floor(diffDays / 7) });
   };
+
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const numberFormatter = new Intl.NumberFormat(locale);
 
   if (loading) {
     return (
@@ -103,7 +108,7 @@ export default function MyJobsPage() {
         className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
       >
         <ArrowLeft className="h-4 w-4 mr-1" />
-        Voltar ao painel
+        {t.get('company.offers.backToDashboard')}
       </Link>
 
       {/* Header */}
@@ -111,16 +116,16 @@ export default function MyJobsPage() {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
             <Briefcase className="h-8 w-8 text-primary" />
-            Minhas Ofertas
+            {t.get('company.offers.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie as suas ofertas de emprego
+            {t.get('company.offers.subtitle')}
           </p>
         </div>
         <Link to="/dashboard/empresa/nova-oferta">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Nova Oferta
+            {t.get('company.offers.actions.newOffer')}
           </Button>
         </Link>
       </div>
@@ -129,14 +134,14 @@ export default function MyJobsPage() {
       {jobs.length === 0 ? (
         <div className="cpc-card p-12 text-center">
           <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="font-semibold mb-2">Sem ofertas</h3>
+          <h3 className="font-semibold mb-2">{t.get('company.offers.empty.title')}</h3>
           <p className="text-muted-foreground mb-4">
-            Ainda não publicou nenhuma oferta de emprego.
+            {t.get('company.offers.empty.subtitle')}
           </p>
           <Link to="/dashboard/empresa/nova-oferta">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
-              Criar Primeira Oferta
+              {t.get('company.offers.empty.cta')}
             </Button>
           </Link>
         </div>
@@ -171,7 +176,7 @@ export default function MyJobsPage() {
                       )}
                       <span className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
-                        {job.applications_count || 0} candidaturas
+                        {t.get('company.offers.applicationsCount', { count: numberFormatter.format(job.applications_count || 0) })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-4 w-4" />

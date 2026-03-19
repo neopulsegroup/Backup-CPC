@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { COOKIE_CONSENT_OPEN_SETTINGS_EVENT, defaultCookieConsentCategories, needsCookieConsentPrompt, readCookieConsent, writeCookieConsent } from '@/lib/cookieConsent';
 import { ChevronDown } from 'lucide-react';
 
@@ -70,6 +71,7 @@ function CookieAccordionSection({
 }
 
 export function CookieConsent() {
+  const { t } = useLanguage();
   const [showBanner, setShowBanner] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [preferences, setPreferences] = useState<Preferences>(() => getInitialPreferences());
@@ -78,31 +80,29 @@ export function CookieConsent() {
 
   const accordionSections = useMemo(() => {
     return [
-      { id: 'necessary' as const, title: 'Cookies Estritamente Necessários' },
-      { id: 'analytics' as const, title: 'Cookies de Desempenho e Estatística' },
-      { id: 'personalization' as const, title: 'Cookies de Personalização' },
-      { id: 'externalServices' as const, title: 'Cookies de Serviços Externos' },
+      { id: 'necessary' as const, title: t.get('cookieConsent.sections.necessary.title') },
+      { id: 'analytics' as const, title: t.get('cookieConsent.sections.analytics.title') },
+      { id: 'personalization' as const, title: t.get('cookieConsent.sections.personalization.title') },
+      { id: 'externalServices' as const, title: t.get('cookieConsent.sections.externalServices.title') },
     ];
-  }, []);
+  }, [t]);
 
-  const bannerTitle = 'Utilizamos cookies para melhorar a sua experiência';
+  const bannerTitle = t.get('cookieConsent.banner.title');
   const bannerDescription = useMemo(() => {
     return (
       <>
-        A Plataforma CPC utiliza cookies essenciais para garantir o funcionamento do sistema e cookies opcionais para melhorar a experiência de
-        navegação, analisar a utilização da plataforma e personalizar conteúdos. Pode aceitar todos os cookies, rejeitar os cookies opcionais ou
-        configurar as suas preferências. Para mais informações, consulte a nossa{' '}
+        {t.get('cookieConsent.banner.descriptionPrefix')}{' '}
         <Link className="text-primary underline underline-offset-4" to="/cookies">
-          Política de Cookies
+          {t.get('policies.cookies.title')}
         </Link>{' '}
-        e{' '}
+        {t.get('cookieConsent.banner.and')}{' '}
         <Link className="text-primary underline underline-offset-4" to="/privacidade">
-          Política de Privacidade
+          {t.get('policies.privacy.title')}
         </Link>
-        .
+        {t.get('cookieConsent.banner.descriptionSuffix')}
       </>
     );
-  }, []);
+  }, [t]);
 
   const openPreferences = () => {
     setPreferences(getInitialPreferences());
@@ -178,12 +178,12 @@ export function CookieConsent() {
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Button variant="secondary" onClick={rejectOptional}>
-                  Rejeitar cookies opcionais
+                  {t.get('cookieConsent.banner.actions.rejectOptional')}
                 </Button>
                 <Button variant="outline" onClick={openPreferences}>
-                  Configurar preferências
+                  {t.get('cookieConsent.banner.actions.configure')}
                 </Button>
-                <Button onClick={acceptAll}>Aceitar todos</Button>
+                <Button onClick={acceptAll}>{t.get('cookieConsent.banner.actions.acceptAll')}</Button>
               </div>
             </div>
           </div>
@@ -194,9 +194,9 @@ export function CookieConsent() {
         <DialogContent className="w-[90vw] max-w-[600px] max-h-[80vh] overflow-hidden p-0 flex flex-col">
           <div className="p-4 pb-2">
             <DialogHeader className="flex flex-row items-center justify-between space-y-0 text-left">
-              <DialogTitle>Preferências de Cookies</DialogTitle>
+              <DialogTitle>{t.get('cookieConsent.dialog.title')}</DialogTitle>
               <Button variant="ghost" size="sm" onClick={toggleExpandAll}>
-                {allExpanded ? 'Recolher tudo' : 'Expandir tudo'}
+                {allExpanded ? t.get('cookieConsent.dialog.actions.collapseAll') : t.get('cookieConsent.dialog.actions.expandAll')}
               </Button>
             </DialogHeader>
           </div>
@@ -204,8 +204,7 @@ export function CookieConsent() {
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-normal break-words">
-                Pode escolher quais os tipos de cookies que autoriza na Plataforma CPC. Alguns cookies são essenciais para o funcionamento do
-                sistema e não podem ser desativados.
+                {t.get('cookieConsent.dialog.description')}
               </p>
 
               <div className="space-y-3">
@@ -217,21 +216,21 @@ export function CookieConsent() {
                 >
                   <div className="flex items-start justify-between gap-6">
                     <div>
-                      <p className="font-medium text-foreground">Sempre ativos</p>
-                      <p className="text-sm text-muted-foreground">Estado: Ativo (não pode ser desativado)</p>
+                      <p className="font-medium text-foreground">{t.get('cookieConsent.sections.necessary.alwaysActiveTitle')}</p>
+                      <p className="text-sm text-muted-foreground">{t.get('cookieConsent.sections.necessary.alwaysActiveStatus')}</p>
                     </div>
-                    <Switch checked disabled aria-label="Cookies estritamente necessários (sempre ativos)" />
+                    <Switch checked disabled aria-label={t.get('cookieConsent.sections.necessary.alwaysActiveAriaLabel')} />
                   </div>
                   <div className="mt-4 space-y-3">
-                    <p>Estes cookies são essenciais para o funcionamento da plataforma e permitem funcionalidades básicas como:</p>
+                    <p>{t.get('cookieConsent.sections.necessary.description')}</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>login e autenticação</li>
-                      <li>navegação segura</li>
-                      <li>acesso às áreas reservadas</li>
-                      <li>gestão de sessões</li>
-                      <li>utilização das funcionalidades principais da plataforma.</li>
+                      <li>{t.get('cookieConsent.sections.necessary.items.login')}</li>
+                      <li>{t.get('cookieConsent.sections.necessary.items.secureNavigation')}</li>
+                      <li>{t.get('cookieConsent.sections.necessary.items.restrictedAreas')}</li>
+                      <li>{t.get('cookieConsent.sections.necessary.items.sessionManagement')}</li>
+                      <li>{t.get('cookieConsent.sections.necessary.items.coreFeatures')}</li>
                     </ul>
-                    <p>Sem estes cookies, a plataforma não pode funcionar corretamente.</p>
+                    <p>{t.get('cookieConsent.sections.necessary.footer')}</p>
                   </div>
                 </CookieAccordionSection>
 
@@ -243,24 +242,24 @@ export function CookieConsent() {
                 >
                   <div className="flex items-start justify-between gap-6">
                     <div>
-                      <p className="font-medium text-foreground">Controlo</p>
-                      <p className="text-sm text-muted-foreground">Ativar / Desativar</p>
+                      <p className="font-medium text-foreground">{t.get('cookieConsent.sections.common.controlTitle')}</p>
+                      <p className="text-sm text-muted-foreground">{t.get('cookieConsent.sections.common.controlHint')}</p>
                     </div>
                     <Switch
                       checked={preferences.analytics}
                       onCheckedChange={(checked) => setPreferences((prev) => ({ ...prev, analytics: checked }))}
-                      aria-label="Cookies de desempenho e estatística"
+                      aria-label={t.get('cookieConsent.sections.analytics.ariaLabel')}
                     />
                   </div>
                   <div className="mt-4 space-y-3">
-                    <p>Estes cookies ajudam-nos a compreender como os utilizadores interagem com a plataforma. Permitem analisar, por exemplo:</p>
+                    <p>{t.get('cookieConsent.sections.analytics.description')}</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>páginas mais visitadas</li>
-                      <li>tempo de permanência</li>
-                      <li>desempenho do sistema</li>
-                      <li>eventuais erros técnicos.</li>
+                      <li>{t.get('cookieConsent.sections.analytics.items.mostVisitedPages')}</li>
+                      <li>{t.get('cookieConsent.sections.analytics.items.timeOnSite')}</li>
+                      <li>{t.get('cookieConsent.sections.analytics.items.systemPerformance')}</li>
+                      <li>{t.get('cookieConsent.sections.analytics.items.technicalErrors')}</li>
                     </ul>
-                    <p>As informações recolhidas são agregadas e utilizadas apenas para melhorar a plataforma.</p>
+                    <p>{t.get('cookieConsent.sections.analytics.footer')}</p>
                   </div>
                 </CookieAccordionSection>
 
@@ -272,22 +271,22 @@ export function CookieConsent() {
                 >
                   <div className="flex items-start justify-between gap-6">
                     <div>
-                      <p className="font-medium text-foreground">Controlo</p>
-                      <p className="text-sm text-muted-foreground">Ativar / Desativar</p>
+                      <p className="font-medium text-foreground">{t.get('cookieConsent.sections.common.controlTitle')}</p>
+                      <p className="text-sm text-muted-foreground">{t.get('cookieConsent.sections.common.controlHint')}</p>
                     </div>
                     <Switch
                       checked={preferences.personalization}
                       onCheckedChange={(checked) => setPreferences((prev) => ({ ...prev, personalization: checked }))}
-                      aria-label="Cookies de personalização"
+                      aria-label={t.get('cookieConsent.sections.personalization.ariaLabel')}
                     />
                   </div>
                   <div className="mt-4 space-y-3">
-                    <p>Estes cookies permitem adaptar a experiência de navegação às preferências do utilizador. Podem ser utilizados para:</p>
+                    <p>{t.get('cookieConsent.sections.personalization.description')}</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>guardar idioma preferido</li>
-                      <li>apresentar conteúdos relevantes</li>
-                      <li>recomendar trilhas formativas</li>
-                      <li>melhorar a experiência de utilização.</li>
+                      <li>{t.get('cookieConsent.sections.personalization.items.preferredLanguage')}</li>
+                      <li>{t.get('cookieConsent.sections.personalization.items.relevantContent')}</li>
+                      <li>{t.get('cookieConsent.sections.personalization.items.recommendedTracks')}</li>
+                      <li>{t.get('cookieConsent.sections.personalization.items.userExperience')}</li>
                     </ul>
                   </div>
                 </CookieAccordionSection>
@@ -300,23 +299,23 @@ export function CookieConsent() {
                 >
                   <div className="flex items-start justify-between gap-6">
                     <div>
-                      <p className="font-medium text-foreground">Controlo</p>
-                      <p className="text-sm text-muted-foreground">Ativar / Desativar</p>
+                      <p className="font-medium text-foreground">{t.get('cookieConsent.sections.common.controlTitle')}</p>
+                      <p className="text-sm text-muted-foreground">{t.get('cookieConsent.sections.common.controlHint')}</p>
                     </div>
                     <Switch
                       checked={preferences.externalServices}
                       onCheckedChange={(checked) => setPreferences((prev) => ({ ...prev, externalServices: checked }))}
-                      aria-label="Cookies de serviços externos"
+                      aria-label={t.get('cookieConsent.sections.externalServices.ariaLabel')}
                     />
                   </div>
                   <div className="mt-4 space-y-3">
-                    <p>Algumas funcionalidades da plataforma podem integrar serviços externos, como:</p>
+                    <p>{t.get('cookieConsent.sections.externalServices.description')}</p>
                     <ul className="list-disc pl-6 space-y-1">
-                      <li>plataformas de vídeo para conteúdos formativos</li>
-                      <li>ferramentas de comunicação</li>
-                      <li>ferramentas de análise de utilização.</li>
+                      <li>{t.get('cookieConsent.sections.externalServices.items.videoPlatforms')}</li>
+                      <li>{t.get('cookieConsent.sections.externalServices.items.communicationTools')}</li>
+                      <li>{t.get('cookieConsent.sections.externalServices.items.analyticsTools')}</li>
                     </ul>
-                    <p>Estes serviços podem utilizar cookies próprios.</p>
+                    <p>{t.get('cookieConsent.sections.externalServices.footer')}</p>
                   </div>
                 </CookieAccordionSection>
               </div>
@@ -326,12 +325,12 @@ export function CookieConsent() {
           <div className="p-4 pt-0">
             <DialogFooter className="gap-2 sm:gap-3">
               <Button variant="secondary" onClick={rejectOptional}>
-                Rejeitar opcionais
+                {t.get('cookieConsent.dialog.actions.rejectOptional')}
               </Button>
               <Button variant="outline" onClick={acceptAll}>
-                Aceitar todos
+                {t.get('cookieConsent.dialog.actions.acceptAll')}
               </Button>
-              <Button onClick={savePreferences}>Guardar preferências</Button>
+              <Button onClick={savePreferences}>{t.get('cookieConsent.dialog.actions.save')}</Button>
             </DialogFooter>
           </div>
         </DialogContent>

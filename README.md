@@ -171,6 +171,31 @@ npm run test:run
 
 Contribuições são bem-vindas! Por favor, siga as boas práticas de desenvolvimento, mantenha o estilo de código consistente e certifique-se de testar suas alterações.
 
+### Internacionalização (i18n)
+As traduções ficam em:
+* `src/locales/pt.json`
+* `src/locales/en.json`
+* `src/locales/es.json`
+
+Na UI, use o hook `useLanguage()` e renderize via `t` (proxy tipado) ou `t.get(path, params)`:
+* `t.nav.login`
+* `t.cpc.profile.title`
+* `t.get('policies.common.lastUpdated', { date: '2026-03-19' })`
+
+Regras:
+* Nunca introduza texto estático hardcoded em páginas/componentes; crie uma chave de tradução.
+* Mantenha as chaves sincronizadas nos 3 idiomas (há um teste de integridade que falha se houver divergências).
+* Use namespaces curtos e estáveis (`common`, `nav`, `dashboard`, `cpc`, `migrant`, `messagesPage`, `policies`, …).
+* Use placeholders com `{nome}` para interpolação e passe valores via `t.get(path, params)`.
+* Fallback: se uma chave não existir no idioma atual, a aplicação usa `pt` e regista a chave em `localStorage` (`cpc-i18n-missing`).
+
+Chaves adicionadas recentemente:
+* `policies.*` (páginas legais Cookies/Privacidade)
+* `messagesPage.*` (UI de mensagens: títulos, labels, aria, erros e toasts)
+* `common.errorTitle`, `common.validationTitle`, `common.notFoundTitle`, `common.create`, `common.retry`, `common.languages.*`
+* `dashboard.session_types.*`, `dashboard.support_types.*`
+* `cpc.profile.*`
+
 ---
 
 Desenvolvido com foco na inclusão e apoio à comunidade migrante em Portugal.

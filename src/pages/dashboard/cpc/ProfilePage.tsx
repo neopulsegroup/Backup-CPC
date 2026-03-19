@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,7 @@ function isValidPhone(value: string): boolean {
 
 export default function CPCProfilePage() {
   const { user, profile, profileData, refreshProfile } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,9 +79,9 @@ export default function CPCProfilePage() {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : '';
         if (msg === 'permission-denied' || msg === 'PERMISSION_DENIED') {
-          setError('Sem permissões para carregar o seu perfil.');
+          setError(t.cpc.profile.errors.loadNoPermission);
         } else {
-          setError('Não foi possível carregar o seu perfil.');
+          setError(t.cpc.profile.errors.loadGeneric);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -89,16 +91,16 @@ export default function CPCProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [profile?.name, profileData?.phone, user?.uid]);
+  }, [profile?.name, profileData?.phone, t.cpc.profile.errors.loadGeneric, t.cpc.profile.errors.loadNoPermission, user?.uid]);
 
   async function handlePhotoPick(file: File) {
     if (!user?.uid) return;
     if (!PHOTO_ALLOWED_MIME.has(file.type)) {
-      toast({ title: 'Formato inválido', description: 'Use JPG, PNG ou GIF.', variant: 'destructive' });
+      toast({ title: t.cpc.profile.photo.invalidFormatTitle, description: t.cpc.profile.photo.invalidFormatDesc, variant: 'destructive' });
       return;
     }
     if (file.size > PHOTO_MAX_BYTES) {
-      toast({ title: 'Ficheiro demasiado grande', description: 'O limite é 5MB.', variant: 'destructive' });
+      toast({ title: t.cpc.profile.photo.tooLargeTitle, description: t.cpc.profile.photo.tooLargeDesc, variant: 'destructive' });
       return;
     }
 
@@ -111,9 +113,9 @@ export default function CPCProfilePage() {
       await updateDocument('profiles', user.uid, { photoUrl: url });
       await refreshProfile();
       setDoc((prev) => (prev ? { ...prev, photoUrl: url } : ({ id: user.uid, photoUrl: url } as ProfileDoc)));
-      toast({ title: 'Foto atualizada', description: 'A sua foto de perfil foi atualizada.' });
+      toast({ title: t.cpc.profile.photo.updatedTitle, description: t.cpc.profile.photo.updatedDesc });
     } catch (err: unknown) {
-      toast({ title: 'Erro', description: 'Não foi possível atualizar a foto.', variant: 'destructive' });
+      toast({ title: t.common.errorTitle, description: t.cpc.profile.photo.updateError, variant: 'destructive' });
     } finally {
       setUploadingPhoto(false);
     }
@@ -125,11 +127,11 @@ export default function CPCProfilePage() {
     const phone = edit.phone.trim();
 
     if (!name) {
-      toast({ title: 'Validação', description: 'O nome é obrigatório.', variant: 'destructive' });
+      toast({ title: t.common.validationTitle, description: t.cpc.profile.validation.nameRequired, variant: 'destructive' });
       return;
     }
     if (!isValidPhone(phone)) {
-      toast({ title: 'Validação', description: 'O telefone não é válido.', variant: 'destructive' });
+      toast({ title: t.common.validationTitle, description: t.cpc.profile.validation.phoneInvalid, variant: 'destructive' });
       return;
     }
 
@@ -139,14 +141,14 @@ export default function CPCProfilePage() {
       await updateDocument('profiles', user.uid, { name, phone: phone || null });
       await refreshProfile();
       setEditMode(false);
-      toast({ title: 'Perfil atualizado', description: 'As alterações foram guardadas com sucesso.' });
+      toast({ title: t.cpc.profile.toast.updatedTitle, description: t.cpc.profile.toast.updatedDesc });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '';
       if (msg === 'permission-denied' || msg === 'PERMISSION_DENIED') {
-        toast({ title: 'Sem permissões', description: 'Não foi possível guardar as alterações.', variant: 'destructive' });
+        toast({ title: t.cpc.profile.errors.saveNoPermissionTitle, description: t.cpc.profile.errors.saveNoPermissionDesc, variant: 'destructive' });
         return;
       }
-      toast({ title: 'Erro', description: 'Não foi possível guardar as alterações.', variant: 'destructive' });
+      toast({ title: t.common.errorTitle, description: t.cpc.profile.errors.saveGeneric, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -173,7 +175,7 @@ export default function CPCProfilePage() {
       <div className="cpc-card p-8 text-center">
         <p className="text-sm text-muted-foreground">{error}</p>
         <Button className="mt-4" onClick={() => window.location.reload()}>
-          Tentar novamente
+          {t.common.retry}
         </Button>
       </div>
     );
@@ -183,24 +185,24 @@ export default function CPCProfilePage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Perfil</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie os dados da sua conta e preferências de contacto.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t.cpc.profile.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t.cpc.profile.subtitle}</p>
         </div>
         <div className="shrink-0 flex items-center gap-2">
           {editMode ? (
             <>
               <Button variant="outline" onClick={cancel} disabled={saving || uploadingPhoto}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button onClick={save} disabled={saving || uploadingPhoto}>
                 {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                Guardar
+                {t.common.save}
               </Button>
             </>
           ) : (
             <Button variant="outline" onClick={() => setEditMode(true)}>
               <UserCog className="h-4 w-4 mr-2" />
-              Editar
+              {t.cpc.profile.actions.edit}
             </Button>
           )}
         </div>
@@ -208,11 +210,11 @@ export default function CPCProfilePage() {
 
       <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="cpc-card p-6">
-          <p className="text-xs font-semibold tracking-widest text-muted-foreground">FOTO</p>
+          <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.cpc.profile.sections.photo}</p>
           <div className="mt-6 flex items-center gap-4">
             <div className="relative">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={doc?.photoUrl || profileData?.photoUrl || undefined} alt={edit.name || 'Utilizador'} />
+                <AvatarImage src={doc?.photoUrl || profileData?.photoUrl || undefined} alt={edit.name || t.cpc.menu.user_fallback} />
                 <AvatarFallback>{avatarFallback}</AvatarFallback>
               </Avatar>
               <input
@@ -231,13 +233,13 @@ export default function CPCProfilePage() {
                 onClick={() => photoInputRef.current?.click()}
                 disabled={uploadingPhoto}
                 className="absolute -bottom-2 -right-2 h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow hover:opacity-95 disabled:opacity-60"
-                aria-label="Alterar foto"
+                aria-label={t.cpc.profile.photo.changeAriaLabel}
               >
                 {uploadingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
               </button>
             </div>
             <div className="min-w-0">
-              <p className="font-semibold truncate">{profile?.name || edit.name || 'Utilizador'}</p>
+              <p className="font-semibold truncate">{profile?.name || edit.name || t.cpc.menu.user_fallback}</p>
               <p className="text-sm text-muted-foreground truncate">{displayEmail}</p>
               <p className="text-xs font-semibold tracking-widest text-muted-foreground mt-2">{displayRole}</p>
             </div>
@@ -245,10 +247,10 @@ export default function CPCProfilePage() {
         </div>
 
         <div className="cpc-card p-6">
-          <p className="text-xs font-semibold tracking-widest text-muted-foreground">INFORMAÇÕES</p>
+          <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.cpc.profile.sections.info}</p>
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="cpc-profile-name">Nome</Label>
+              <Label htmlFor="cpc-profile-name">{t.cpc.profile.labels.name}</Label>
               <Input
                 id="cpc-profile-name"
                 value={edit.name}
@@ -257,21 +259,21 @@ export default function CPCProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cpc-profile-email">Email</Label>
+              <Label htmlFor="cpc-profile-email">{t.cpc.profile.labels.email}</Label>
               <Input id="cpc-profile-email" value={displayEmail} disabled />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="cpc-profile-role">Função</Label>
+              <Label htmlFor="cpc-profile-role">{t.cpc.profile.labels.role}</Label>
               <Input id="cpc-profile-role" value={displayRole} disabled />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="cpc-profile-phone">Telefone</Label>
+              <Label htmlFor="cpc-profile-phone">{t.cpc.profile.labels.phone}</Label>
               <Input
                 id="cpc-profile-phone"
                 value={edit.phone}
                 onChange={(e) => setEdit((p) => ({ ...p, phone: e.target.value }))}
                 disabled={!editMode}
-                placeholder="Ex.: +351 910 000 000"
+                placeholder={t.cpc.profile.placeholders.phone}
               />
             </div>
           </div>

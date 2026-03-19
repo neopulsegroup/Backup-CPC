@@ -17,7 +17,7 @@ export function Footer() {
           <div className="space-y-4">
             <Link to="/" className="block">
               <div className="flex items-center mb-4">
-                <img src={logo} alt="CPC Logo" className="h-16 w-auto" />
+                <img src={logo} alt={t.footer.logoAlt} className="h-16 w-auto" />
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
@@ -80,15 +80,15 @@ export function Footer() {
             <ul className="space-y-4 mb-6">
               <li className="flex items-center gap-3 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                 <Mail className="h-4 w-4 text-primary" />
-                <span>geral@cibea.eu</span>
+                <span>{t.footer.contacts.email}</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary" />
-                <span>+351 225 088 015</span>
+                <span>{t.footer.contacts.phone}</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary" />
-                <span>Algarve (Portugal)</span>
+                <span>{t.footer.contacts.location}</span>
               </li>
             </ul>
 
@@ -112,23 +112,23 @@ export function Footer() {
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t.footer.coFunded}</p>
           <img
             src="/logos-apoio.png"
-            alt="Portugal Inovação Social, Algarve 2030, Portugal 2030, União Europeia"
+            alt={t.footer.supportLogosAlt}
             className="h-12 w-auto object-contain"
           />
         </div>
 
         <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-          <p>© {currentYear} Portal CPC. {t.footer.rights}.</p>
+          <p>{t.get('footer.copyright', { year: currentYear })}</p>
           <div className="flex gap-6">
             <Link to="/privacidade" className="hover:text-primary transition-colors">{t.footer.privacy}</Link>
             <Link to="/termos" className="hover:text-primary transition-colors">{t.footer.terms}</Link>
-            <Link to="/cookies" className="hover:text-primary transition-colors">Cookies</Link>
+            <Link to="/cookies" className="hover:text-primary transition-colors">{t.footer.cookies}</Link>
             <button
               type="button"
               className="hover:text-primary transition-colors"
               onClick={() => window.dispatchEvent(new Event(COOKIE_CONSENT_OPEN_SETTINGS_EVENT))}
             >
-              Gerir cookies
+              {t.footer.manageCookies}
             </button>
           </div>
         </div>

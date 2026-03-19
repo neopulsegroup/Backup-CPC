@@ -25,6 +25,40 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: stableUser }),
 }));
 
+vi.mock('@/contexts/LanguageContext', async () => {
+  const { getTranslationStringAtPath, interpolateTranslation } = await vi.importActual<typeof import('@/lib/i18n')>(
+    '@/lib/i18n'
+  );
+
+  const get = (path: string, params?: Record<string, string | number>) => {
+    const template = getTranslationStringAtPath('pt', path) ?? path;
+    return interpolateTranslation(template, params);
+  };
+
+  const wrap = (prefix = ''): unknown =>
+    new Proxy(
+      {},
+      {
+        get: (_, prop) => {
+          if (prop === 'get') return get;
+          if (typeof prop !== 'string') return undefined;
+          const next = prefix ? `${prefix}.${prop}` : prop;
+          const value = getTranslationStringAtPath('pt', next);
+          if (typeof value === 'string') return value;
+          return wrap(next);
+        },
+      }
+    );
+
+  return {
+    useLanguage: () => ({
+      language: 'pt',
+      setLanguage: vi.fn(),
+      t: wrap() as unknown as Record<string, unknown> & { get: typeof get },
+    }),
+  };
+});
+
 vi.mock('@/integrations/firebase/firestore', () => ({
   addDocument: (...args: unknown[]) => mockAddDocument(...args),
   updateDocument: (...args: unknown[]) => mockUpdateDocument(...args),

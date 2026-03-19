@@ -64,9 +64,9 @@ export function Header() {
         <div className="flex h-20 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="CPC Logo" className="h-12 w-auto" />
+            <img src={logo} alt={t.header.logoAlt} className="h-12 w-auto" />
             <div className="hidden lg:block ml-2 text-xs text-primary font-medium leading-tight">
-              Connecting<br />People & Companies
+              {t.header.taglineLine1}<br />{t.header.taglineLine2}
             </div>
           </Link>
 

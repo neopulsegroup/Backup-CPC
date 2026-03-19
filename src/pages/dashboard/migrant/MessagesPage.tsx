@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -52,13 +53,13 @@ function parseUnknownDate(value: unknown): Date | null {
   return null;
 }
 
-function formatTimeLabel(value: unknown): string {
+function formatTimeLabel(value: unknown, locale: string): string {
   const date = parseUnknownDate(value);
   if (!date) return '';
   const now = new Date();
   const sameDay = date.toDateString() === now.toDateString();
-  if (sameDay) return date.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-  return date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+  if (sameDay) return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
 }
 
 function getInitials(value?: string | null): string {
@@ -69,6 +70,7 @@ function getInitials(value?: string | null): string {
 
 export default function MigrantMessagesPage() {
   const { user, profile } = useAuth();
+  const { language, t } = useLanguage();
   const { toast } = useToast();
 
   const role = (profile?.role ?? '').toString().toLowerCase();
@@ -108,12 +110,12 @@ export default function MigrantMessagesPage() {
         });
       },
       onError: () => {
-        setError('Não foi possível carregar as conversas.');
+        setError(t.messagesPage.errors.loadConversations);
         setLoading(false);
       },
     });
     return () => unsubscribe();
-  }, [isMigrant, user?.uid]);
+  }, [isMigrant, t.messagesPage.errors.loadConversations, user?.uid]);
 
   useEffect(() => {
     if (!user?.uid || !isMigrant) return;
@@ -136,12 +138,12 @@ export default function MigrantMessagesPage() {
         setMessagesLoading(false);
       },
       onError: () => {
-        setMessagesError('Não foi possível carregar as mensagens.');
+        setMessagesError(t.messagesPage.errors.loadMessages);
         setMessagesLoading(false);
       },
     });
     return () => unsubscribe();
-  }, [activeConversationId, isMigrant, user?.uid]);
+  }, [activeConversationId, isMigrant, t.messagesPage.errors.loadMessages, user?.uid]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' });
@@ -171,7 +173,7 @@ export default function MigrantMessagesPage() {
         updatedAt: serverTimestamp(),
       });
     } catch {
-      toast({ title: 'Erro', description: 'Não foi possível enviar a mensagem.', variant: 'destructive' });
+      toast({ title: t.common.errorTitle, description: t.messagesPage.errors.sendMessage, variant: 'destructive' });
       setCompose(text);
     }
   }
@@ -179,7 +181,7 @@ export default function MigrantMessagesPage() {
   async function createConversation() {
     if (!user?.uid || !isMigrant) return;
     if (!isValidEmail(newEmail)) {
-      toast({ title: 'Validação', description: 'Insira um email válido.', variant: 'destructive' });
+      toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailValid, variant: 'destructive' });
       return;
     }
 
@@ -188,15 +190,15 @@ export default function MigrantMessagesPage() {
       const users = await queryDocuments<UserRow>('users', [{ field: 'email', operator: '==', value: newEmail.trim() }], undefined, 1);
       const target = users[0];
       if (!target?.id) {
-        toast({ title: 'Não encontrado', description: 'Não existe utilizador com esse email.', variant: 'destructive' });
+        toast({ title: t.common.notFoundTitle, description: t.messagesPage.validation.noUserWithEmail, variant: 'destructive' });
         return;
       }
       if (target.id === user.uid) {
-        toast({ title: 'Validação', description: 'Escolha um email diferente do seu.', variant: 'destructive' });
+        toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailDifferent, variant: 'destructive' });
         return;
       }
 
-      const title = target.name || target.email || 'Conversa';
+      const title = target.name || target.email || t.messagesPage.conversationFallbackTitle;
       const id = await addDocument('conversations', {
         participants: [user.uid, target.id],
         title,
@@ -208,20 +210,20 @@ export default function MigrantMessagesPage() {
       setNewOpen(false);
       setNewEmail('');
       setActiveConversationId(id);
-      toast({ title: 'Conversa criada', description: 'A nova conversa foi criada com sucesso.' });
+      toast({ title: t.messagesPage.toast.conversationCreatedTitle, description: t.messagesPage.toast.conversationCreatedDesc });
     } catch {
-      toast({ title: 'Erro', description: 'Não foi possível criar a conversa.', variant: 'destructive' });
+      toast({ title: t.common.errorTitle, description: t.messagesPage.errors.createConversation, variant: 'destructive' });
     } finally {
       setCreating(false);
     }
   }
 
   if (!user?.uid) {
-    return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">Inicie sessão para aceder às mensagens.</div>;
+    return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">{t.messagesPage.auth.signInToAccess}</div>;
   }
 
   if (!isMigrant) {
-    return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">Sem permissão para aceder às mensagens.</div>;
+    return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">{t.messagesPage.auth.noPermission}</div>;
   }
 
   if (loading) {
@@ -246,29 +248,31 @@ export default function MigrantMessagesPage() {
         <div className="grid lg:grid-cols-[360px_minmax(0,1fr)] min-h-[640px]">
           <div className="p-6">
             <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold tracking-tight">Conversas</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{t.messagesPage.title}</h1>
               <Button size="sm" onClick={() => setNewOpen(true)}>
                 <MessageSquare className="h-4 w-4 mr-2" />
-                Nova
+                {t.messagesPage.newAction}
               </Button>
             </div>
 
             <p className="text-sm text-muted-foreground mt-3">
-              As empresas respondem através de <span className="font-medium">Dashboard Empresa → Mensagens</span>.
+              {t.messagesPage.hintPrefix}{' '}
+              <span className="font-medium">{t.messagesPage.hintPathLabel}</span>.
             </p>
 
             <div className="mt-6 space-y-2">
               {conversations.length === 0 ? (
                 <div className="cpc-card p-6 text-center text-sm text-muted-foreground">
-                  Sem conversas. Crie uma nova conversa para começar.
+                  {t.messagesPage.emptyConversations}
                 </div>
               ) : (
                 conversations.map((conversation) => {
                   const isActive = conversation.id === activeConversationId;
-                  const title = conversation.title || 'Conversa';
+                  const title = conversation.title || t.messagesPage.conversationFallbackTitle;
                   const subtitle = conversation.subtitle || '';
-                  const last = conversation.last_message_text || 'Sem mensagens';
-                  const timeLabel = formatTimeLabel(conversation.updatedAt) || '';
+                  const last = conversation.last_message_text || t.messagesPage.noMessagesPreview;
+                  const locale = language === 'pt' ? 'pt-PT' : language === 'en' ? 'en-GB' : 'es-ES';
+                  const timeLabel = formatTimeLabel(conversation.updatedAt, locale) || '';
                   return (
                     <button
                       key={conversation.id}
@@ -301,7 +305,7 @@ export default function MigrantMessagesPage() {
 
           <div className="border-t lg:border-t-0 lg:border-l bg-muted/20">
             {!activeConversation ? (
-              <div className="p-10 text-center text-sm text-muted-foreground">Selecione uma conversa para ver as mensagens.</div>
+              <div className="p-10 text-center text-sm text-muted-foreground">{t.messagesPage.selectConversation}</div>
             ) : (
               <>
                 <div className="p-6 bg-background border-b">
@@ -311,11 +315,11 @@ export default function MigrantMessagesPage() {
                         <span className="text-sm font-semibold text-muted-foreground">{getInitials(activeConversation.title)}</span>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold truncate">{activeConversation.title || 'Conversa'}</p>
+                        <p className="font-semibold truncate">{activeConversation.title || t.messagesPage.conversationFallbackTitle}</p>
                         <p className="text-sm text-muted-foreground truncate">
                           <span className="inline-flex items-center gap-2">
                             <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            Online agora
+                            {t.messagesPage.onlineNow}
                           </span>
                         </p>
                       </div>
@@ -325,21 +329,21 @@ export default function MigrantMessagesPage() {
                       <button
                         type="button"
                         className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                        aria-label="Videochamada"
+                        aria-label={t.messagesPage.aria.videoCall}
                       >
                         <Video className="h-4 w-4 text-muted-foreground" />
                       </button>
                       <button
                         type="button"
                         className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                        aria-label="Chamada"
+                        aria-label={t.messagesPage.aria.call}
                       >
                         <Phone className="h-4 w-4 text-muted-foreground" />
                       </button>
                       <button
                         type="button"
                         className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center"
-                        aria-label="Mais opções"
+                        aria-label={t.messagesPage.aria.moreOptions}
                       >
                         <EllipsisVertical className="h-4 w-4 text-muted-foreground" />
                       </button>
@@ -349,7 +353,7 @@ export default function MigrantMessagesPage() {
 
                 <div className="p-6 space-y-6 overflow-auto">
                   <div className="flex items-center justify-center">
-                    <span className="text-xs font-semibold tracking-widest text-muted-foreground bg-background px-4 py-2 rounded-full border">HOJE</span>
+                    <span className="text-xs font-semibold tracking-widest text-muted-foreground bg-background px-4 py-2 rounded-full border">{t.messagesPage.today}</span>
                   </div>
 
                   {messagesLoading ? (
@@ -359,7 +363,7 @@ export default function MigrantMessagesPage() {
                   ) : messagesError ? (
                     <div className="cpc-card p-6 text-center text-sm text-muted-foreground">{messagesError}</div>
                   ) : messages.length === 0 ? (
-                    <div className="cpc-card p-6 text-center text-sm text-muted-foreground">Sem mensagens nesta conversa.</div>
+                    <div className="cpc-card p-6 text-center text-sm text-muted-foreground">{t.messagesPage.noMessagesInConversation}</div>
                   ) : (
                     messages.map((m) => {
                       const mine = (m.sender_id || '') === user.uid;
@@ -392,21 +396,21 @@ export default function MigrantMessagesPage() {
                     <button
                       type="button"
                       className="h-11 w-11 rounded-2xl bg-muted hover:bg-muted/80 flex items-center justify-center"
-                      aria-label="Adicionar"
+                      aria-label={t.messagesPage.aria.add}
                     >
                       <CirclePlus className="h-5 w-5 text-muted-foreground" />
                     </button>
                     <button
                       type="button"
                       className="h-11 w-11 rounded-2xl bg-muted hover:bg-muted/80 flex items-center justify-center"
-                      aria-label="Emoji"
+                      aria-label={t.messagesPage.aria.emoji}
                     >
                       <Smile className="h-5 w-5 text-muted-foreground" />
                     </button>
 
                     <div className="relative flex-1">
                       <Input
-                        placeholder="Escreva a sua mensagem aqui..."
+                        placeholder={t.messagesPage.composePlaceholder}
                         className="h-12 rounded-full pl-12 pr-14 bg-muted/30 border-muted"
                         value={compose}
                         onChange={(e) => setCompose(e.target.value)}
@@ -424,7 +428,7 @@ export default function MigrantMessagesPage() {
                         <button
                           type="button"
                           className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
-                          aria-label="Enviar"
+                          aria-label={t.messagesPage.aria.send}
                           onClick={() => void send()}
                         >
                           <Send className="h-4 w-4" />
@@ -442,20 +446,20 @@ export default function MigrantMessagesPage() {
       <Dialog open={newOpen} onOpenChange={(open) => (creating ? null : setNewOpen(open))}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nova conversa</DialogTitle>
+            <DialogTitle>{t.messagesPage.dialog.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Email do destinatário (empresa ou equipa)</p>
-              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email@dominio.com" />
+              <p className="text-sm text-muted-foreground">{t.messagesPage.dialog.recipientEmailLabel}</p>
+              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.messagesPage.dialog.emailPlaceholder} />
             </div>
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
-                Cancelar
+                {t.common.cancel}
               </Button>
               <Button onClick={() => void createConversation()} disabled={creating}>
                 {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
-                Criar
+                {t.common.create}
               </Button>
             </div>
           </div>
@@ -464,4 +468,3 @@ export default function MigrantMessagesPage() {
     </>
   );
 }
-

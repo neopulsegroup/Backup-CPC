@@ -465,9 +465,9 @@ function MigrantHome() {
               <Select value={localStorage.getItem('cpc-language') || 'pt'} onValueChange={(v) => { localStorage.setItem('cpc-language', v); location.reload(); }}>
                 <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pt">Português</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
+                  <SelectItem value="pt">{t.common.languages.pt}</SelectItem>
+                  <SelectItem value="en">{t.common.languages.en}</SelectItem>
+                  <SelectItem value="es">{t.common.languages.es}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -488,9 +488,9 @@ function MigrantHome() {
               <Select value={bookType} onValueChange={(v) => setBookType(v as typeof bookType)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mediador">Mediador</SelectItem>
-                  <SelectItem value="jurista">Jurista</SelectItem>
-                  <SelectItem value="psicologa">Psicóloga</SelectItem>
+                  <SelectItem value="mediador">{t.dashboard.session_types.mediador}</SelectItem>
+                  <SelectItem value="jurista">{t.dashboard.session_types.jurista}</SelectItem>
+                  <SelectItem value="psicologa">{t.dashboard.session_types.psicologa}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -516,10 +516,10 @@ function MigrantHome() {
               <Select value={urgentType} onValueChange={(v) => setUrgentType(v as typeof urgentType)}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="juridico">Jurídico</SelectItem>
-                  <SelectItem value="psicologico">Psicológico</SelectItem>
-                  <SelectItem value="habitacional">Habitacional</SelectItem>
-                  <SelectItem value="necessidades">Necessidades básicas</SelectItem>
+                  <SelectItem value="juridico">{t.dashboard.support_types.juridico}</SelectItem>
+                  <SelectItem value="psicologico">{t.dashboard.support_types.psicologico}</SelectItem>
+                  <SelectItem value="habitacional">{t.dashboard.support_types.habitacional}</SelectItem>
+                  <SelectItem value="necessidades">{t.dashboard.support_types.necessidades}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -537,18 +537,19 @@ function MigrantHome() {
 
 export default function MigrantDashboard() {
   const location = useLocation();
+  const { t } = useLanguage();
   const { profile } = useAuth();
   const isHome = location.pathname === '/dashboard/migrante' || location.pathname === '/dashboard/migrante/';
   const sidebarItemsMain = [
-    { to: '/dashboard/migrante', label: 'Visão geral', icon: TrendingUp },
-    { to: '/dashboard/migrante/sessoes', label: 'Sessões', icon: Calendar },
-    { to: '/dashboard/migrante/emprego', label: 'Emprego', icon: Briefcase },
-    { to: '/dashboard/migrante/trilhas', label: 'Trilhas', icon: BookOpen },
+    { to: '/dashboard/migrante', label: t.get('dashboard.overview'), icon: TrendingUp },
+    { to: '/dashboard/migrante/sessoes', label: t.get('dashboard.sessions'), icon: Calendar },
+    { to: '/dashboard/migrante/emprego', label: t.get('dashboard.employment'), icon: Briefcase },
+    { to: '/dashboard/migrante/trilhas', label: t.get('dashboard.trails'), icon: BookOpen },
   ];
   const role = (profile?.role ?? '').toString().toLowerCase();
   const isMigrant = role === 'migrant' || role === 'migrante' || role.length === 0;
-  const sidebarItemsProfile = [{ to: '/dashboard/migrante/perfil', label: 'Perfil', icon: Building2 }];
-  const sidebarItemsMessages = [{ to: '/dashboard/migrante/mensagens', label: 'Mensagens', icon: MessagesSquare }];
+  const sidebarItemsProfile = [{ to: '/dashboard/migrante/perfil', label: t.get('dashboard.profile'), icon: Building2 }];
+  const sidebarItemsMessages = [{ to: '/dashboard/migrante/mensagens', label: t.get('dashboard.messages'), icon: MessagesSquare }];
 
   return (
     <Layout>
@@ -558,8 +559,8 @@ export default function MigrantDashboard() {
           <div className="grid lg:grid-cols-[250px_minmax(0,1fr)] gap-6">
             <aside className="cpc-card p-4 h-fit lg:sticky lg:top-24">
               <div className="mb-4 px-2">
-                <p className="text-sm text-muted-foreground">Menu Migrante</p>
-                <p className="font-semibold">{profile?.name || 'Utilizador'}</p>
+                <p className="text-sm text-muted-foreground">{t.get('migrant.menu.title')}</p>
+                <p className="font-semibold">{profile?.name || t.get('cpc.menu.user_fallback')}</p>
               </div>
 
               {/* Documentação:
@@ -586,7 +587,7 @@ export default function MigrantDashboard() {
                 {isMigrant ? (
                   <>
                     <div className="pt-4 mt-4 border-t">
-                      <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">Definições</p>
+                      <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('sidebar.sections.settings')}</p>
                       <div className="mt-2 space-y-1">
                         {sidebarItemsProfile.map((item) => (
                           <NavLink
@@ -604,7 +605,7 @@ export default function MigrantDashboard() {
                     </div>
 
                     <div className="pt-4 mt-4 border-t">
-                      <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">Mensagens</p>
+                      <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('sidebar.sections.messages')}</p>
                       <div className="mt-2 space-y-1">
                         {sidebarItemsMessages.map((item) => (
                           <NavLink
@@ -629,10 +630,11 @@ export default function MigrantDashboard() {
               {isHome ? (
                 <div className="mb-8">
                   <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                    Bem-vindo(a), <span className="text-primary">{profile?.name || 'Migrante'}</span>
+                    {t.get('dashboard.welcome')},{' '}
+                    <span className="text-primary">{profile?.name || t.get('auth.roles.migrant')}</span>
                   </h1>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Resumo personalizado da sua integração.
+                    {t.get('dashboard.overview_desc')}.
                   </p>
                 </div>
               ) : null}

@@ -1,7 +1,10 @@
 import { Layout } from '@/components/layout/Layout';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Privacy() {
-  const updatedAt = new Intl.DateTimeFormat('pt-PT', {
+  const { language, t } = useLanguage();
+  const dateLocale = language === 'pt' ? 'pt-PT' : language === 'es' ? 'es-ES' : 'en-GB';
+  const updatedAt = new Intl.DateTimeFormat(dateLocale, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -11,276 +14,254 @@ export default function Privacy() {
     <Layout>
       <section className="cpc-gradient-bg text-primary-foreground py-20">
         <div className="cpc-container text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Política de Privacidade</h1>
-          <p className="text-xl opacity-90">Plataforma CPC</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">{t.policies.privacy.title}</h1>
+          <p className="text-xl opacity-90">{t.policies.common.platform}</p>
         </div>
       </section>
 
       <section className="cpc-section">
         <div className="cpc-container">
           <div className="max-w-4xl mx-auto cpc-card p-8">
-            <p className="text-sm text-muted-foreground mb-8">Última atualização: {updatedAt}</p>
+            <p className="text-sm text-muted-foreground mb-8">{t.get('policies.common.lastUpdated', { date: updatedAt })}</p>
 
-            <h2 className="text-2xl font-bold mb-4">1. Introdução</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.intro.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              A proteção dos dados pessoais é uma prioridade para a Plataforma CPC. Esta Política de Privacidade explica como recolhemos,
-              utilizamos, armazenamos e protegemos os dados pessoais dos utilizadores da plataforma.
+              {t.policies.privacy.sections.intro.p1}
             </p>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              A Plataforma CPC é um sistema digital destinado a apoiar processos de capacitação, integração socioprofissional e ligação ao
-              emprego, incluindo o acesso a conteúdos formativos, agendamento de sessões de apoio técnico e ligação entre migrantes e entidades
-              empregadoras.
+              {t.policies.privacy.sections.intro.p2}
             </p>
-            <p className="text-muted-foreground leading-relaxed mb-4">Esta política está em conformidade com:</p>
+            <p className="text-muted-foreground leading-relaxed mb-4">{t.policies.privacy.sections.intro.p3}</p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>Regulamento (UE) 2016/679 — Regulamento Geral sobre a Proteção de Dados (RGPD / GDPR)</li>
-              <li>legislação nacional aplicável em matéria de proteção de dados</li>
-              <li>princípios de transparência e responsabilidade no tratamento de dados pessoais.</li>
+              {t.policies.privacy.sections.intro.list.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Ao utilizar a Plataforma CPC, o utilizador aceita as práticas descritas nesta política.
+              {t.policies.privacy.sections.intro.p4}
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">2. Responsável pelo tratamento de dados</h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">O responsável pelo tratamento de dados pessoais é:</p>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.controller.title}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">{t.policies.privacy.sections.controller.p1}</p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>Praticus – Formação e Serviços de Apoio às Empresas, Lda.</li>
-              <li>NIF: 503 650 498</li>
-              <li>Rua Francisco Carqueja, 179, 2.º Dto, 4350-185 Porto</li>
+              <li>{t.policies.common.contacts.companyLine}</li>
+              <li>{t.policies.common.contacts.addressLine}</li>
               <li>
-                <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
-                  geral@oportoforte.com
+                <a className="text-primary underline underline-offset-4" href={`mailto:${t.policies.common.contacts.email}`}>
+                  {t.policies.common.contacts.email}
                 </a>
               </li>
             </ul>
-            <p className="text-muted-foreground leading-relaxed mb-2">Encarregado de Proteção de Dados (DPO)</p>
+            <p className="text-muted-foreground leading-relaxed mb-2">{t.policies.privacy.sections.controller.dpoTitle}</p>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Email:{' '}
-              <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
-                geral@oportoforte.com
+              {t.policies.privacy.sections.controller.dpoEmailPrefix}{' '}
+              <a className="text-primary underline underline-offset-4" href={`mailto:${t.policies.common.contacts.email}`}>
+                {t.policies.common.contacts.email}
               </a>
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">3. Finalidade do tratamento de dados</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.purposes.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Os dados pessoais são recolhidos e tratados para permitir o funcionamento e prestação dos serviços disponibilizados pela Plataforma
-              CPC. As principais finalidades incluem:
+              {t.policies.privacy.sections.purposes.p1}
             </p>
 
-            <h3 className="text-xl font-semibold mb-3">Gestão de contas de utilizador</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.accountManagementTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>criação e gestão de contas de utilizadores</li>
-              <li>autenticação e acesso à plataforma</li>
-              <li>gestão de perfis (migrantes, equipa CPC e empresas)</li>
+              {t.policies.privacy.sections.purposes.accountManagementList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Triagem inicial e acompanhamento</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.screeningTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>avaliação inicial de necessidades</li>
-              <li>orientação para serviços de apoio</li>
-              <li>acompanhamento técnico por mediadores, juristas ou psicólogos</li>
+              {t.policies.privacy.sections.purposes.screeningList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Capacitação e formação</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.trainingTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>acesso a trilhas formativas</li>
-              <li>registo de progresso em conteúdos educativos</li>
-              <li>avaliação de aprendizagem</li>
+              {t.policies.privacy.sections.purposes.trainingList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Agendamento de serviços</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.schedulingTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>marcação e gestão de sessões de apoio</li>
-              <li>comunicação entre utilizadores e equipa CPC</li>
+              {t.policies.privacy.sections.purposes.schedulingList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Inserção socioprofissional</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.jobInsertionTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>criação de perfil profissional</li>
-              <li>candidatura a oportunidades de emprego</li>
-              <li>ligação entre migrantes e entidades empregadoras</li>
+              {t.policies.privacy.sections.purposes.jobInsertionList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Comunicação e notificações</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.communicationTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>envio de notificações relacionadas com a conta</li>
-              <li>lembretes de sessões e atividades</li>
-              <li>comunicação institucional relacionada com o projeto</li>
+              {t.policies.privacy.sections.purposes.communicationList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Melhoria da plataforma</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.purposes.improvementTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-8">
-              <li>análise de utilização</li>
-              <li>melhoria da experiência do utilizador</li>
-              <li>monitorização do desempenho do sistema.</li>
+              {t.policies.privacy.sections.purposes.improvementList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h2 className="text-2xl font-bold mb-4">4. Categorias de dados pessoais recolhidos</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.dataCategories.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Dependendo da utilização da plataforma, podem ser recolhidos diferentes tipos de dados pessoais.
+              {t.policies.privacy.sections.dataCategories.p1}
             </p>
 
-            <h3 className="text-xl font-semibold mb-3">Dados de identificação</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.dataCategories.identificationTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>nome</li>
-              <li>endereço de email</li>
-              <li>número de telefone</li>
-              <li>país de origem</li>
+              {t.policies.privacy.sections.dataCategories.identificationList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Dados de perfil e integração</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.dataCategories.profileIntegrationTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>idioma</li>
-              <li>competências profissionais</li>
-              <li>interesses profissionais</li>
-              <li>experiência de trabalho</li>
-              <li>formação</li>
+              {t.policies.privacy.sections.dataCategories.profileIntegrationList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Dados relacionados com a triagem inicial</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.dataCategories.screeningTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>situação laboral</li>
-              <li>situação habitacional</li>
-              <li>necessidades de apoio</li>
-              <li>interesses formativos</li>
+              {t.policies.privacy.sections.dataCategories.screeningList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Dados de utilização da plataforma</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.dataCategories.platformUsageTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>progresso nas trilhas formativas</li>
-              <li>histórico de sessões e agendamentos</li>
-              <li>candidaturas a oportunidades de emprego</li>
+              {t.policies.privacy.sections.dataCategories.platformUsageList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h3 className="text-xl font-semibold mb-3">Dados técnicos</h3>
+            <h3 className="text-xl font-semibold mb-3">{t.policies.privacy.sections.dataCategories.technicalTitle}</h3>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>endereço IP</li>
-              <li>tipo de navegador</li>
-              <li>dispositivo utilizado</li>
-              <li>dados de navegação na plataforma</li>
+              {t.policies.privacy.sections.dataCategories.technicalList.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Sempre que possível, apenas são recolhidos os dados estritamente necessários para a prestação do serviço.
+              {t.policies.privacy.sections.dataCategories.p2}
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">5. Base legal para o tratamento de dados</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.legalBasis.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              O tratamento de dados pessoais na Plataforma CPC baseia-se nas seguintes bases legais previstas no RGPD:
+              {t.policies.privacy.sections.legalBasis.p1}
             </p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-8">
-              <li>Execução de um serviço solicitado pelo utilizador (Artigo 6.º, n.º 1, alínea b)</li>
-              <li>Consentimento do utilizador (Artigo 6.º, n.º 1, alínea a)</li>
-              <li>Cumprimento de obrigações legais (Artigo 6.º, n.º 1, alínea c)</li>
-              <li>Interesse legítimo (Artigo 6.º, n.º 1, alínea f)</li>
+              {t.policies.privacy.sections.legalBasis.list.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h2 className="text-2xl font-bold mb-4">6. Partilha de dados</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.sharing.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Os dados pessoais podem ser partilhados apenas quando necessário para a execução das finalidades descritas. Os dados podem ser
-              partilhados com:
+              {t.policies.privacy.sections.sharing.p1}
             </p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
               <li>
-                <span className="font-medium text-foreground">Equipa CPC</span> — Mediadores, técnicos, juristas, psicólogos e gestores de caso
-                responsáveis pelo acompanhamento dos utilizadores.
+                <span className="font-medium text-foreground">{t.policies.privacy.sections.sharing.items.team.label}</span> —{' '}
+                {t.policies.privacy.sections.sharing.items.team.desc}
               </li>
               <li>
-                <span className="font-medium text-foreground">Entidades empregadoras</span> — Apenas quando o utilizador decide candidatar-se a
-                oportunidades de emprego.
+                <span className="font-medium text-foreground">{t.policies.privacy.sections.sharing.items.employers.label}</span> —{' '}
+                {t.policies.privacy.sections.sharing.items.employers.desc}
               </li>
               <li>
-                <span className="font-medium text-foreground">Prestadores de serviços tecnológicos</span> — Fornecedores de infraestrutura
-                digital, alojamento, ferramentas de comunicação ou análise.
+                <span className="font-medium text-foreground">{t.policies.privacy.sections.sharing.items.providers.label}</span> —{' '}
+                {t.policies.privacy.sections.sharing.items.providers.desc}
               </li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Todos os prestadores de serviços estão sujeitos a acordos de confidencialidade e proteção de dados. Os dados não são vendidos nem
-              utilizados para fins comerciais externos.
+              {t.policies.privacy.sections.sharing.p2}
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">7. Transferências internacionais de dados</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.internationalTransfers.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Sempre que dados pessoais sejam tratados fora do Espaço Económico Europeu (EEE), serão aplicadas salvaguardas adequadas, conforme
-              previsto no RGPD, incluindo:
+              {t.policies.privacy.sections.internationalTransfers.p1}
             </p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-8">
-              <li>decisões de adequação da Comissão Europeia</li>
-              <li>cláusulas contratuais-tipo</li>
-              <li>mecanismos equivalentes de proteção de dados.</li>
+              {t.policies.privacy.sections.internationalTransfers.list.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h2 className="text-2xl font-bold mb-4">8. Período de conservação dos dados</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.retention.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Os dados pessoais são conservados apenas pelo período necessário para cumprir as finalidades para as quais foram recolhidos. Em
-              geral:
+              {t.policies.privacy.sections.retention.p1}
             </p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-8">
-              <li>dados de contas de utilizador são mantidos enquanto a conta estiver ativa</li>
-              <li>dados relacionados com o projeto podem ser mantidos pelo período exigido por normas de auditoria de financiamento europeu</li>
-              <li>após esse período, os dados serão eliminados ou anonimizados.</li>
+              {t.policies.privacy.sections.retention.list.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h2 className="text-2xl font-bold mb-4">9. Segurança dos dados</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.security.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              A Plataforma CPC implementa medidas técnicas e organizacionais adequadas para proteger os dados pessoais contra:
+              {t.policies.privacy.sections.security.p1}
             </p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>acesso não autorizado</li>
-              <li>perda ou destruição acidental</li>
-              <li>alteração indevida</li>
-              <li>divulgação não autorizada.</li>
+              {t.policies.privacy.sections.security.list1.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
-            <p className="text-muted-foreground leading-relaxed mb-4">Estas medidas incluem:</p>
+            <p className="text-muted-foreground leading-relaxed mb-4">{t.policies.privacy.sections.security.p2}</p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-8">
-              <li>controlo de acesso por perfil de utilizador</li>
-              <li>sistemas de autenticação segura</li>
-              <li>proteção da infraestrutura tecnológica</li>
-              <li>monitorização de segurança.</li>
+              {t.policies.privacy.sections.security.list2.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
 
-            <h2 className="text-2xl font-bold mb-4">10. Direitos dos titulares dos dados</h2>
-            <p className="text-muted-foreground leading-relaxed mb-4">Nos termos do RGPD, os utilizadores têm os seguintes direitos:</p>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.dataSubjectRights.title}</h2>
+            <p className="text-muted-foreground leading-relaxed mb-4">{t.policies.privacy.sections.dataSubjectRights.p1}</p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed mb-4">
-              <li>direito de acesso aos seus dados pessoais</li>
-              <li>direito de retificação de dados incorretos</li>
-              <li>direito ao apagamento dos dados (&quot;direito a ser esquecido&quot;)</li>
-              <li>direito à limitação do tratamento</li>
-              <li>direito de oposição ao tratamento</li>
-              <li>direito à portabilidade dos dados</li>
-              <li>direito de retirar o consentimento a qualquer momento.</li>
+              {t.policies.privacy.sections.dataSubjectRights.list.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Para exercer estes direitos, o utilizador pode contactar a entidade responsável através dos contactos indicados nesta política.
+              {t.policies.privacy.sections.dataSubjectRights.p2}
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">11. Reclamações</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.complaints.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Os utilizadores têm o direito de apresentar reclamação junto da autoridade de controlo competente em matéria de proteção de dados.
-              Em Portugal, a autoridade competente é:
+              {t.policies.privacy.sections.complaints.p1}
             </p>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Comissão Nacional de Proteção de Dados (CNPD){' '}
+              {t.policies.privacy.sections.complaints.authority}{' '}
               <a className="text-primary underline underline-offset-4" href="https://www.cnpd.pt" target="_blank" rel="noreferrer">
                 https://www.cnpd.pt
               </a>
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">12. Alterações à Política de Privacidade</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.changes.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Esta Política de Privacidade pode ser atualizada periodicamente para refletir alterações legais, técnicas ou operacionais. Sempre
-              que ocorrerem alterações relevantes, os utilizadores serão informados através da plataforma ou por outros meios adequados.
+              {t.policies.privacy.sections.changes.p1}
             </p>
 
-            <h2 className="text-2xl font-bold mb-4">13. Contactos</h2>
+            <h2 className="text-2xl font-bold mb-4">{t.policies.privacy.sections.contacts.title}</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              Para qualquer questão relacionada com esta Política de Privacidade ou com o tratamento de dados pessoais, pode contactar:
+              {t.policies.privacy.sections.contacts.p1}
             </p>
             <ul className="list-disc pl-6 text-muted-foreground leading-relaxed">
-              <li>Praticus – Formação e Serviços de Apoio às Empresas, Lda. NIF: 503 650 498</li>
-              <li>Rua Francisco Carqueja, 179, 2.º Dto, 4350-185 Porto</li>
+              <li>{t.policies.common.contacts.companyLine}</li>
+              <li>{t.policies.common.contacts.addressLine}</li>
               <li>
-                <a className="text-primary underline underline-offset-4" href="mailto:geral@oportoforte.com">
-                  geral@oportoforte.com
+                <a className="text-primary underline underline-offset-4" href={`mailto:${t.policies.common.contacts.email}`}>
+                  {t.policies.common.contacts.email}
                 </a>
               </li>
             </ul>
