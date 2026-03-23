@@ -237,6 +237,16 @@ service cloud.firestore {
       allow delete: if isCpcStaff();
     }
 
+    match /activities/{activityId} {
+      allow read: if isCpcStaff();
+      allow create: if isCpcStaff()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow update: if isCpcStaff()
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if isCpcStaff();
+    }
+
     match /audit_logs/{logId} {
       allow read: if isAccountEnabled() && hasRole('admin');
       function isUnauthorizedAttemptLog() {
@@ -252,7 +262,7 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && request.resource.data.actor_id == request.auth.uid
         && (
-          (isAccountEnabled() && hasRole('admin')) ||
+          isCpcStaff() ||
           isUnauthorizedAttemptLog()
         );
       allow update, delete: if false;

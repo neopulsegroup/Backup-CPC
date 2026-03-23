@@ -37,6 +37,7 @@ import {
   Wrench,
   Languages,
   MessagesSquare,
+  ClipboardList,
 } from 'lucide-react';
 
 type FirebaseUserDoc = {
@@ -1059,11 +1060,13 @@ export default function CPCDashboard() {
   const sidebarItemsMain = [
     { to: '/dashboard/cpc', label: t.get('cpc.menu.overview'), icon: TrendingUp },
     { to: '/dashboard/cpc/migrantes', label: t.get('cpc.menu.migrants'), icon: Users },
+    { to: '/dashboard/cpc/atividades', label: t.get('cpc.menu.activities'), icon: ClipboardList },
     { to: '/dashboard/cpc/agenda', label: t.get('cpc.menu.agenda'), icon: Calendar },
     { to: '/dashboard/cpc/candidaturas', label: t.get('cpc.menu.applications'), icon: FileText },
     { to: '/dashboard/cpc/ofertas', label: t.get('cpc.menu.offers'), icon: Briefcase },
     { to: '/dashboard/cpc/trilhas', label: t.get('cpc.menu.trails'), icon: BookOpen },
     { to: '/dashboard/cpc/equipa', label: t.get('cpc.menu.team'), icon: UserCog },
+    { to: '/dashboard/cpc/estatisticas', label: t.get('cpc.menu.statistics'), icon: TrendingUp },
     { to: '/dashboard/cpc/traducoes', label: t.get('cpcTranslations.title'), icon: Languages },
   ];
 
@@ -1355,12 +1358,17 @@ export default function CPCDashboard() {
                 <Route path="candidatos/:candidateId" element={<CandidateProfilePage />} />
                 <Route path="migrantes/:migrantId/perfil" element={<MigrantProfilePage />} />
                 <Route path="migrantes" element={<MigrantsAdminPage />} />
+                <Route path="atividades" element={<ActivitiesPage />} />
+                <Route path="atividades/nova" element={<ActivityEditorPage />} />
+                <Route path="atividades/:activityId" element={<ActivityDetailsPage />} />
+                <Route path="atividades/:activityId/editar" element={<ActivityEditorPage />} />
                 <Route path="agenda" element={<TeamAgendaPage />} />
                 <Route path="candidaturas" element={<CandidaturasDetalhadas />} />
                 <Route path="ofertas" element={<OfertasAguardandoAprovacao />} />
                 <Route path="trilhas" element={<TrailsAdminPage />} />
                 <Route path="trilhas/:trailId" element={<TrailEditorPage />} />
                 <Route path="equipa" element={<EquipaPage />} />
+                <Route path="estatisticas" element={<StatisticsPage />} />
                 <Route path="perfil" element={<CPCProfilePage />} />
                 <Route path="mensagens" element={<CPCMessagesPage />} />
                 <Route path="traducoes" element={<TranslationsAdminPage />} />
@@ -1381,3 +1389,7 @@ import TrailEditorPage from './cpc/TrailEditorPage';
 import TranslationsAdminPage from './cpc/TranslationsAdminPage';
 import CPCProfilePage from './cpc/ProfilePage';
 import CPCMessagesPage from './cpc/MessagesPage';
+import ActivitiesPage from './cpc/ActivitiesPage';
+import ActivityEditorPage from './cpc/ActivityEditorPage';
+import ActivityDetailsPage from './cpc/ActivityDetailsPage';
+import StatisticsPage from './cpc/StatisticsPage';

@@ -215,7 +215,7 @@ export default function ModuleViewerPage() {
     try {
       if (!isDemo) {
         if (!user) return;
-        const existing = await queryDocuments<{ id: string; modules_completed: number; progress_percent: number; completed_at?: string | null }>(
+        const existing = await queryDocuments<{ id: string; modules_completed: number; progress_percent: number; completed_at?: string | null; started_at?: string | null }>(
           'user_trail_progress',
           [
             { field: 'user_id', operator: '==', value: user.uid },
@@ -229,13 +229,18 @@ export default function ModuleViewerPage() {
         const newModulesCompleted = Math.min(totalModules, currentModulesCompleted + 1);
         const newProgressPercent = totalModules > 0 ? Math.round((newModulesCompleted / totalModules) * 100) : 0;
         const isComplete = totalModules > 0 ? newModulesCompleted >= totalModules : false;
+        const nowIso = new Date().toISOString();
 
         if (existing[0]?.id) {
-          await updateDocument('user_trail_progress', existing[0].id, {
+          const payload: Record<string, unknown> = {
             modules_completed: newModulesCompleted,
             progress_percent: newProgressPercent,
             completed_at: isComplete ? new Date().toISOString() : null,
-          });
+          };
+          if ((existing[0].modules_completed || 0) === 0 && newModulesCompleted > 0 && !existing[0].started_at) {
+            payload.started_at = nowIso;
+          }
+          await updateDocument('user_trail_progress', existing[0].id, payload);
         } else {
           await addDocument('user_trail_progress', {
             user_id: user.uid,
@@ -243,6 +248,7 @@ export default function ModuleViewerPage() {
             modules_completed: newModulesCompleted,
             progress_percent: newProgressPercent,
             completed_at: isComplete ? new Date().toISOString() : null,
+            started_at: newModulesCompleted > 0 ? nowIso : null,
           });
         }
         setUserProgress({ modules_completed: newModulesCompleted, progress_percent: newProgressPercent });

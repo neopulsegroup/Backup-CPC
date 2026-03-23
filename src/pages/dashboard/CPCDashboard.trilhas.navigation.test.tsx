@@ -35,6 +35,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
           'cpc.menu.user_fallback': 'Utilizador',
           'cpc.menu.overview': 'Visão geral',
           'cpc.menu.migrants': 'Migrantes',
+          'cpc.menu.activities': 'Atividades',
           'cpc.menu.agenda': 'Agenda',
           'cpc.menu.applications': 'Candidaturas',
           'cpc.menu.offers': 'Ofertas',
@@ -257,6 +258,30 @@ describe('CPCDashboard - navegação (inclui Trilhas)', () => {
       .filter(Boolean);
     expect(links2.at(-2)).toBe('Perfil');
     expect(links2.at(-1)).toBe('Mensagens');
+  });
+
+  it('inclui "Atividades" imediatamente após "Migrantes" no menu principal', async () => {
+    Object.defineProperty(window, 'innerWidth', { value: 1280, writable: true, configurable: true });
+    window.dispatchEvent(new Event('resize'));
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc']}>
+        <Routes>
+          <Route path="/dashboard/cpc/*" element={<CPCDashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText('Definições')).toBeInTheDocument();
+    const nav = screen.getByRole('navigation');
+    const links = Array.from(nav.querySelectorAll('a'))
+      .map((a) => a.textContent?.trim() ?? '')
+      .filter(Boolean);
+
+    const migrantsIndex = links.indexOf('Migrantes');
+    const activitiesIndex = links.indexOf('Atividades');
+    expect(migrantsIndex).toBeGreaterThanOrEqual(0);
+    expect(activitiesIndex).toBe(migrantsIndex + 1);
   });
 
   it('mantém "Trilhas" como ativo ao abrir o editor /trilhas/:trailId', async () => {

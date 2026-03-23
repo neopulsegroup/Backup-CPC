@@ -235,6 +235,7 @@
     "save": "Save",
     "create": "Crear",
     "cancel": "Cancel",
+    "close": "Cerrar",
     "retry": "Intentar de nuevo",
     "next": "Next",
     "back": "Back",
@@ -1124,11 +1125,13 @@
       "user_fallback": "User",
       "overview": "Overview",
       "migrants": "Migrants",
+      "activities": "Actividades",
       "agenda": "Agenda",
       "applications": "Applications",
       "offers": "Offers",
       "trails": "Trails",
       "team": "Team",
+      "statistics": "Estadísticas",
       "profile": "Profile",
       "messages": "Messages"
     },
@@ -1223,6 +1226,164 @@
         "cancelled": "Cancelled",
         "in_progress": "In progress",
         "scheduled": "Scheduled"
+      }
+    },
+    "activities": {
+      "title": "Actividades",
+      "subtitle": "Crea, edita y sigue actividades con migrantes (extensible a empresas).",
+      "export": {
+        "button": "Exportar",
+        "csv": "Exportar CSV",
+        "pdf": "Exportar PDF"
+      },
+      "actions": {
+        "new": "Nueva actividad",
+        "save": "Guardar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "back": "Volver",
+        "add_consultant": "Añadir consultor"
+      },
+      "list": {
+        "empty": "No hay actividades para los filtros seleccionados.",
+        "showing_none": "Mostrando 0 resultados",
+        "showing_range": "Mostrando {start}-{end} de {total}"
+      },
+      "pagination": {
+        "prev": "Anterior",
+        "next": "Siguiente"
+      },
+      "table": {
+        "activity": "Actividad",
+        "type": "Tipo",
+        "date_time": "Fecha/Hora",
+        "consultants": "Consultores",
+        "location": "Lugar",
+        "status": "Estado"
+      },
+      "filters": {
+        "search": {
+          "label": "Búsqueda",
+          "placeholder": "Buscar por título o lugar",
+          "action": "Aplicar",
+          "disabled_hint": "La búsqueda se desactiva cuando seleccionas Consultor o Temática."
+        },
+        "type": "Tipo",
+        "all_types": "Todos los tipos",
+        "status": "Estado",
+        "any_status": "Cualquier estado",
+        "format": "Formato",
+        "all_formats": "Todos los formatos",
+        "date": "Periodo",
+        "date_this_month": "Este mes",
+        "date_next_30": "Próximos 30 días",
+        "date_all": "Todos",
+        "consultant": {
+          "label": "Consultor",
+          "disabled_hint": "El filtro por consultor se desactiva cuando seleccionas Temática o Búsqueda."
+        },
+        "any_consultant": "Cualquier consultor",
+        "topic": {
+          "label": "Temática",
+          "disabled_hint": "El filtro por temática se desactiva cuando seleccionas Consultor o Búsqueda."
+        },
+        "any_topic": "Cualquier temática",
+        "hints_title": "Consejo",
+        "hints_body": "Para mantener las consultas rápidas, Búsqueda, Consultor y Temática no pueden usarse a la vez."
+      },
+      "fields": {
+        "title": "Título",
+        "title_placeholder": "Ej.: Taller de Integración",
+        "type": "Tipo",
+        "type_placeholder": "Selecciona un tipo",
+        "format": "Formato",
+        "format_placeholder": "Selecciona un formato",
+        "status": "Estado",
+        "preview": "Resumen",
+        "date": "Fecha",
+        "time": "Hora",
+        "start_time": "Inicio",
+        "end_time": "Fin",
+        "duration": "Duración",
+        "duration_hint": "Calculada automáticamente",
+        "location": "Lugar / Enlace",
+        "location_placeholder": "Ej.: CPC Faro o https://…",
+        "consultants": "Consultores",
+        "participants": "Participantes",
+        "topics": "Temáticas"
+      },
+      "status": {
+        "draft": "Borrador",
+        "scheduled": "Programada",
+        "completed": "Finalizada",
+        "cancelled": "Cancelada"
+      },
+      "format": {
+        "presencial": "Presencial",
+        "online": "Online",
+        "hibrido": "Híbrido"
+      },
+      "new": {
+        "title": "Nueva actividad"
+      },
+      "edit": {
+        "title": "Editar actividad"
+      },
+      "editor": {
+        "subtitle": "Rellena los campos obligatorios y guarda para publicar la actividad.",
+        "sections": {
+          "general": "General",
+          "schedule": "Programación",
+          "people": "Personas",
+          "topics": "Temáticas",
+          "summary": "Resumen"
+        },
+        "consultants_hint": "Selecciona al menos un consultor responsable.",
+        "consultants_empty": "Ningún consultor seleccionado.",
+        "participants_hint": "Selecciona los participantes de la actividad.",
+        "selected_count": "{count} seleccionado(s)",
+        "migrants_search": "Buscar migrantes…",
+        "migrants_empty": "No se encontraron migrantes.",
+        "topics_placeholder": "Añadir temática…",
+        "topics_add": "Añadir",
+        "checklist": "Checklist",
+        "checklist_title": "Título válido",
+        "checklist_time": "Horario válido",
+        "checklist_participants": "Participantes seleccionados"
+      },
+      "details": {
+        "not_found": "Actividad no encontrada.",
+        "sections": {
+          "general": "Detalles",
+          "participants": "Participantes"
+        },
+        "participants": {
+          "total": "Total",
+          "migrants": "Migrantes",
+          "consultants": "Consultores",
+          "companies": "Empresas"
+        }
+      },
+      "delete": {
+        "title": "Eliminar actividad",
+        "description": "¿Seguro que deseas eliminar “{title}”? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar",
+        "success": {
+          "title": "Actividad eliminada",
+          "desc": "“{title}” fue eliminada con éxito."
+        }
+      },
+      "save": {
+        "success": {
+          "title": "Actividad guardada",
+          "desc": "Los cambios se guardaron correctamente."
+        }
+      },
+      "errors": {
+        "no_auth": "Debes iniciar sesión para realizar esta acción.",
+        "permission_denied": "No tienes permisos para realizar esta acción.",
+        "delete_failed": "No se pudo eliminar la actividad.",
+        "save_failed": "No se pudo guardar la actividad."
       }
     },
     "agenda": {
