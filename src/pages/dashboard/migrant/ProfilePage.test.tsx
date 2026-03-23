@@ -7,6 +7,7 @@ import ProfilePage from './ProfilePage';
 
 const mockFetchMigrantProfile = vi.fn();
 const mockUpdateDocument = vi.fn();
+const mockQueryDocuments = vi.fn();
 const mockUpdateUserProfile = vi.fn();
 const mockRefreshProfile = vi.fn();
 const mockToast = vi.fn();
@@ -18,6 +19,7 @@ vi.mock('@/api/migrantProfile', () => ({
 
 vi.mock('@/integrations/firebase/firestore', () => ({
   updateDocument: (...args: unknown[]) => mockUpdateDocument(...args),
+  queryDocuments: (...args: unknown[]) => mockQueryDocuments(...args),
 }));
 
 vi.mock('@/integrations/firebase/auth', () => ({
@@ -49,6 +51,33 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/contexts/LanguageContext', () => ({
   useLanguage: () => ({ language: 'pt', setLanguage: vi.fn(), t: { get: (path: string) => path } }),
 }));
+
+vi.mock('pdf-lib', () => {
+  const pages: Array<{ getSize: () => { width: number; height: number }; drawText: () => void; drawImage: () => void }> = [];
+  const makePage = () => ({
+    getSize: () => ({ width: 595.28, height: 841.89 }),
+    drawText: vi.fn(),
+    drawImage: vi.fn(),
+  });
+  const mockPdfDoc = {
+    addPage: vi.fn(() => {
+      const p = makePage();
+      pages.push(p);
+      return p;
+    }),
+    embedFont: vi.fn(async () => ({
+      widthOfTextAtSize: (txt: string, size: number) => txt.length * size * 0.45,
+    })),
+    embedPng: vi.fn(async () => ({ width: 100, height: 40 })),
+    getPages: vi.fn(() => pages),
+    save: vi.fn(async () => new Uint8Array([1, 2, 3])),
+  };
+  return {
+    PDFDocument: { create: vi.fn(async () => mockPdfDoc) },
+    StandardFonts: { Helvetica: 'Helvetica', HelveticaBold: 'HelveticaBold' },
+    rgb: vi.fn(),
+  };
+});
 
 describe('ProfilePage (dashboard/migrante)', () => {
   beforeEach(() => {
@@ -222,6 +251,10 @@ describe('ProfilePage (dashboard/migrante)', () => {
     await user.click(screen.getByRole('button', { name: 'Editar Perfil' }));
     await user.clear(screen.getByLabelText('Nome'));
     await user.type(screen.getByLabelText('Nome'), 'Migrante 1 Atualizado');
+    await user.type(screen.getByLabelText('Morada'), 'Rua da Liberdade 123, Lisboa');
+    await user.type(screen.getByLabelText('Nº Identificação'), 'AA123456');
+    await user.click(screen.getByLabelText('Região'));
+    await user.click(await screen.findByText('Lisboa'));
     await user.click(screen.getByRole('button', { name: 'Guardar alterações' }));
 
     await waitFor(() => {
@@ -229,6 +262,224 @@ describe('ProfilePage (dashboard/migrante)', () => {
       expect(mockUpdateUserProfile).not.toHaveBeenCalled();
       expect(mockRefreshProfile).not.toHaveBeenCalled();
     });
+  });
+
+  it('valida campos obrigatórios (Morada, Nº Identificação e Região) no perfil CPC', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    stableUser.uid = 'cpc1';
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'm1@exemplo.com', name: 'Migrante 1', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'm1', name: 'Migrante 1', email: 'm1@exemplo.com', phone: null },
+      triage: { id: 'm1', userId: 'm1', answers: { document_type: 'nif' }, legal_status: null, work_status: null, language_level: null, interests: null, urgencies: null },
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc/migrantes/m1/perfil']}>
+        <Routes>
+          <Route path="/dashboard/cpc/migrantes/:migrantId/perfil" element={<ProfilePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Informação Pessoal');
+    await user.click(screen.getByRole('button', { name: 'Editar Perfil' }));
+    await user.click(screen.getByRole('button', { name: 'Guardar alterações' }));
+
+    expect(await screen.findByText('A Morada é obrigatória.')).toBeInTheDocument();
+    expect(screen.getByText('O Nº Identificação é obrigatório.')).toBeInTheDocument();
+    expect(screen.getByText('A Região é obrigatória.')).toBeInTheDocument();
+    expect(mockUpdateDocument).not.toHaveBeenCalled();
+  });
+
+  it('normaliza o Nº Identificação para letras maiúsculas e apenas números/letras', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    stableUser.uid = 'cpc1';
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'm2@exemplo.com', name: 'Migrante 2', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'm2', name: 'Migrante 2', email: 'm2@exemplo.com', phone: null },
+      triage: { id: 'm2', userId: 'm2', answers: { document_type: 'passport' }, legal_status: null, work_status: null, language_level: null, interests: null, urgencies: null },
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc/migrantes/m2/perfil']}>
+        <Routes>
+          <Route path="/dashboard/cpc/migrantes/:migrantId/perfil" element={<ProfilePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Informação Pessoal');
+    await user.click(screen.getByRole('button', { name: 'Editar Perfil' }));
+
+    const input = screen.getByLabelText('Nº Identificação') as HTMLInputElement;
+    await user.type(input, 'ab-12cD#ç@');
+    expect(input.value).toBe('AB12CD');
+  });
+
+  it('requer região adicional quando seleciona "Outra" e guarda no Firestore', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    stableUser.uid = 'cpc1';
+
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'm3@exemplo.com', name: 'Migrante 3', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'm3', name: 'Migrante 3', email: 'm3@exemplo.com', phone: null },
+      triage: { id: 'm3', userId: 'm3', answers: { document_type: 'passport' }, legal_status: null, work_status: null, language_level: null, interests: null, urgencies: null },
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+    mockUpdateDocument.mockResolvedValueOnce(undefined);
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'm3@exemplo.com', name: 'Migrante 3', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'm3', name: 'Migrante 3', email: 'm3@exemplo.com', phone: null },
+      triage: { id: 'm3', userId: 'm3', answers: { document_type: 'passport' }, legal_status: null, work_status: null, language_level: null, interests: null, urgencies: null },
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc/migrantes/m3/perfil']}>
+        <Routes>
+          <Route path="/dashboard/cpc/migrantes/:migrantId/perfil" element={<ProfilePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Informação Pessoal');
+    await user.click(screen.getByRole('button', { name: 'Editar Perfil' }));
+
+    await user.type(screen.getByLabelText('Morada'), 'Rua Exemplo, 123, Lisboa');
+    await user.type(screen.getByLabelText('Nº Identificação'), 'ab123456');
+
+    await user.click(screen.getByLabelText('Região'));
+    await user.click(await screen.findByText('Outra'));
+
+    await user.click(screen.getByRole('button', { name: 'Guardar alterações' }));
+    expect(await screen.findByText('Indique a Região.')).toBeInTheDocument();
+    expect(mockUpdateDocument).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText('Outra Região'), 'Madeira');
+    await user.click(screen.getByRole('button', { name: 'Guardar alterações' }));
+
+    await waitFor(() => {
+      expect(mockUpdateDocument).toHaveBeenCalledWith(
+        'profiles',
+        'm3',
+        expect.objectContaining({
+          address: 'Rua Exemplo, 123, Lisboa',
+          identificationNumber: 'AB123456',
+          region: 'Outra',
+          regionOther: 'Madeira',
+        })
+      );
+    });
+  });
+
+  it('exporta ficha em PDF no perfil CPC', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    stableUser.uid = 'cpc1';
+
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null as unknown as Window);
+    const originalCreateObjectURL = (URL as unknown as { createObjectURL?: (b: Blob) => string }).createObjectURL;
+    const originalRevokeObjectURL = (URL as unknown as { revokeObjectURL?: (s: string) => void }).revokeObjectURL;
+    (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = vi.fn(() => 'blob:mock');
+    (URL as unknown as { revokeObjectURL: (s: string) => void }).revokeObjectURL = vi.fn(() => {});
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(8) }) as unknown as Response) as unknown as typeof fetch;
+
+    mockQueryDocuments.mockResolvedValueOnce([]);
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'm1@exemplo.com', name: 'Migrante 1', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'm1', name: 'Migrante 1', email: 'm1@exemplo.com', phone: null, currentLocation: 'Rua A' },
+      triage: { id: 'm1', userId: 'm1', answers: {}, legal_status: null, work_status: null, language_level: null, interests: null, urgencies: null },
+      sessions: [{ id: 's1', migrant_id: 'm1', session_type: 'mediador', scheduled_date: '2026-01-01', scheduled_time: '10:00', status: 'completed' }],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc/migrantes/m1/perfil']}>
+        <Routes>
+          <Route path="/dashboard/cpc/migrantes/:migrantId/perfil" element={<ProfilePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Informação Pessoal');
+
+    await user.click(screen.getByRole('button', { name: 'Exportar Ficha' }));
+
+    await waitFor(() => {
+      expect(mockQueryDocuments).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+    });
+
+    globalThis.fetch = originalFetch;
+    (URL as unknown as { createObjectURL?: (b: Blob) => string }).createObjectURL = originalCreateObjectURL;
+    (URL as unknown as { revokeObjectURL?: (s: string) => void }).revokeObjectURL = originalRevokeObjectURL;
+    openSpy.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('exporta ficha em PDF mesmo sem dados de progresso', async () => {
+    localStorage.clear();
+    const user = userEvent.setup();
+    stableUser.uid = 'cpc1';
+
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null as unknown as Window);
+    const originalCreateObjectURL = (URL as unknown as { createObjectURL?: (b: Blob) => string }).createObjectURL;
+    const originalRevokeObjectURL = (URL as unknown as { revokeObjectURL?: (s: string) => void }).revokeObjectURL;
+    (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = vi.fn(() => 'blob:mock');
+    (URL as unknown as { revokeObjectURL: (s: string) => void }).revokeObjectURL = vi.fn(() => {});
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async () => ({ arrayBuffer: async () => new ArrayBuffer(8) }) as unknown as Response) as unknown as typeof fetch;
+
+    mockQueryDocuments.mockResolvedValueOnce([]);
+    mockFetchMigrantProfile.mockResolvedValueOnce({
+      userProfile: { email: 'm2@exemplo.com', name: 'Migrante 2', role: 'migrant', createdAt: null, updatedAt: null },
+      profile: { id: 'm2', name: 'Migrante 2', email: 'm2@exemplo.com', phone: null, currentLocation: 'Rua B' },
+      triage: { id: 'm2', userId: 'm2', answers: {}, legal_status: null, work_status: null, language_level: null, interests: null, urgencies: null },
+      sessions: [],
+      progress: [],
+      trails: {},
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/dashboard/cpc/migrantes/m2/perfil']}>
+        <Routes>
+          <Route path="/dashboard/cpc/migrantes/:migrantId/perfil" element={<ProfilePage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await screen.findByText('Informação Pessoal');
+    await user.click(screen.getByRole('button', { name: 'Exportar Ficha' }));
+
+    await waitFor(() => {
+      expect(mockQueryDocuments).toHaveBeenCalled();
+      expect(clickSpy).toHaveBeenCalled();
+    });
+
+    globalThis.fetch = originalFetch;
+    (URL as unknown as { createObjectURL?: (b: Blob) => string }).createObjectURL = originalCreateObjectURL;
+    (URL as unknown as { revokeObjectURL?: (s: string) => void }).revokeObjectURL = originalRevokeObjectURL;
+    openSpy.mockRestore();
+    clickSpy.mockRestore();
   });
 
   it('permite upload de foto e grava photoUrl no perfil', async () => {
@@ -399,7 +650,7 @@ describe('ProfilePage (dashboard/migrante)', () => {
     await user.upload(fileInput as HTMLInputElement, file);
 
     await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Sem permissão', variant: 'destructive' }));
+      expect(mockUploadBytes).toHaveBeenCalled();
       expect(mockUpdateDocument).not.toHaveBeenCalled();
     });
   });
@@ -434,7 +685,7 @@ describe('ProfilePage (dashboard/migrante)', () => {
     await user.upload(fileInput as HTMLInputElement, file);
 
     await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Sem permissão', variant: 'destructive' }));
+      expect(mockUpdateDocument).toHaveBeenCalledWith('profiles', 'u1', expect.any(Object));
     });
   });
 });

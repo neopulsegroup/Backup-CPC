@@ -30,6 +30,7 @@ Formato validado automaticamente.
 | MIG-101 | [x] Migrante • Sessões: página idêntica à referência (lista/calendário, próximos/histórico, especialistas) + wizard de marcação (4 etapas) + ações (reagendar/cancelar/entrar em vídeo) + testes | done | P1 | Renato | 2026-03-20 | 100 | 2026-03-20 | src/pages/dashboard/migrant/SessionsPage.tsx; src/pages/dashboard/migrant/SessionsPage.wizard.test.tsx; src/pages/dashboard/migrant/SessionsPage.ui.test.tsx |
 | CPC-115 | [x] CPC • Estatísticas: página em /dashboard/cpc/estatisticas com filtros (ano/período/região), KPIs, gráficos, tabela regional e exportações (PDF/DOCX/XLSX) com dados reais + item de menu | done | P0 | Renato | 2026-03-23 | 100 | 2026-03-23 | src/pages/dashboard/cpc/StatisticsPage.tsx; src/pages/dashboard/CPCDashboard.tsx; src/locales/pt.json; src/locales/en.json; src/locales/es.json |
 | CPC-116 | [x] Trilhas • Progresso: gravar started_at em user_trail_progress (primeiro avanço) e adaptar estatísticas para considerar started_at no período | done | P1 | Renato | 2026-03-23 | 100 | 2026-03-23 | src/pages/dashboard/migrant/ModuleViewerPage.tsx; src/pages/dashboard/cpc/StatisticsPage.tsx |
+| CPC-117 | [x] CPC • Migrantes: botão "Exportar Ficha" no perfil com geração de PDF (ficha + progresso) e download padronizado | done | P1 | Renato | 2026-03-23 | 100 | 2026-03-23 | src/pages/dashboard/migrant/ProfilePage.tsx; src/pages/dashboard/migrant/ProfilePage.test.tsx; package.json |
 
 ### Convenções do Registro
 - `Status`: `todo` | `in_progress` | `blocked` | `done`

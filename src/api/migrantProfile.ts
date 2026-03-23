@@ -35,6 +35,10 @@ export type MigrantProfileDoc = {
   nationality?: string | null;
   photoUrl?: string | null;
   currentLocation?: string | null;
+  address?: string | null;
+  identificationNumber?: string | null;
+  region?: 'Lisboa' | 'Norte' | 'Centro' | 'Alentejo' | 'Algarve' | 'Outra' | null;
+  regionOther?: string | null;
   arrivalDate?: string | null;
   resumeUrl?: string | null;
   professionalTitle?: string | null;
@@ -93,6 +97,10 @@ export async function fetchMigrantProfile(uid: string): Promise<MigrantProfileRe
       nationality: profileFs?.nationality ?? null,
       photoUrl: profileFs?.photoUrl ?? null,
       currentLocation: profileFs?.currentLocation ?? null,
+      address: profileFs?.address ?? null,
+      identificationNumber: profileFs?.identificationNumber ?? null,
+      region: (profileFs?.region as MigrantProfileDoc['region']) ?? null,
+      regionOther: profileFs?.regionOther ?? null,
       arrivalDate: profileFs?.arrivalDate ?? null,
       resumeUrl: profileFs?.resumeUrl ?? null,
       professionalTitle: profileFs?.professionalTitle ?? null,

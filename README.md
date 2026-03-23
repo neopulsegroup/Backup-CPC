@@ -100,6 +100,16 @@ flowchart TD
 
 * Testes unitários: [CandidatesPage.test.ts](file:///Users/renatomenezes/Desktop/Projetos/Portal-CPC/app/Backup/Backup-CPC-main/src/pages/dashboard/company/CandidatesPage.test.ts)
 
+## 👤 Perfil de Migrante (Dashboard • CPC / Migrante)
+
+Coleção: **`profiles`**
+
+Campos adicionais (Informação Pessoal):
+* `address` (string) — morada completa (mín. 10 caracteres)
+* `identificationNumber` (string) — apenas letras maiúsculas e números (máx. 20)
+* `region` (`Lisboa | Norte | Centro | Alentejo | Algarve | Outra`)
+* `regionOther` (string | null) — obrigatório quando `region == "Outra"`
+
 ### Funcionalidades Transversais
 *   **Autenticação Segura**: Sistema de login e registo robusto via Firebase Auth.
 *   **Design Responsivo**: Interface moderna e adaptável a dispositivos móveis e desktop.

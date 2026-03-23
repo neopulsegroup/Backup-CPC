@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, BookOpen, Clock, User, FileText, Camera } from 'lucide-react';
+import { Calendar, BookOpen, Clock, User, FileText, Camera, Download, Loader2 } from 'lucide-react';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,10 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { formatPhoneValueForDisplay } from '@/components/ui/phone-input';
 import { fetchMigrantProfile, type MigrantProfileDoc, type MigrantProfileResponse } from '@/api/migrantProfile';
 import { updateUserProfile } from '@/integrations/firebase/auth';
-import { updateDocument } from '@/integrations/firebase/firestore';
+import { queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { storage } from '@/integrations/firebase/client';
 import { getDownloadURL, ref as makeStorageRef, uploadBytes } from 'firebase/storage';
+import logo from '@/assets/logo.png';
 
 export default function ProfilePage() {
   const { user, refreshProfile } = useAuth();
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [exportingFicha, setExportingFicha] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
   const PHOTO_ALLOWED_MIME = useMemo(() => new Set(['image/jpeg', 'image/png', 'image/gif']), []);
@@ -42,6 +44,10 @@ export default function ProfilePage() {
     languagesList: string;
     mainNeeds: string;
     contactPreference: 'email' | 'phone';
+    address: string;
+    identificationNumber: string;
+    region: '' | 'Lisboa' | 'Norte' | 'Centro' | 'Alentejo' | 'Algarve' | 'Outra';
+    regionOther: string;
   }>({
     name: '',
     resumeUrl: '',
@@ -51,7 +57,13 @@ export default function ProfilePage() {
     languagesList: '',
     mainNeeds: '',
     contactPreference: 'email',
+    address: '',
+    identificationNumber: '',
+    region: '',
+    regionOther: '',
   });
+
+  const [personalInfoErrors, setPersonalInfoErrors] = useState<Partial<Record<'address' | 'identificationNumber' | 'region' | 'regionOther', string>>>({});
 
   const targetUserId = migrantId || user?.uid || null;
   const isViewingOtherUser = !!(migrantId && user?.uid && migrantId !== user.uid);
@@ -88,6 +100,10 @@ export default function ProfilePage() {
               ...p,
               birthDate: p.birthDate || extras?.birthDate || null,
               nationality: p.nationality || extras?.nationality || null,
+              address: p.address || extras?.address || null,
+              identificationNumber: p.identificationNumber || extras?.identificationNumber || null,
+              region: p.region || extras?.region || null,
+              regionOther: p.regionOther || extras?.regionOther || null,
               resumeUrl: p.resumeUrl || extras?.resumeUrl || null,
               professionalTitle: p.professionalTitle || extras?.professionalTitle || null,
               professionalExperience: p.professionalExperience || extras?.professionalExperience || null,
@@ -102,6 +118,10 @@ export default function ProfilePage() {
           const shouldMigrate =
             (!p.birthDate && extras.birthDate) ||
             (!p.nationality && extras.nationality) ||
+            (!p.address && extras.address) ||
+            (!p.identificationNumber && extras.identificationNumber) ||
+            (!p.region && extras.region) ||
+            (!p.regionOther && extras.regionOther) ||
             (!p.resumeUrl && extras.resumeUrl) ||
             (!p.professionalTitle && extras.professionalTitle) ||
             (!p.professionalExperience && extras.professionalExperience) ||
@@ -114,6 +134,10 @@ export default function ProfilePage() {
             void updateDocument('profiles', targetUserId, {
               birthDate: merged?.birthDate || null,
               nationality: merged?.nationality || null,
+              address: merged?.address || null,
+              identificationNumber: merged?.identificationNumber || null,
+              region: merged?.region || null,
+              regionOther: merged?.regionOther || null,
               resumeUrl: merged?.resumeUrl || null,
               professionalTitle: merged?.professionalTitle || null,
               professionalExperience: merged?.professionalExperience || null,
@@ -134,8 +158,13 @@ export default function ProfilePage() {
           languagesList: merged?.languagesList || '',
           mainNeeds: merged?.mainNeeds || '',
           contactPreference: (merged?.contactPreference as 'email' | 'phone') || 'email',
+          address: merged?.address || '',
+          identificationNumber: merged?.identificationNumber || '',
+          region: (merged?.region as typeof edit.region) || '',
+          regionOther: merged?.regionOther || '',
         });
         setEditMode(false);
+        setPersonalInfoErrors({});
       } catch (err: unknown) {
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : '';
@@ -284,11 +313,69 @@ export default function ProfilePage() {
     return progressSorted.length ? progressSorted[0] : null;
   }, [progressSorted]);
 
+  const selectedDocumentType = useMemo(() => {
+    const raw =
+      (typeof triageAnswers.document_type === 'string' ? triageAnswers.document_type : null) ||
+      (typeof triageAnswers.id_document_type === 'string' ? triageAnswers.id_document_type : null) ||
+      (typeof triageAnswers.documentType === 'string' ? triageAnswers.documentType : null) ||
+      null;
+    return raw ? raw.toLowerCase() : null;
+  }, [triageAnswers]);
+
+  const REGIONS = useMemo(() => ['Lisboa', 'Norte', 'Centro', 'Alentejo', 'Algarve', 'Outra'] as const, []);
+
+  const normalizeIdentificationInput = useCallback((raw: string) => {
+    return raw
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 20);
+  }, []);
+
+  const validateIdentificationNumber = useCallback((value: string) => {
+    const v = normalizeIdentificationInput(value);
+    if (!v) return 'O Nº Identificação é obrigatório.';
+    if (v.length > 20) return 'O Nº Identificação deve ter no máximo 20 caracteres.';
+    if (!/^[A-Z0-9]+$/.test(v)) return 'Use apenas letras maiúsculas e números.';
+    const dt = selectedDocumentType || '';
+    if (dt.includes('nif')) {
+      if (!/^\d{9}$/.test(v)) return 'Para NIF, introduza exatamente 9 dígitos.';
+    } else if (dt.includes('pass')) {
+      if (v.length < 6) return 'Para Passaporte, introduza pelo menos 6 caracteres.';
+    } else if (dt.includes('resid') || dt.includes('cart') || dt.includes('cc')) {
+      if (v.length < 6) return 'O Nº Identificação é inválido para o tipo de documento selecionado.';
+    }
+    return null;
+  }, [normalizeIdentificationInput, selectedDocumentType]);
+
   async function save() {
     if (!user || !targetUserId) return;
+    if (isViewingOtherUser) {
+      const nextErrors: Partial<Record<'address' | 'identificationNumber' | 'region' | 'regionOther', string>> = {};
+      const addressTrim = edit.address.trim();
+      if (!addressTrim) nextErrors.address = 'A Morada é obrigatória.';
+      else if (addressTrim.length < 10) nextErrors.address = 'A Morada deve ter pelo menos 10 caracteres.';
+
+      const idErr = validateIdentificationNumber(edit.identificationNumber);
+      if (idErr) nextErrors.identificationNumber = idErr;
+
+      if (!edit.region) nextErrors.region = 'A Região é obrigatória.';
+      else if (!(REGIONS as readonly string[]).includes(edit.region)) nextErrors.region = 'A Região selecionada é inválida.';
+
+      if (edit.region === 'Outra') {
+        const regionOtherTrim = edit.regionOther.trim();
+        if (!regionOtherTrim) nextErrors.regionOther = 'Indique a Região.';
+        else if (regionOtherTrim.length < 2) nextErrors.regionOther = 'Indique uma Região válida.';
+      }
+
+      setPersonalInfoErrors(nextErrors);
+      if (Object.keys(nextErrors).length) return;
+    }
+
+    setPersonalInfoErrors({});
     setSaving(true);
     try {
-      await updateDocument('profiles', targetUserId, {
+
+      const payload: Record<string, unknown> = {
         name: edit.name,
         resumeUrl: edit.resumeUrl || null,
         professionalTitle: edit.professionalTitle || null,
@@ -297,7 +384,16 @@ export default function ProfilePage() {
         languagesList: edit.languagesList || null,
         mainNeeds: edit.mainNeeds || null,
         contactPreference: edit.contactPreference || null,
-      });
+      };
+
+      if (isViewingOtherUser) {
+        payload.address = edit.address.trim();
+        payload.identificationNumber = normalizeIdentificationInput(edit.identificationNumber);
+        payload.region = edit.region;
+        payload.regionOther = edit.region === 'Outra' ? edit.regionOther.trim() : null;
+      }
+
+      await updateDocument('profiles', targetUserId, payload);
 
       if (targetUserId === user.uid) {
         await updateUserProfile(user.uid, { name: edit.name });
@@ -310,6 +406,277 @@ export default function ProfilePage() {
       setError('Não foi possível guardar as alterações do perfil.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleExportFicha() {
+    if (!targetUserId || exportingFicha) return;
+    const profile = data?.profile || null;
+    if (!profile || (!profile.name && !profile.email)) {
+      toast({ title: 'Dados insuficientes', description: 'Não existem dados suficientes para gerar a ficha.', variant: 'destructive' });
+      return;
+    }
+
+    // Prossiga mesmo sem dados de progresso; as secções serão apresentadas vazias.
+
+    setExportingFicha(true);
+    try {
+      const [{ PDFDocument, StandardFonts, rgb }, activities] = await Promise.all([
+        import('pdf-lib'),
+        queryDocuments<{
+          id: string;
+          title?: string;
+          date?: string;
+          startTime?: string;
+          status?: string | null;
+          topics?: string[] | null;
+        }>(
+          'activities',
+          [{ field: 'participantMigrantIds', operator: 'array-contains', value: targetUserId }],
+          { field: 'date', direction: 'desc' },
+          200
+        ).catch(() => []),
+      ]);
+
+      const now = new Date();
+      const nowIso = now.toISOString().slice(0, 10);
+      const fileDate = nowIso;
+      const safeName = (profile.name || profile.email || 'Migrante')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]+/g, '')
+        .trim()
+        .replace(/\s+/g, '_')
+        .slice(0, 60) || 'Migrante';
+      const fileName = `Ficha_Migrante_${safeName}_${fileDate}.pdf`;
+
+      const pdfDoc = await PDFDocument.create();
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+      const logoBytes = await fetch(logo).then((r) => r.arrayBuffer());
+      const logoImage = await pdfDoc.embedPng(logoBytes);
+
+      const pageSize: [number, number] = [595.28, 841.89];
+      const marginX = 48;
+      const marginTop = 72;
+      const marginBottom = 56;
+      const lineGap = 4;
+      const headerHeight = 56;
+
+      const newPage = () => {
+        const page = pdfDoc.addPage(pageSize);
+        const { width, height } = page.getSize();
+        const logoMaxH = 28;
+        const logoScale = logoMaxH / logoImage.height;
+        const logoW = logoImage.width * logoScale;
+        const logoH = logoImage.height * logoScale;
+        page.drawImage(logoImage, { x: marginX, y: height - 40 - logoH, width: logoW, height: logoH });
+        page.drawText('Ficha do Migrante', { x: marginX + logoW + 12, y: height - 44, size: 14, font: fontBold, color: rgb(0.07, 0.07, 0.07) });
+        return page;
+      };
+
+      const wrapText = (text: string, maxWidth: number, size: number, useBold: boolean) => {
+        const f = useBold ? fontBold : font;
+        const words = String(text || '').split(/\s+/g).filter(Boolean);
+        if (words.length === 0) return ['—'];
+        const lines: string[] = [];
+        let current = '';
+        words.forEach((w) => {
+          const next = current ? `${current} ${w}` : w;
+          const width = f.widthOfTextAtSize(next, size);
+          if (width <= maxWidth) {
+            current = next;
+            return;
+          }
+          if (current) lines.push(current);
+          current = w;
+        });
+        if (current) lines.push(current);
+        return lines.length ? lines : ['—'];
+      };
+
+      let page = newPage();
+      let cursorY = page.getSize().height - marginTop - headerHeight;
+      const maxTextWidth = page.getSize().width - marginX * 2;
+
+      const ensureSpace = (neededHeight: number) => {
+        if (cursorY - neededHeight >= marginBottom) return;
+        page = newPage();
+        cursorY = page.getSize().height - marginTop - headerHeight;
+      };
+
+      const drawTitle = (text: string) => {
+        const size = 12;
+        ensureSpace(size + 10);
+        page.drawText(text, { x: marginX, y: cursorY, size, font: fontBold, color: rgb(0.1, 0.1, 0.1) });
+        cursorY -= size + 10;
+      };
+
+      const drawKeyValue = (label: string, value: string) => {
+        const labelSize = 10;
+        const valueSize = 10;
+        const labelWidth = 170;
+        const valueX = marginX + labelWidth;
+        const lines = wrapText(value || '—', maxTextWidth - labelWidth, valueSize, false);
+        const blockHeight = lines.length * (valueSize + lineGap) + 2;
+        ensureSpace(blockHeight + 6);
+        page.drawText(label, { x: marginX, y: cursorY, size: labelSize, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
+        lines.forEach((line, idx) => {
+          page.drawText(line, { x: valueX, y: cursorY - idx * (valueSize + lineGap), size: valueSize, font, color: rgb(0.1, 0.1, 0.1) });
+        });
+        cursorY -= blockHeight + 6;
+      };
+
+      const drawBullets = (items: Array<{ title: string; meta?: string | null }>, emptyLabel: string = 'Sem registos') => {
+        const size = 10;
+        const bullet = '•';
+        if (items.length === 0) {
+          ensureSpace(size + 8);
+          page.drawText(emptyLabel, { x: marginX, y: cursorY, size, font, color: rgb(0.35, 0.35, 0.35) });
+          cursorY -= size + 8;
+          return;
+        }
+        items.forEach((it) => {
+          const text = it.meta ? `${it.title} (${it.meta})` : it.title;
+          const lines = wrapText(text, maxTextWidth - 14, size, false);
+          const blockHeight = lines.length * (size + lineGap) + 6;
+          ensureSpace(blockHeight);
+          page.drawText(bullet, { x: marginX, y: cursorY, size, font, color: rgb(0.1, 0.1, 0.1) });
+          lines.forEach((line, idx) => {
+            page.drawText(line, { x: marginX + 14, y: cursorY - idx * (size + lineGap), size, font, color: rgb(0.1, 0.1, 0.1) });
+          });
+          cursorY -= blockHeight;
+        });
+      };
+
+      const birthDate = profileReadOnlyFields.birth || '—';
+      const nationality = profileReadOnlyFields.nationality || '—';
+      const phone = profileReadOnlyFields.phone || '—';
+      const addressValue = (profile.address || '').trim() || '—';
+      const idDocNumber =
+        (typeof profile.identificationNumber === 'string' && profile.identificationNumber.trim().length > 0)
+          ? profile.identificationNumber
+          : (typeof triageAnswers.document_number === 'string' && triageAnswers.document_number.trim().length > 0)
+            ? triageAnswers.document_number
+            : '—';
+      const regionValue = (() => {
+        const r = typeof profile.region === 'string' ? profile.region : '';
+        if (!r) return '—';
+        if (r === 'Outra') return (profile.regionOther || '—');
+        return r;
+      })();
+
+      drawTitle('Ficha de Inscrição');
+      drawKeyValue('Nome completo', profile.name || '—');
+      drawKeyValue('Morada', addressValue);
+      drawKeyValue('Região', regionValue);
+      drawKeyValue('Telefone', phone);
+      drawKeyValue('E-mail', profile.email || '—');
+      drawKeyValue('Data de nascimento', birthDate);
+      drawKeyValue('Nacionalidade', nationality);
+      drawKeyValue('Nº documento de identificação', idDocNumber);
+
+      const progress = (data?.progress || []).map((p) => ({
+        ...p,
+        progress_percent: typeof p.progress_percent === 'number' ? p.progress_percent : 0,
+      }));
+      const pdiPercent = progress.length ? Math.round(progress.reduce((acc, p) => acc + (p.progress_percent || 0), 0) / progress.length) : 0;
+      const trails = data?.trails || {};
+
+      const completedTrails = progress
+        .filter((p) => (p.progress_percent || 0) >= 100 || !!p.completed_at)
+        .map((p) => {
+          const trail = trails[p.trail_id] || null;
+          const title = trail?.title || p.trail_id || 'Trilha';
+          const date = p.completed_at ? new Date(p.completed_at).toLocaleDateString('pt-PT') : null;
+          return { title, meta: [date, 'Avaliação: —'].filter(Boolean).join(' · ') };
+        });
+
+      const inProgressTrails = progress
+        .filter((p) => (p.progress_percent || 0) > 0 && (p.progress_percent || 0) < 100 && !p.completed_at)
+        .map((p) => {
+          const trail = trails[p.trail_id] || null;
+          const title = trail?.title || p.trail_id || 'Trilha';
+          const pct = `${Math.round(p.progress_percent || 0)}%`;
+          const modules = (() => {
+            const done = typeof p.modules_completed === 'number' ? p.modules_completed : null;
+            const total = typeof trail?.modules_count === 'number' ? trail.modules_count : null;
+            if (done === null || total === null) return null;
+            return `${done}/${total} módulos`;
+          })();
+          return { title, meta: [pct, modules].filter(Boolean).join(' · ') };
+        });
+
+      const sessionsDone = (data?.sessions || []).filter((s) => (s.status || '').toLowerCase() === 'completed' || (s.status || '').toLowerCase() === 'concluida');
+      const sessionsMissed = (data?.sessions || []).filter((s) => (s.status || '').toLowerCase() === 'missed' || (s.status || '').toLowerCase() === 'faltou');
+
+      const sessionsItems = sessionsDone.map((s) => {
+        const date = s.scheduled_date ? new Date(s.scheduled_date).toLocaleDateString('pt-PT') : '—';
+        const meta = [`${date} ${s.scheduled_time || ''}`.trim(), 'Observações: —'].filter(Boolean).join(' · ');
+        const title = s.session_type ? `Sessão (${s.session_type})` : 'Sessão';
+        return { title, meta };
+      });
+
+      const activityItems = activities.map((a) => {
+        const date = a.date ? new Date(a.date).toLocaleDateString('pt-PT') : '—';
+        const meta = [date, a.status ? `Estado: ${a.status}` : null].filter(Boolean).join(' · ');
+        return { title: a.title || 'Atividade', meta };
+      });
+
+      drawTitle('Relatório de Progresso');
+      drawKeyValue('Conclusão do Plano de Desenvolvimento Individual', `${pdiPercent}%`);
+
+      drawTitle('Trilhas formativas concluídas');
+      drawBullets(completedTrails);
+
+      drawTitle('Trilhas em curso');
+      drawBullets(inProgressTrails);
+
+      drawTitle('Sessões individuais realizadas');
+      drawBullets(sessionsItems);
+
+      drawTitle('Atividades participadas');
+      drawBullets(activityItems);
+
+      drawTitle('Histórico de presenças e faltas');
+      drawKeyValue('Presenças (sessões concluídas)', String(sessionsDone.length));
+      drawKeyValue('Faltas (sessões marcadas como falta)', String(sessionsMissed.length));
+
+      drawTitle('Observações gerais');
+      drawKeyValue('Desempenho', (profile.mainNeeds || '').trim() || '—');
+
+      const pages = pdfDoc.getPages();
+      const totalPages = pages.length;
+      pages.forEach((p, idx) => {
+        const { width } = p.getSize();
+        const label = `Gerado em ${now.toLocaleDateString('pt-PT')} · Página ${idx + 1} de ${totalPages}`;
+        p.drawText(label, { x: marginX, y: 28, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
+        p.drawText('CPC', { x: width - marginX - font.widthOfTextAtSize('CPC', 9), y: 28, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
+      });
+
+      const bytes = await pdfDoc.save();
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      try {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch {
+        void 0;
+      }
+
+      toast({ title: 'Ficha exportada', description: 'O PDF foi gerado e o download foi iniciado.' });
+    } catch (err) {
+      console.error('Erro ao exportar ficha:', err);
+      toast({ title: 'Erro ao exportar', description: 'Não foi possível gerar o PDF da ficha do migrante.', variant: 'destructive' });
+    } finally {
+      setExportingFicha(false);
     }
   }
 
@@ -557,6 +924,7 @@ export default function ProfilePage() {
                   variant="outline"
                   onClick={() => {
                     setEditMode(false);
+                    setPersonalInfoErrors({});
                     setEdit({
                       name: profileDoc.name || data?.userProfile?.name || '',
                       resumeUrl: profileDoc.resumeUrl || '',
@@ -566,6 +934,10 @@ export default function ProfilePage() {
                       languagesList: profileDoc.languagesList || '',
                       mainNeeds: profileDoc.mainNeeds || '',
                       contactPreference: (profileDoc.contactPreference as 'email' | 'phone') || 'email',
+                      address: profileDoc.address || '',
+                      identificationNumber: profileDoc.identificationNumber || '',
+                      region: (profileDoc.region as typeof edit.region) || '',
+                      regionOther: profileDoc.regionOther || '',
                     });
                   }}
                   disabled={saving || uploadingPhoto}
@@ -578,7 +950,13 @@ export default function ProfilePage() {
               </>
             ) : (
               <>
-                <Button type="button" onClick={() => setEditMode(true)} disabled={uploadingPhoto}>
+                {isViewingOtherUser ? (
+                  <Button type="button" variant="outline" onClick={handleExportFicha} disabled={uploadingPhoto || exportingFicha}>
+                    {exportingFicha ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {exportingFicha ? 'A gerar…' : 'Exportar Ficha'}
+                  </Button>
+                ) : null}
+                <Button type="button" onClick={() => { setPersonalInfoErrors({}); setEditMode(true); }} disabled={uploadingPhoto}>
                   Editar Perfil
                 </Button>
                 <Button type="button" variant="outline" onClick={() => window.print()} disabled={uploadingPhoto}>
@@ -597,7 +975,7 @@ export default function ProfilePage() {
             <User className="h-5 w-5 text-muted-foreground" />
           </div>
 
-          <div className="mt-5 space-y-5">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
               <p className="text-[11px] tracking-wider text-muted-foreground uppercase">Telefone</p>
               <p className="mt-1 font-medium">{profileReadOnlyFields.phone || '—'}</p>
@@ -609,6 +987,116 @@ export default function ProfilePage() {
             <div>
               <p className="text-[11px] tracking-wider text-muted-foreground uppercase">Data de nascimento</p>
               <p className="mt-1 font-medium">{profileReadOnlyFields.birth || '—'}</p>
+            </div>
+
+            <div className="sm:col-span-2">
+              <p className="text-[11px] tracking-wider text-muted-foreground uppercase">Morada</p>
+              {editMode && isViewingOtherUser ? (
+                <>
+                  <Label htmlFor="profile-address" className="sr-only">Morada</Label>
+                  <Input
+                    id="profile-address"
+                    aria-label="Morada"
+                    value={edit.address}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setEdit((s) => ({ ...s, address: v }));
+                      if (personalInfoErrors.address) setPersonalInfoErrors((prev) => ({ ...prev, address: undefined }));
+                    }}
+                    className="mt-2"
+                    placeholder="Endereço completo"
+                  />
+                  {personalInfoErrors.address ? (
+                    <p className="text-sm font-medium text-destructive mt-2">{personalInfoErrors.address}</p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-1 font-medium">{profileDoc.address || profileDoc.currentLocation || '—'}</p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-[11px] tracking-wider text-muted-foreground uppercase">Nº Identificação</p>
+              {editMode && isViewingOtherUser ? (
+                <>
+                  <Label htmlFor="profile-identification" className="sr-only">Nº Identificação</Label>
+                  <Input
+                    id="profile-identification"
+                    aria-label="Nº Identificação"
+                    value={edit.identificationNumber}
+                    onChange={(e) => {
+                      const v = normalizeIdentificationInput(e.target.value);
+                      setEdit((s) => ({ ...s, identificationNumber: v }));
+                      if (personalInfoErrors.identificationNumber) setPersonalInfoErrors((prev) => ({ ...prev, identificationNumber: undefined }));
+                    }}
+                    className="mt-2"
+                    placeholder="Ex.: AB123456"
+                    inputMode="text"
+                    maxLength={20}
+                  />
+                  {personalInfoErrors.identificationNumber ? (
+                    <p className="text-sm font-medium text-destructive mt-2">{personalInfoErrors.identificationNumber}</p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-1 font-medium">
+                  {profileDoc.identificationNumber || (typeof triageAnswers.document_number === 'string' ? triageAnswers.document_number : '') || '—'}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-[11px] tracking-wider text-muted-foreground uppercase">Região</p>
+              {editMode && isViewingOtherUser ? (
+                <>
+                  <Select
+                    value={edit.region}
+                    onValueChange={(v) => {
+                      setEdit((s) => ({ ...s, region: v as typeof edit.region, regionOther: v === 'Outra' ? s.regionOther : '' }));
+                      setPersonalInfoErrors((prev) => ({ ...prev, region: undefined }));
+                    }}
+                  >
+                    <SelectTrigger className="mt-2" aria-label="Região">
+                      <SelectValue placeholder="Selecionar…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Lisboa">Lisboa</SelectItem>
+                      <SelectItem value="Norte">Norte</SelectItem>
+                      <SelectItem value="Centro">Centro</SelectItem>
+                      <SelectItem value="Alentejo">Alentejo</SelectItem>
+                      <SelectItem value="Algarve">Algarve</SelectItem>
+                      <SelectItem value="Outra">Outra</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {personalInfoErrors.region ? (
+                    <p className="text-sm font-medium text-destructive mt-2">{personalInfoErrors.region}</p>
+                  ) : null}
+                  {edit.region === 'Outra' ? (
+                    <>
+                      <Label htmlFor="profile-region-other" className="sr-only">Outra Região</Label>
+                      <Input
+                        id="profile-region-other"
+                        aria-label="Outra Região"
+                        value={edit.regionOther}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setEdit((s) => ({ ...s, regionOther: v }));
+                          if (personalInfoErrors.regionOther) setPersonalInfoErrors((prev) => ({ ...prev, regionOther: undefined }));
+                        }}
+                        className="mt-3"
+                        placeholder="Indique a região"
+                      />
+                      {personalInfoErrors.regionOther ? (
+                        <p className="text-sm font-medium text-destructive mt-2">{personalInfoErrors.regionOther}</p>
+                      ) : null}
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-1 font-medium">
+                  {profileDoc.region === 'Outra' ? profileDoc.regionOther || '—' : profileDoc.region || '—'}
+                </p>
+              )}
             </div>
           </div>
         </div>

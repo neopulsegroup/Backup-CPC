@@ -66,6 +66,41 @@ service cloud.firestore {
       return isAccountEnabled() && userRole() in ['admin', 'mediator', 'lawyer', 'psychologist', 'manager', 'coordinator', 'trainer'];
     }
 
+    function isEditingOtherProfile(userId) {
+      return isAuthenticated() && request.auth.uid != userId;
+    }
+
+    function isValidMigrantRegion(value) {
+      return value in ['Lisboa', 'Norte', 'Centro', 'Alentejo', 'Algarve', 'Outra'];
+    }
+
+    function isValidMigrantAddress(value) {
+      return (value is string) && value.size() >= 10 && value.size() <= 200;
+    }
+
+    function isValidMigrantIdentificationNumber(value) {
+      return (value is string)
+        && value.size() >= 1
+        && value.size() <= 20
+        && value.matches('^[A-Z0-9]+$')
+        && (
+          (value.matches('^\\d+$') && value.size() == 9) ||
+          (!value.matches('^\\d+$') && value.size() >= 6)
+        );
+    }
+
+    function isValidMigrantRegionOther(region, value) {
+      return region != 'Outra' || ((value is string) && value.size() >= 2 && value.size() <= 80);
+    }
+
+    function isValidMigrantPersonalInfoForCpc() {
+      return isValidMigrantAddress(request.resource.data.address)
+        && isValidMigrantIdentificationNumber(request.resource.data.identificationNumber)
+        && (request.resource.data.region is string)
+        && isValidMigrantRegion(request.resource.data.region)
+        && isValidMigrantRegionOther(request.resource.data.region, request.resource.data.regionOther);
+    }
+
     function canManageCpcTeam() {
       return isAccountEnabled() && userRole() in ['admin', 'manager', 'coordinator'];
     }
@@ -112,7 +147,9 @@ service cloud.firestore {
     match /profiles/{userId} {
       allow read: if isOwner(userId) || (isAccountEnabled() && isCpcStaff());
       allow create: if isAuthenticated() && request.auth.uid == userId;
-      allow update: if isOwner(userId) || (isAccountEnabled() && hasRole('admin'));
+      allow update: if isOwner(userId) ||
+        (isAccountEnabled() && hasRole('admin')) ||
+        (isCpcStaff() && isEditingOtherProfile(userId) && isValidMigrantPersonalInfoForCpc());
       allow delete: if isAccountEnabled() && hasRole('admin');
     }
     
