@@ -312,7 +312,7 @@ export default function TeamAgendaPage() {
         }}
       >
         <DialogContent hideClose className="h-[calc(100vh-1.5rem)] w-[calc(100vw-1.5rem)] max-w-6xl overflow-hidden border-0 bg-slate-50 p-0">
-          <div className="flex h-full flex-col">
+          <div className="flex h-full min-h-0 flex-col">
             <div className="border-b bg-white px-4 py-4 sm:px-6">
               <div className="text-xs font-medium text-slate-500">
                 <span>{t.get('cpc.agenda.sessionRecord.breadcrumbs.home')}</span>
@@ -348,7 +348,7 @@ export default function TeamAgendaPage() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
                 <div className="space-y-6">
                   <section className="rounded-xl border bg-white p-5 shadow-sm">

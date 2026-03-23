@@ -319,6 +319,8 @@ describe('TeamAgendaPage', () => {
     await user.click(screen.getByRole('button', { name: 'Ver nota de sessão' }));
 
     expect(screen.getByRole('heading', { name: 'Registo de Sessão' })).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.querySelector('div[class*="overflow-y-auto"]')).not.toBeNull();
     expect(screen.getByRole('button', { name: 'Guardar rascunho' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Mateo Silva' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Necessidades identificadas' })).toBeInTheDocument();

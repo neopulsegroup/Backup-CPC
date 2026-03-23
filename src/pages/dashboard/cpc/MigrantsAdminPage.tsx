@@ -109,7 +109,7 @@ export default function MigrantsAdminPage() {
   const [langFilter, setLangFilter] = useState<'all' | 'iniciante' | 'intermediario' | 'avancado'>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'juridico' | 'psicologico' | 'habitacional'>('all');
   const [selectedTriage, setSelectedTriage] = useState<MigrantRow | null>(null);
-  const [exporting, setExporting] = useState<'csv' | 'xlsx' | null>(null);
+  const [exporting, setExporting] = useState<'csv' | 'xlsx' | 'pdf' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MigrantRow | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [blockingUserId, setBlockingUserId] = useState<string | null>(null);
@@ -235,13 +235,100 @@ export default function MigrantsAdminPage() {
     return getStringFromCell(row.arrival_date);
   }
 
-  async function handleExport(format: 'csv' | 'xlsx') {
+  async function handleExport(format: 'csv' | 'xlsx' | 'pdf') {
     if (!profile || !['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer'].includes(profile.role)) {
       toast({
         title: t.get('cpc.migrantsAdmin.export.no_permission.title'),
         description: t.get('cpc.migrantsAdmin.export.no_permission.description'),
         variant: 'destructive',
       });
+      return;
+    }
+
+    if (format === 'pdf') {
+      if (filtered.length === 0) {
+        toast({ title: t.get('cpc.migrantsAdmin.export.no_results.title'), description: t.get('cpc.migrantsAdmin.export.no_results.description') });
+        return;
+      }
+      setExporting('pdf');
+      try {
+        const header = [
+          t.get('cpc.migrantsAdmin.export.columns.name'),
+          t.get('cpc.migrantsAdmin.export.columns.email'),
+          t.get('cpc.migrantsAdmin.export.columns.birth_date'),
+          t.get('cpc.migrantsAdmin.export.columns.nationality'),
+          t.get('cpc.migrantsAdmin.export.columns.legal_status'),
+          t.get('cpc.migrantsAdmin.export.columns.arrival_date'),
+        ];
+        const rowsHtml = filtered.map(r => {
+          const email = normalizeEmail(r.email).value;
+          return `
+            <tr>
+              <td>${getStringFromCell(r.name)}</td>
+              <td>${email}</td>
+              <td>${exportRowValue(r, 'birth_date')}</td>
+              <td>${exportRowValue(r, 'nationality')}</td>
+              <td>${legalLabel(r.legal_status)}</td>
+              <td>${exportRowValue(r, 'arrival_date')}</td>
+            </tr>`;
+        }).join('');
+        const docHtml = `
+          <!doctype html>
+          <html lang="pt">
+            <head>
+              <meta charset="utf-8" />
+              <title>${t.get('cpc.migrantsAdmin.title')} — PDF</title>
+              <style>
+                body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #0a0a0a; }
+                h1 { font-size: 20px; margin: 0 0 12px; }
+                p { margin: 0 0 12px; color: #444; }
+                table { border-collapse: collapse; width: 100%; font-size: 12px; }
+                th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+                th { background: #f5f5f5; text-align: left; }
+                tfoot td { border: none; padding-top: 8px; font-size: 11px; color: #666; }
+                @media print {
+                  @page { margin: 16mm; }
+                  body { padding: 0; }
+                }
+              </style>
+            </head>
+            <body>
+              <h1>${t.get('cpc.migrantsAdmin.title')} — ${t.get('cpc.migrantsAdmin.export.button')}</h1>
+              <p>${t.get('cpc.migrantsAdmin.subtitle')}</p>
+              <table>
+                <thead>
+                  <tr>${header.map(h => `<th>${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+              </table>
+              <tfoot>
+                <tr><td colspan="${header.length}">${filtered.length} ${t.get('cpc.migrantsAdmin.title').toLowerCase()}</td></tr>
+              </tfoot>
+              <script>
+                window.onload = function() {
+                  setTimeout(function(){ window.print(); }, 300);
+                };
+              </script>
+            </body>
+          </html>
+        `;
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.open();
+          win.document.write(docHtml);
+          win.document.close();
+          try { win.focus(); } catch { /* no-op */ }
+        } else {
+          const blob = new Blob([docHtml], { type: 'text/html;charset=utf-8' });
+          const ts = getExportTimestamp();
+          downloadBlob(blob, `migrantes_export_${ts}.html`);
+        }
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : t.get('cpc.migrantsAdmin.export.generic_error');
+        toast({ title: t.get('cpc.migrantsAdmin.export.error_title'), description: message, variant: 'destructive' });
+      } finally {
+        setExporting(null);
+      }
       return;
     }
 
@@ -612,6 +699,10 @@ export default function MigrantsAdminPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+          <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('pdf')}>
+            <FileText className="h-4 w-4 mr-2" />
+            {t.get('cpc.migrantsAdmin.export.formats.pdf')}
+          </DropdownMenuItem>
             <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('csv')}>
               <FileText className="h-4 w-4 mr-2" />
               {t.get('cpc.migrantsAdmin.export.formats.csv')}

@@ -1743,6 +1743,7 @@
       "export": {
         "button": "Exportar Lista",
         "formats": {
+          "pdf": "PDF",
           "csv": "CSV",
           "xlsx": "XLSX"
         },
