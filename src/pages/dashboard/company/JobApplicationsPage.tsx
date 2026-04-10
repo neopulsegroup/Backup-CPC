@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { getDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
-import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   ArrowLeft,
@@ -36,7 +34,6 @@ interface JobOffer {
 
 export default function JobApplicationsPage() {
   const { jobId } = useParams();
-  const { user } = useAuth();
   const { language, t } = useLanguage();
   const [applications, setApplications] = useState<Application[]>([]);
   const [job, setJob] = useState<JobOffer | null>(null);
@@ -118,40 +115,36 @@ export default function JobApplicationsPage() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="cpc-section">
-          <div className="cpc-container">
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          </div>
-        </div>
-      </Layout>
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   return (
-    <Layout>
-      <div className="cpc-section">
-        <div className="cpc-container">
-          {/* Header */}
-          <div className="mb-8">
-            <Link
-              to="/dashboard/empresa/ofertas"
-              className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
+    <div>
+      <div className="flex flex-col gap-3 mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link to="/dashboard/empresa/ofertas" className="inline-flex items-center gap-2 hover:underline">
+              <ArrowLeft className="h-4 w-4 shrink-0" />
               {t.get('company.applications.backToOffers')}
             </Link>
-            <h1 className="text-2xl md:text-3xl font-bold">
-              {t.get('company.applications.title', { title: job?.title || '' })}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {t.get('company.applications.count', { count: applications.length })}
-            </p>
           </div>
+          <h1 className="text-2xl md:text-4xl font-bold tracking-tight mt-2 leading-snug text-primary">
+            {job?.title?.trim() || '—'}
+          </h1>
+          <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2 mt-5">
+            <FileText className="h-6 w-6 shrink-0 text-primary" aria-hidden />
+            {t.get('company.applications.pageTitle')}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {t.get('company.applications.count', { count: applications.length })}
+          </p>
+        </div>
+      </div>
 
-          <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6">
             {/* Applications List */}
             <div className="lg:col-span-2 space-y-4">
               {applications.length === 0 ? (
@@ -293,8 +286,6 @@ export default function JobApplicationsPage() {
               )}
             </div>
           </div>
-        </div>
-      </div>
-    </Layout>
+    </div>
   );
 }

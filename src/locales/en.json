@@ -267,6 +267,12 @@
     "backToSelection": "Back to profile selection",
     "registerAs": "Register as:",
     "loginError": "Incorrect email or password",
+    "loginTryAgain": "Could not sign in. Check your details and try again.",
+    "registerErrorGeneric": "Could not complete registration. Check your details or try again.",
+    "registerErrorEmailInUse": "This email is already registered. Sign in or reset your password.",
+    "networkError": "Connection issue. Check your internet and try again.",
+    "tooManyAttempts": "Too many attempts in a short time. Please wait a few minutes and try again.",
+    "serviceUnavailable": "Service temporarily unavailable. Please try again shortly.",
     "accessDeniedBlockedTitle": "Account blocked",
     "accessDeniedBlockedDescription": "Your access is blocked and you cannot sign in at this time.",
     "accessDeniedDisabledTitle": "Account disabled",
@@ -1835,9 +1841,25 @@
         "empty": "No applications in this period"
       },
       "offers": {
-        "title": "Offers pending approval",
+        "title": "Offers",
         "empty": "No pending offers",
-        "status_pending": "Pending approval"
+        "subtitle": "Validate, reject or delete jobs published by companies.",
+        "status_pending": "Pending approval",
+        "status_active": "Approved",
+        "status_rejected": "Rejected",
+        "search_placeholder": "Search by job, company or location",
+        "confirm_delete": "Do you want to delete job \"{title}\"? This action cannot be undone.",
+        "filters": {
+          "pending": "Pending",
+          "active": "Approved",
+          "rejected": "Rejected",
+          "all": "All"
+        },
+        "actions": {
+          "approve": "Validate",
+          "reject": "Reject",
+          "delete": "Delete"
+        }
       }
     }
   },
@@ -2121,7 +2143,7 @@
     "applications": {
       "unknownApplicant": "Unknown",
       "backToOffers": "Back to jobs",
-      "title": "Applications: {title}",
+      "pageTitle": "Applications",
       "count": "{count} application(s) received",
       "empty": {
         "title": "No applications",
@@ -2151,6 +2173,49 @@
           "date": "Date",
           "coverLetter": "Cover letter"
         }
+      }
+    },
+    "applicationsHub": {
+      "backToDashboard": "Back to dashboard",
+      "title": "Applications",
+      "subtitle": "Track all applications received for your jobs.",
+      "kpis": {
+        "total": "TOTAL",
+        "submitted": "NEW",
+        "reviewing": "UNDER REVIEW",
+        "accepted": "ACCEPTED",
+        "rejected": "REJECTED"
+      },
+      "filters": {
+        "all": "All",
+        "submitted": "New",
+        "reviewing": "Under review",
+        "interview": "Interview",
+        "accepted": "Accepted",
+        "rejected": "Rejected"
+      },
+      "searchPlaceholder": "Search by candidate, email, job or location",
+      "searchAria": "Search applications",
+      "sort": {
+        "aria": "Sort applications",
+        "newest": "Newest first",
+        "oldest": "Oldest first"
+      },
+      "empty": {
+        "noApplicationsTitle": "No applications",
+        "noApplicationsSubtitle": "You have not received applications for your jobs yet.",
+        "filtered": "No applications found for the selected filters."
+      },
+      "actions": {
+        "openOffers": "Go to jobs",
+        "viewOffer": "View job",
+        "viewCandidate": "View candidate"
+      },
+      "toast": {
+        "loadError": "Could not load applications.",
+        "updatedTitle": "Status updated",
+        "updatedDesc": "Application status updated successfully.",
+        "updateError": "Could not update application status."
       }
     },
     "candidates": {

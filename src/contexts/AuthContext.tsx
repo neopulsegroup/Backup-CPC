@@ -114,6 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userProfile.role === 'company') {
         try {
+          // Espelha o papel em profiles para as regras Firestore (employerRoleOnProfileDoc) quando users tiver campos atípicos.
+          await setDocument('profiles', firebaseUser.uid, { role: 'company' }, true);
+        } catch (error) {
+          console.error('Error syncing company role to profile:', error);
+        }
+        try {
           const existingCompany = await getDocument<Record<string, unknown>>('companies', firebaseUser.uid);
           const baseName =
             (typeof userProfile.name === 'string' && userProfile.name.trim() ? userProfile.name.trim() : null) ??

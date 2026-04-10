@@ -30,7 +30,13 @@ export default defineConfig(({ mode }) => ({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     globals: true,
-    exclude: ["**/node_modules/**", "**/dist/**", "**/coverage/**", "functions/**"],
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/coverage/**",
+      "functions/**",
+      "**/firestore.rules.test.ts",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],

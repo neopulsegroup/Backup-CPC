@@ -58,6 +58,10 @@ vi.mock('./company/JobApplicationsPage', () => ({
   default: () => <div>Candidaturas da oferta</div>,
 }));
 
+vi.mock('./company/CompanyApplicationsPage', () => ({
+  default: () => <div>Candidaturas</div>,
+}));
+
 vi.mock('./company/CandidateProfilePage', () => ({
   default: () => <div>Perfil do candidato</div>,
 }));

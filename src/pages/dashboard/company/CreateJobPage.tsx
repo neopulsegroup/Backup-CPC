@@ -9,6 +9,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 
+function normalizeRoleValue(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim().toLowerCase();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function looksLikeEmployerRole(value: unknown): boolean {
+  const normalized = normalizeRoleValue(value);
+  return normalized !== null && ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'].includes(normalized);
+}
+
+function accountLooksEnabledForFirestore(userDoc: Record<string, unknown> | null): boolean {
+  if (!userDoc) return false;
+  if (userDoc.blocked === true) return false;
+  if (userDoc.active === false) return false;
+  return true;
+}
+
 export default function CreateJobPage() {
   const { user, profile, profileData } = useAuth();
   const navigate = useNavigate();
@@ -210,6 +228,42 @@ export default function CreateJobPage() {
 
     try {
       const publisherId = user.uid;
+      const [userDoc, profileDoc] = await Promise.all([
+        getDocument<Record<string, unknown>>('users', publisherId),
+        getDocument<Record<string, unknown>>('profiles', publisherId),
+      ]);
+      const employerOnUser =
+        looksLikeEmployerRole(userDoc?.role) ||
+        looksLikeEmployerRole(userDoc?.profile) ||
+        looksLikeEmployerRole(userDoc?.perfil) ||
+        looksLikeEmployerRole(userDoc?.type);
+      const employerOnProfile =
+        looksLikeEmployerRole(profileDoc?.role) ||
+        looksLikeEmployerRole(profileDoc?.profile) ||
+        looksLikeEmployerRole(profileDoc?.perfil) ||
+        looksLikeEmployerRole(profileDoc?.type);
+
+      const hasEmployerRole = employerOnUser || employerOnProfile;
+
+      if (!hasEmployerRole) {
+        toast({
+          title: t.get('company.createJob.errors.createFailedTitle'),
+          description: 'Seu perfil não está identificado como empresa para publicar vagas. Atualize o campo role para "company" em users e/ou profiles.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (userDoc && !accountLooksEnabledForFirestore(userDoc)) {
+        toast({
+          title: t.get('company.createJob.errors.createFailedTitle'),
+          description:
+            'A conta está inativa ou bloqueada no Firestore (users: active=false ou blocked=true). Corrija em users/{seu uid} ou contacte o suporte.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Doc canónico no ID do utilizador (regras aceitam company_id == auth.uid quando o doc existe).
       await setDocument('companies', publisherId, { user_id: publisherId }, true);
 
@@ -252,6 +306,15 @@ export default function CreateJobPage() {
       }
       navigate('/dashboard/empresa/ofertas');
     } catch (error) {
+      const err = error as { code?: unknown; message?: unknown };
+      const code = typeof err.code === 'string' ? err.code : null;
+      const message = typeof err.message === 'string' ? err.message : '';
+      if (code === 'permission-denied' || message.toLowerCase().includes('permission')) {
+        console.error(
+          'Permission denied while creating/updating job_offers. Confirm: (1) firebase deploy --only firestore:rules com o ficheiro deste repo, (2) users/{uid} com active true e blocked false, (3) App Check no Firebase Console não a bloquear escritas.',
+          { uid: user?.uid ?? null, companyId, code, message }
+        );
+      }
       console.error('Error saving job:', error);
       toast({
         title: t.get('company.createJob.errors.createFailedTitle'),

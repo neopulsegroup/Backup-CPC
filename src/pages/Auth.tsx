@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { mapAuthErrorToMessage } from '@/lib/authErrorMapper';
 import { toast } from 'sonner';
 import { User, Building2, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
@@ -102,16 +103,14 @@ export default function Auth() {
       }
     } catch (error: unknown) {
       console.error('Auth error:', error);
-      const message = error instanceof Error ? error.message : t.common.error;
-      if (message === 'ACCOUNT_BLOCKED') {
-        toast.error(t.auth.accessDeniedBlockedToast);
-      } else if (message === 'ACCOUNT_DISABLED') {
-        toast.error(t.auth.accessDeniedDisabledToast);
-      } else if (message === 'Invalid login credentials') {
-        toast.error(t.auth.loginError || 'Email ou palavra-passe incorretos');
-      } else {
-        toast.error(message);
-      }
+      toast.error(
+        mapAuthErrorToMessage({
+          error,
+          mode,
+          t,
+          secureRegistrationMessage: true,
+        })
+      );
     } finally {
       setIsLoading(false);
     }

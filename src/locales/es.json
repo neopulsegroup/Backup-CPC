@@ -267,6 +267,12 @@
     "backToSelection": "Back to profile selection",
     "registerAs": "Register as:",
     "loginError": "Incorrect email or password",
+    "loginTryAgain": "No fue posible iniciar sesión. Verifica los datos e inténtalo de nuevo.",
+    "registerErrorGeneric": "No fue posible completar el registro. Verifica los datos o inténtalo de nuevo.",
+    "registerErrorEmailInUse": "Este correo ya está registrado. Inicia sesión o recupera tu contraseña.",
+    "networkError": "Problema de conexión. Verifica tu internet e inténtalo de nuevo.",
+    "tooManyAttempts": "Demasiados intentos en poco tiempo. Espera unos minutos y vuelve a intentarlo.",
+    "serviceUnavailable": "Servicio temporalmente no disponible. Inténtalo de nuevo en unos instantes.",
     "accessDeniedBlockedTitle": "Account blocked",
     "accessDeniedBlockedDescription": "Your access is blocked and you cannot sign in at this time.",
     "accessDeniedDisabledTitle": "Account disabled",
@@ -1835,9 +1841,25 @@
         "empty": "No applications in this period"
       },
       "offers": {
-        "title": "Offers pending approval",
+        "title": "Ofertas",
         "empty": "No pending offers",
-        "status_pending": "Pending approval"
+        "subtitle": "Valida, rechaza o elimina vacantes publicadas por empresas.",
+        "status_pending": "Pendiente de aprobación",
+        "status_active": "Aprobada",
+        "status_rejected": "Rechazada",
+        "search_placeholder": "Buscar por vacante, empresa o ubicación",
+        "confirm_delete": "¿Quieres eliminar la vacante \"{title}\"? Esta acción no se puede deshacer.",
+        "filters": {
+          "pending": "Pendientes",
+          "active": "Aprobadas",
+          "rejected": "Rechazadas",
+          "all": "Todas"
+        },
+        "actions": {
+          "approve": "Validar",
+          "reject": "Rechazar",
+          "delete": "Eliminar"
+        }
       }
     }
   },
@@ -2121,7 +2143,7 @@
     "applications": {
       "unknownApplicant": "Desconocido",
       "backToOffers": "Volver a las ofertas",
-      "title": "Candidaturas: {title}",
+      "pageTitle": "Candidaturas",
       "count": "{count} candidatura(s) recibida(s)",
       "empty": {
         "title": "Sin candidaturas",
@@ -2151,6 +2173,49 @@
           "date": "Fecha",
           "coverLetter": "Carta de presentación"
         }
+      }
+    },
+    "applicationsHub": {
+      "backToDashboard": "Volver al panel",
+      "title": "Candidaturas",
+      "subtitle": "Sigue todas las candidaturas recibidas en tus vacantes.",
+      "kpis": {
+        "total": "TOTAL",
+        "submitted": "NUEVAS",
+        "reviewing": "EN ANÁLISIS",
+        "accepted": "ACEPTADAS",
+        "rejected": "RECHAZADAS"
+      },
+      "filters": {
+        "all": "Todas",
+        "submitted": "Nuevas",
+        "reviewing": "En análisis",
+        "interview": "Entrevista",
+        "accepted": "Aceptadas",
+        "rejected": "Rechazadas"
+      },
+      "searchPlaceholder": "Buscar por candidato, email, vacante o ubicación",
+      "searchAria": "Buscar candidaturas",
+      "sort": {
+        "aria": "Ordenar candidaturas",
+        "newest": "Más recientes",
+        "oldest": "Más antiguas"
+      },
+      "empty": {
+        "noApplicationsTitle": "Sin candidaturas",
+        "noApplicationsSubtitle": "Aún no recibiste candidaturas en tus vacantes.",
+        "filtered": "No se encontraron candidaturas para los filtros aplicados."
+      },
+      "actions": {
+        "openOffers": "Ir a vacantes",
+        "viewOffer": "Ver vacante",
+        "viewCandidate": "Ver candidato"
+      },
+      "toast": {
+        "loadError": "No se pudieron cargar las candidaturas.",
+        "updatedTitle": "Estado actualizado",
+        "updatedDesc": "La candidatura se actualizó correctamente.",
+        "updateError": "No se pudo actualizar el estado de la candidatura."
       }
     },
     "candidates": {

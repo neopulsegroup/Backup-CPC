@@ -1,12 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.testSmtpConnection = exports.onMailCreated = void 0;
+exports.registerUserSecure = exports.testSmtpConnection = exports.onMailCreated = void 0;
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const permissions_1 = require("./permissions");
 const mailProcessor_1 = require("./mailProcessor");
 const smtp_1 = require("./smtp");
 const mailProcessor_2 = require("./mailProcessor");
+const registerUserSecure_1 = require("./registerUserSecure");
+Object.defineProperty(exports, "registerUserSecure", { enumerable: true, get: function () { return registerUserSecure_1.registerUserSecure; } });
 exports.onMailCreated = (0, firestore_1.onDocumentCreated)('mail/{mailId}', async (event) => {
     const mailId = event.params.mailId;
     await (0, mailProcessor_2.processMailDocument)(mailId);

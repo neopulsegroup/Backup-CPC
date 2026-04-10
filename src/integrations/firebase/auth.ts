@@ -1,13 +1,14 @@
 import {
-    createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
     sendPasswordResetEmail,
-    updateProfile,
     User,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from './client';
+import { functions } from './functionsClient';
+import { getRecaptchaToken } from '@/lib/recaptcha';
 
 export interface UserProfile {
     email: string;
@@ -40,6 +41,52 @@ function getErrorMessage(error: unknown, fallback: string): string {
     return fallback;
 }
 
+function getFirebaseAuthCode(error: unknown): string | null {
+    if (!error || typeof error !== 'object') return null;
+    const code = (error as { code?: unknown }).code;
+    return typeof code === 'string' ? code : null;
+}
+
+function mapRegisterAuthError(error: unknown): string {
+    if (error && typeof error === 'object' && 'details' in error) {
+        const details = (error as { details?: unknown }).details;
+        if (details && typeof details === 'object' && 'error' in details) {
+            const code = (details as { error?: unknown }).error;
+            if (typeof code === 'string' && code.trim()) return code;
+        }
+    }
+    if (error && typeof error === 'object' && 'code' in error) {
+        const code = (error as { code?: unknown }).code;
+        if (typeof code === 'string' && code.startsWith('functions/')) {
+            if (code === 'functions/already-exists') return 'USER_ALREADY_EXISTS';
+            if (code === 'functions/resource-exhausted') return 'RATE_LIMITED';
+            if (code === 'functions/invalid-argument') return 'VALIDATION_FAILED';
+            if (code === 'functions/failed-precondition') return 'CAPTCHA_REQUIRED';
+            if (code === 'functions/permission-denied') return 'REGISTER_FAILED';
+            if (code === 'functions/unavailable') return 'AUTH_PROVIDER_UNAVAILABLE';
+            if (code === 'functions/internal') return 'REGISTER_FAILED';
+        }
+    }
+    const code = getFirebaseAuthCode(error);
+    if (code === 'auth/email-already-in-use') return 'USER_ALREADY_EXISTS';
+    if (code === 'auth/weak-password') return 'WEAK_PASSWORD';
+    if (code === 'auth/network-request-failed') return 'NETWORK_ERROR';
+    if (code === 'auth/too-many-requests') return 'RATE_LIMITED';
+    if (code === 'auth/internal-error' || code === 'auth/app-not-authorized') return 'AUTH_PROVIDER_UNAVAILABLE';
+    return 'REGISTER_FAILED';
+}
+
+function mapLoginAuthError(error: unknown): string {
+    const code = getFirebaseAuthCode(error);
+    if (code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials' || code === 'auth/user-not-found' || code === 'auth/wrong-password') {
+        return 'INVALID_CREDENTIALS';
+    }
+    if (code === 'auth/network-request-failed') return 'NETWORK_ERROR';
+    if (code === 'auth/too-many-requests') return 'RATE_LIMITED';
+    if (code === 'auth/internal-error' || code === 'auth/app-not-authorized') return 'AUTH_PROVIDER_UNAVAILABLE';
+    return 'LOGIN_FAILED';
+}
+
 /**
  * Register a new user with email and password
  */
@@ -51,15 +98,33 @@ export async function registerUser(
     additionalData?: { nif?: string }
 ) {
     try {
-        // Create user in Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const callRegister = httpsCallable<
+            {
+                email: string;
+                password: string;
+                name: string;
+                role: UserProfile['role'];
+                nif?: string;
+                captchaToken?: string;
+            },
+            { ok: boolean; requestId?: string }
+        >(functions, 'registerUserSecure');
+
+        const captchaToken = await getRecaptchaToken('register');
+
+        await callRegister({
+            email,
+            password,
+            name,
+            role,
+            ...(captchaToken ? { captchaToken } : {}),
+            ...(additionalData?.nif ? { nif: additionalData.nif } : {}),
+        });
+
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-
-        // Update display name
-        await updateProfile(user, { displayName: name });
-
-        // Create user profile in Firestore
-        const userProfile: UserProfile = {
+        const profile = await getUserProfile(user.uid);
+        const userProfile: UserProfile = profile ?? {
             email,
             name,
             role,
@@ -72,41 +137,10 @@ export async function registerUser(
             updatedAt: serverTimestamp(),
             ...(additionalData?.nif && { nif: additionalData.nif }),
         };
-
-        await setDoc(doc(db, 'users', user.uid), userProfile);
-
-        // Create empty profile document
-        await setDoc(doc(db, 'profiles', user.uid), {
-            name,
-            email,
-            phone: null,
-            birthDate: null,
-            nationality: null,
-            photoUrl: null,
-            currentLocation: null,
-            arrivalDate: null,
-            registeredAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-
-        if (role === 'company') {
-            await setDoc(
-                doc(db, 'companies', user.uid),
-                {
-                    user_id: user.uid,
-                    company_name: name,
-                    verified: false,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
-                },
-                { merge: true }
-            );
-        }
-
         return { user, profile: userProfile };
     } catch (error: unknown) {
         console.error('Error registering user:', error);
-        throw new Error(getErrorMessage(error, 'Error registering user'));
+        throw new Error(mapRegisterAuthError(error));
     }
 }
 
@@ -119,7 +153,7 @@ export async function loginUser(email: string, password: string) {
         return userCredential.user;
     } catch (error: unknown) {
         console.error('Error logging in:', error);
-        throw new Error(getErrorMessage(error, 'Error logging in'));
+        throw new Error(mapLoginAuthError(error));
     }
 }
 

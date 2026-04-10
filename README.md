@@ -178,6 +178,75 @@ src/
 3.  Configure as variáveis de ambiente:
     Crie um arquivo `.env` na raiz do projeto com as credenciais do Firebase (exemplo baseado no setup atual).
 
+### 🔐 Cadastro seguro (Auth hardening)
+
+O fluxo de registo foi endurecido com:
+* mensagem de erro mascarada no frontend (sem expor `Firebase`/`auth/*`);
+* endpoint seguro em Cloud Functions (`registerUserSecure`);
+* rate limit server-side por IP + hash de email;
+* suporte a reCAPTCHA v3;
+* `requestId` para rastreabilidade de incidentes.
+
+#### Variáveis de ambiente (Frontend)
+
+Crie `.env` na raiz (ou ajuste no ambiente de deploy):
+
+```bash
+# Firebase (já usado pelo projeto)
+VITE_FUNCTIONS_REGION=us-central1
+
+# CAPTCHA no browser (recomendado)
+VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+
+# Fallback opcional (se já usar a mesma chave no App Check)
+VITE_FIREBASE_APPCHECK_SITE_KEY=your_appcheck_site_key
+```
+
+#### Variáveis de ambiente (Cloud Functions)
+
+Defina no ambiente das funções:
+
+```bash
+# Obriga App Check nas callables sensíveis
+ENFORCE_APPCHECK=true
+
+# Chave secreta reCAPTCHA v3 (server-side)
+RECAPTCHA_SECRET_KEY=your_recaptcha_secret
+
+# Score mínimo do captcha
+RECAPTCHA_MIN_SCORE=0.5
+```
+
+> Sem `RECAPTCHA_SECRET_KEY`, a função continua a operar, mas sem validação anti-bot de captcha.
+
+#### Deploy (segurança)
+
+1. Build de funções:
+   ```bash
+   cd functions && npm run build
+   ```
+2. Deploy:
+   ```bash
+   firebase deploy --only functions
+   ```
+3. Verificar no cliente se o registo continua funcional e sem erro técnico exposto.
+
+#### Checklist de validação ponta a ponta
+
+* [ ] Registo com email novo funciona e autentica automaticamente.
+* [ ] Registo com email já existente **não** mostra `Firebase`/`auth/*` na UI.
+* [ ] Erro de rede mostra mensagem amigável (`networkError`).
+* [ ] Múltiplas tentativas disparam bloqueio (`RATE_LIMITED`) com mensagem segura.
+* [ ] Com captcha ativo, token inválido é bloqueado sem detalhe técnico.
+* [ ] Logs no backend contêm `requestId` para troubleshooting.
+* [ ] Linter, `tsc` e testes passam após alterações.
+
+#### Runbook operacional
+
+Para resposta a incidentes de autenticação/cadastro (rate limit, captcha, indisponibilidade do provedor), consultar:
+
+* [Runbook de segurança de autenticação](docs/auth-security-runbook.md)
+
 4.  Inicie o servidor de desenvolvimento:
     ```bash
     npm run dev

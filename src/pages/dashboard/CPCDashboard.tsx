@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { addDocument, countDocuments, getDocument, queryDocuments, serverTimestamp, updateDocument } from '@/integrations/firebase/firestore';
+import { addDocument, countDocuments, deleteDocument, getDocument, queryDocuments, serverTimestamp, updateDocument } from '@/integrations/firebase/firestore';
 import { registerUser } from '@/integrations/firebase/auth';
 import {
   Building2,
@@ -39,6 +39,8 @@ import {
   Languages,
   MessagesSquare,
   ClipboardList,
+  Trash2,
+  Search,
 } from 'lucide-react';
 import {
   APP_TIME_ZONE,
@@ -747,57 +749,242 @@ export default function CPCDashboard() {
   }
 
   function OfertasAguardandoAprovacao() {
+    type OfferRow = {
+      id: string;
+      title: string;
+      location: string | null;
+      created_at: string;
+      status: string;
+      company_id: string | null;
+      company_name: string;
+    };
+
     const [loadingList, setLoadingList] = useState(true);
-    const [rows, setRows] = useState<Array<{ id: string; title: string; location: string | null; created_at: string }>>([]);
-    useEffect(() => {
-      async function fetchAll() {
-        setLoadingList(true);
-        try {
-          const data = await queryDocuments<{ id: string; title: string; location: string | null; created_at: string }>(
-            'job_offers',
-            [{ field: 'status', operator: '==', value: 'pending_review' }],
-            { field: 'created_at', direction: 'desc' },
-            200
-          );
-          setRows(data || []);
-        } finally {
-          setLoadingList(false);
-        }
+    const [processingId, setProcessingId] = useState<string | null>(null);
+    const [statusFilter, setStatusFilter] = useState<'all' | 'pending_review' | 'active' | 'rejected'>('pending_review');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [rows, setRows] = useState<OfferRow[]>([]);
+
+    async function fetchAll() {
+      setLoadingList(true);
+      try {
+        const data = await queryDocuments<Record<string, unknown> & { id: string }>(
+          'job_offers',
+          [],
+          undefined,
+          400
+        );
+
+        const companyIds = Array.from(
+          new Set(
+            (data || [])
+              .map((row) => (typeof row.company_id === 'string' ? row.company_id : null))
+              .filter((id): id is string => Boolean(id))
+          )
+        );
+        const companyDocs = await Promise.all(
+          companyIds.map((id) => getDocument<{ company_name?: string | null }>('companies', id))
+        );
+        const companyNameMap = new Map<string, string>();
+        companyIds.forEach((id, idx) => {
+          const n = companyDocs[idx]?.company_name;
+          companyNameMap.set(id, typeof n === 'string' && n.trim() ? n.trim() : id);
+        });
+
+        const mapped: OfferRow[] = (data || []).map((row) => {
+          const companyId = typeof row.company_id === 'string' ? row.company_id : null;
+          const created = parseUnknownDate(row.created_at);
+          return {
+            id: row.id,
+            title: typeof row.title === 'string' && row.title.trim() ? row.title.trim() : '—',
+            location: typeof row.location === 'string' ? row.location : null,
+            created_at: created ? created.toISOString() : '',
+            status: typeof row.status === 'string' ? row.status : 'pending_review',
+            company_id: companyId,
+            company_name: companyId ? (companyNameMap.get(companyId) || companyId) : '—',
+          };
+        });
+
+        mapped.sort((a, b) => {
+          const ad = parseUnknownDate(a.created_at)?.getTime() || 0;
+          const bd = parseUnknownDate(b.created_at)?.getTime() || 0;
+          return bd - ad;
+        });
+
+        setRows(mapped);
+      } catch (error) {
+        console.error('Error fetching CPC offers moderation list:', error);
+      } finally {
+        setLoadingList(false);
       }
-      fetchAll();
+    }
+
+    useEffect(() => {
+      void fetchAll();
     }, []);
 
+    async function handleSetStatus(row: OfferRow, nextStatus: 'active' | 'rejected') {
+      setProcessingId(row.id);
+      try {
+        await updateDocument('job_offers', row.id, {
+          status: nextStatus,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: user?.uid || null,
+        });
+        setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: nextStatus } : r)));
+      } catch (error) {
+        console.error('Error moderating offer status:', error);
+      } finally {
+        setProcessingId(null);
+      }
+    }
+
+    async function handleDelete(row: OfferRow) {
+      const ok = window.confirm(t.get('cpc.pages.offers.confirm_delete', { title: row.title }));
+      if (!ok) return;
+      setProcessingId(row.id);
+      try {
+        await deleteDocument('job_offers', row.id);
+        setRows((prev) => prev.filter((r) => r.id !== row.id));
+      } catch (error) {
+        console.error('Error deleting offer:', error);
+      } finally {
+        setProcessingId(null);
+      }
+    }
+
+    const filteredRows = useMemo(() => {
+      let out = [...rows];
+      if (statusFilter !== 'all') {
+        out = out.filter((r) => r.status === statusFilter);
+      }
+      const q = searchQuery.trim().toLowerCase();
+      if (q) {
+        out = out.filter((r) => {
+          const title = r.title.toLowerCase();
+          const location = (r.location || '').toLowerCase();
+          const company = (r.company_name || '').toLowerCase();
+          return title.includes(q) || location.includes(q) || company.includes(q);
+        });
+      }
+      return out;
+    }, [rows, searchQuery, statusFilter]);
+
+    function statusBadge(status: string) {
+      if (status === 'active') {
+        return <span className="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">{t.get('cpc.pages.offers.status_active')}</span>;
+      }
+      if (status === 'rejected' || status === 'closed') {
+        return <span className="text-xs px-2 py-1 rounded-full bg-rose-100 text-rose-700">{t.get('cpc.pages.offers.status_rejected')}</span>;
+      }
+      return <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">{t.get('cpc.pages.offers.status_pending')}</span>;
+    }
+
     return (
-      <div className="cpc-section">
-        <div className="cpc-container">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold">{t.get('cpc.pages.offers.title')}</h2>
-            <Link to="/dashboard/cpc" className="text-sm text-primary hover:underline">{t.get('cpc.actions.back')}</Link>
+      <div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <Briefcase className="h-7 w-7 text-primary" /> {t.get('cpc.pages.offers.title')}
+            </h1>
+            <p className="text-muted-foreground mt-1">{t.get('cpc.pages.offers.subtitle')}</p>
           </div>
-          {loadingList ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {rows.map(r => (
-                <div key={r.id} className="cpc-card p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{r.title}</p>
-                    <p className="text-sm text-muted-foreground">{r.location || '—'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm">{new Date(r.created_at).toLocaleDateString(locale)}</p>
-                    <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">{t.get('cpc.pages.offers.status_pending')}</span>
-                  </div>
-                </div>
-              ))}
-              {rows.length === 0 && (
-                <div className="cpc-card p-12 text-center text-muted-foreground">{t.get('cpc.pages.offers.empty')}</div>
-              )}
-            </div>
-          )}
+          <Link
+            to="/dashboard/cpc"
+            className="text-sm text-primary hover:underline shrink-0 self-start md:self-auto"
+          >
+            {t.get('cpc.actions.back')}
+          </Link>
         </div>
+
+        <div className="cpc-card p-6 mb-6 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { key: 'pending_review', label: t.get('cpc.pages.offers.filters.pending') },
+              { key: 'active', label: t.get('cpc.pages.offers.filters.active') },
+              { key: 'rejected', label: t.get('cpc.pages.offers.filters.rejected') },
+              { key: 'all', label: t.get('cpc.pages.offers.filters.all') },
+            ].map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setStatusFilter(f.key as 'all' | 'pending_review' | 'active' | 'rejected')}
+                className={`px-3 py-1.5 rounded-full text-sm ${
+                  statusFilter === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative">
+            <Search className="h-4 w-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 z-10" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t.get('cpc.pages.offers.search_placeholder')}
+              className="pl-9"
+              aria-label={t.get('cpc.pages.offers.search_placeholder')}
+            />
+          </div>
+        </div>
+
+        {loadingList ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredRows.map((r) => {
+                const rowBusy = processingId === r.id;
+                return (
+                  <div key={r.id} className="cpc-card p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{r.title}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {r.company_name} {r.location ? `• ${r.location}` : ''}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {r.created_at ? new Date(r.created_at).toLocaleDateString(locale) : '—'}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                      {statusBadge(r.status)}
+                      <Button
+                        size="sm"
+                        onClick={() => handleSetStatus(r, 'active')}
+                        disabled={rowBusy || r.status === 'active'}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {t.get('cpc.pages.offers.actions.approve')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSetStatus(r, 'rejected')}
+                        disabled={rowBusy || r.status === 'rejected'}
+                      >
+                        <Ban className="h-4 w-4 mr-2" />
+                        {t.get('cpc.pages.offers.actions.reject')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(r)}
+                        disabled={rowBusy}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t.get('cpc.pages.offers.actions.delete')}
+                      </Button>
+                    </div>
+                  </div>
+                );
+            })}
+            {filteredRows.length === 0 && (
+              <div className="cpc-card p-12 text-center text-muted-foreground">{t.get('cpc.pages.offers.empty')}</div>
+            )}
+          </div>
+        )}
       </div>
     );
   }

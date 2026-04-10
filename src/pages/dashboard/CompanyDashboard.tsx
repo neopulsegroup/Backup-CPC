@@ -34,6 +34,7 @@ import MyJobsPage from './company/MyJobsPage';
 import JobApplicationsPage from './company/JobApplicationsPage';
 import CandidateProfilePage from './company/CandidateProfilePage';
 import CandidatesPage from './company/CandidatesPage';
+import CompanyApplicationsPage from './company/CompanyApplicationsPage';
 
 function normalizeText(value?: string | null): string {
   if (!value) return '';
@@ -702,7 +703,7 @@ export default function CompanyDashboard() {
                 <Route index element={<CompanyHome />} />
                 <Route path="nova-oferta" element={<CreateJobPage />} />
                 <Route path="ofertas" element={<MyJobsPage />} />
-                <Route path="candidaturas" element={<MyJobsPage />} />
+                <Route path="candidaturas" element={<CompanyApplicationsPage />} />
                 <Route path="perfil" element={<CompanyProfilePage />} />
                 <Route path="mensagens" element={<CompanyMessagesPage />} />
                 <Route path="ofertas/:jobId/candidaturas" element={<JobApplicationsPage />} />

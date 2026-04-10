@@ -125,20 +125,31 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/companies/$(companyId));
     }
 
+    function isEmployerRoleValue(v) {
+      return v is string
+        && v.lower().matches('^\\s*(company|empresa|employer|business|empresario|empresário)\\s*$');
+    }
+
     // Papel de empresa além de userRole() (ex.: role não-string no doc users, ou só em profiles).
+    // Importante: nunca chamar get(users/uid) sem exists — caso contrário a avaliação da regra falha por completo.
     function employerRoleOnUserDoc() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && employerRoleOnUserDocWhenExists();
+    }
+
+    function employerRoleOnUserDocWhenExists() {
       let u = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return (u.role is string && u.role.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'])
-        || (u.profile is string && u.profile.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'])
-        || (u.perfil is string && u.perfil.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'])
-        || (u.type is string && u.type.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário']);
+      return isEmployerRoleValue(u.role)
+        || isEmployerRoleValue(u.profile)
+        || isEmployerRoleValue(u.perfil)
+        || isEmployerRoleValue(u.type);
     }
 
     function profileDocLooksEmployer(p) {
-      return (p.role is string && p.role.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'])
-        || (p.profile is string && p.profile.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'])
-        || (p.perfil is string && p.perfil.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'])
-        || (p.type is string && p.type.lower() in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário']);
+      return isEmployerRoleValue(p.role)
+        || isEmployerRoleValue(p.profile)
+        || isEmployerRoleValue(p.perfil)
+        || isEmployerRoleValue(p.type);
     }
 
     function employerRoleOnProfileDoc() {
@@ -146,32 +157,49 @@ service cloud.firestore {
         && profileDocLooksEmployer(get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data);
     }
 
+    // Conta “ok” para escrita de empresa: doc users/{uid} com active/blocked coerentes.
+    // Caso raro: utilizador tem profiles (papel empresa) + companies/{uid} mas não tem users/{uid}
+    // (dados legados / importação). Sem este ramo, isAccountEnabled() falha e bloqueia job_offers.
+    function employerProfileFallbackWhenNoUserDoc() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && employerRoleOnProfileDoc()
+        && exists(/databases/$(database)/documents/companies/$(request.auth.uid));
+    }
+
+    function employerPublisherRoleMatch() {
+      return userRole() == 'company'
+        || employerRoleOnUserDoc()
+        || employerRoleOnProfileDoc();
+    }
+
     function employerPublisher() {
-      return isAccountEnabled()
+      return isAuthenticated()
+        && employerPublisherRoleMatch()
         && (
-          userRole() == 'company'
-          || employerRoleOnUserDoc()
-          || employerRoleOnProfileDoc()
+          isAccountEnabled()
+          || employerProfileFallbackWhenNoUserDoc()
         );
     }
 
     // Dono do documento companies/{companyId}:
     // - Se company_id na vaga == auth.uid e existe companies/{uid}, aceita (convénio do app: doc canónico no ID do utilizador).
     // - Caso contrário: user_id / userId no doc (string ou referência a users/{uid}).
+    function companyUserIdFieldMatches(fieldVal) {
+      return fieldVal == request.auth.uid
+        || fieldVal == /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
     function companyOwnsCompanyId(companyId) {
       return companyId is string
         && companyId.size() > 0
         && exists(/databases/$(database)/documents/companies/$(companyId))
         && (
           companyId == request.auth.uid
-          || companyDoc(companyId).data.user_id == request.auth.uid
-          || companyDoc(companyId).data.userId == request.auth.uid
-          || companyDoc(companyId).data.user_id == /databases/$(database)/documents/users/$(request.auth.uid)
-          || companyDoc(companyId).data.userId == /databases/$(database)/documents/users/$(request.auth.uid)
+          || companyUserIdFieldMatches(companyDoc(companyId).data.get('user_id', null))
+          || companyUserIdFieldMatches(companyDoc(companyId).data.get('userId', null))
           || (
             companyId == request.auth.uid
-            && !(companyDoc(companyId).data.keys().hasAll(['user_id']))
-            && !(companyDoc(companyId).data.keys().hasAll(['userId']))
+            && !(companyDoc(companyId).data.keys().hasAny(['user_id', 'userId']))
           )
         );
     }

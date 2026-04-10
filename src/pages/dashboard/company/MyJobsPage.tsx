@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { countDocuments, getDocument, queryDocuments, setDocument, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -33,16 +33,31 @@ interface JobOffer {
 type StatusFilter = 'all' | 'active' | 'in_review' | 'paused' | 'closed';
 
 const PAGE_SIZE = 8;
+const CATALOG_LIMIT = 500;
 
-type OfferFilterOp = '==' | 'in' | '>=' | '<=';
+function createdAtToIso(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toDate' in value &&
+    typeof (value as { toDate: () => Date }).toDate === 'function'
+  ) {
+    return (value as { toDate: () => Date }).toDate().toISOString();
+  }
+  return '';
+}
 
 export default function MyJobsPage() {
   const { user, profile, profileData } = useAuth();
   const { language, t } = useLanguage();
   const { toast } = useToast();
+  const location = useLocation();
   const [companyId, setCompanyId] = useState<string | null>(null);
   /** IDs usados em job_offers.company_id (uid canónico + doc legado, se existir). */
   const [jobOfferCompanyIds, setJobOfferCompanyIds] = useState<string[]>([]);
+  /** Ofertas carregadas do Firestore (escopo empresa); filtros/ordenação/paginação são no cliente — evita índices compostos ausentes em job_offers. */
+  const [catalog, setCatalog] = useState<JobOffer[]>([]);
   const [jobs, setJobs] = useState<JobOffer[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingList, setLoadingList] = useState(false);
@@ -51,23 +66,27 @@ export default function MyJobsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-  const [stats, setStats] = useState({ total: 0, active: 0, paused: 0, closed: 0 });
-  const [filteredCount, setFilteredCount] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageCursors, setPageCursors] = useState<(string | null)[]>([null]);
-  const [hasNextPage, setHasNextPage] = useState(false);
 
   useEffect(() => {
     fetchCompanyAndBootstrap();
   }, [user]);
 
   useEffect(() => {
-    if (!companyId || jobOfferCompanyIds.length === 0) return;
+    if (!companyId || jobOfferCompanyIds.length === 0) {
+      setCatalog([]);
+      setJobs([]);
+      setPageIndex(0);
+      return;
+    }
     setPageIndex(0);
-    setPageCursors([null]);
-    void fetchStats(jobOfferCompanyIds);
-    void fetchPage({ companyIds: jobOfferCompanyIds, cursor: null, nextPageIndex: 0 });
-  }, [companyId, jobOfferCompanyIds, statusFilter, sortDir, dateFrom, dateTo]);
+    void fetchOffersCatalog(jobOfferCompanyIds);
+    // location.key: recarrega ao voltar de "nova oferta" / edição (mesma rota pode reutilizar o componente).
+  }, [companyId, jobOfferCompanyIds, location.key]);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [statusFilter, sortDir, dateFrom, dateTo, searchQuery]);
 
   async function fetchCompanyAndBootstrap() {
     if (!user) return;
@@ -196,105 +215,142 @@ export default function MyJobsPage() {
     return date.toISOString();
   }
 
-  function companyScopeFilters(companyIds: string[]): { field: string; operator: OfferFilterOp; value: unknown }[] {
+  async function fetchOffersCatalog(companyIds: string[]) {
     const ids = Array.from(new Set(companyIds.filter(Boolean)));
-    if (ids.length === 0) return [];
-    if (ids.length === 1) return [{ field: 'company_id', operator: '==', value: ids[0] }];
-    return [{ field: 'company_id', operator: 'in', value: ids }];
-  }
-
-  function buildOfferFilters(args: {
-    companyIds: string[];
-    statusFilter: StatusFilter;
-    dateFrom: string;
-    dateTo: string;
-  }) {
-    const filters: { field: string; operator: OfferFilterOp; value: unknown }[] = [...companyScopeFilters(args.companyIds)];
-
-    if (args.statusFilter === 'active') {
-      filters.push({ field: 'status', operator: '==', value: 'active' });
-    } else if (args.statusFilter === 'in_review') {
-      filters.push({ field: 'status', operator: '==', value: 'pending_review' });
-    } else if (args.statusFilter === 'paused') {
-      filters.push({ field: 'status', operator: '==', value: 'paused' });
-    } else if (args.statusFilter === 'closed') {
-      filters.push({ field: 'status', operator: 'in', value: ['closed', 'rejected'] });
-    }
-
-    if (args.dateFrom) {
-      filters.push({ field: 'created_at', operator: '>=', value: toIsoDateStart(args.dateFrom) });
-    }
-
-    if (args.dateTo) {
-      filters.push({ field: 'created_at', operator: '<=', value: toIsoDateEnd(args.dateTo) });
-    }
-
-    return filters;
-  }
-
-  async function fetchStats(companyIds: string[]) {
-    const scope = companyScopeFilters(companyIds);
-    if (scope.length === 0) return;
-    try {
-      const [total, active, paused, closed] = await Promise.all([
-        countDocuments('job_offers', scope),
-        countDocuments('job_offers', [...scope, { field: 'status', operator: '==', value: 'active' }]),
-        countDocuments('job_offers', [...scope, { field: 'status', operator: '==', value: 'paused' }]),
-        countDocuments('job_offers', [...scope, { field: 'status', operator: 'in', value: ['closed', 'rejected'] }]),
-      ]);
-      setStats({ total, active, paused, closed });
-    } catch (error) {
-      console.error('Error fetching offers stats:', error);
-    }
-  }
-
-  async function fetchPage(args: { companyIds: string[]; cursor: string | null; nextPageIndex: number }) {
-    if (args.companyIds.length === 0) {
-      setJobs([]);
-      setFilteredCount(0);
-      setHasNextPage(false);
+    if (ids.length === 0) {
+      setCatalog([]);
       return;
     }
     setLoadingList(true);
     try {
-      const filters = buildOfferFilters({ companyIds: args.companyIds, statusFilter, dateFrom, dateTo });
-      const total = await countDocuments('job_offers', filters);
-      setFilteredCount(total);
-
-      const data = await queryDocuments<JobOffer>(
-        'job_offers',
-        filters,
-        { field: 'created_at', direction: sortDir },
-        PAGE_SIZE + 1,
-        args.cursor ? [args.cursor] : undefined
+      const rowsById = new Map<string, JobOffer>();
+      await Promise.all(
+        ids.map(async (cid) => {
+          const rows = await queryDocuments<Record<string, unknown> & { id: string }>(
+            'job_offers',
+            [{ field: 'company_id', operator: '==', value: cid }],
+            undefined,
+            CATALOG_LIMIT
+          );
+          for (const row of rows) {
+            const createdAt = createdAtToIso(row.created_at);
+            rowsById.set(row.id, {
+              id: row.id,
+              title: typeof row.title === 'string' ? row.title : '',
+              description: (row.description as string | null | undefined) ?? null,
+              location: typeof row.location === 'string' ? row.location : row.location === null ? null : null,
+              status: typeof row.status === 'string' ? row.status : '',
+              applications_count: null,
+              created_at: createdAt,
+            });
+          }
+        })
       );
-
-      const hasNext = data.length > PAGE_SIZE;
-      const pageJobs = data.slice(0, PAGE_SIZE);
-
-      const counts = await Promise.all(
-        pageJobs.map((job) => countDocuments('job_applications', [{ field: 'job_id', operator: '==', value: job.id }]))
-      );
-      const withCounts = pageJobs.map((job, idx) => ({ ...job, applications_count: counts[idx] }));
-      setJobs(withCounts);
-      setHasNextPage(hasNext);
-
-      const lastCreatedAt = pageJobs[pageJobs.length - 1]?.created_at ?? null;
-      setPageCursors((prev) => {
-        const next = prev.slice(0, args.nextPageIndex + 1);
-        if (lastCreatedAt && next.length === args.nextPageIndex + 1) {
-          next.push(lastCreatedAt);
-        }
-        return next;
-      });
+      setCatalog([...rowsById.values()]);
     } catch (error) {
-      console.error('Error fetching jobs:', error);
-      setJobs([]);
-      setHasNextPage(false);
+      console.error('Error fetching job offers catalog:', error);
+      setCatalog([]);
+      toast({
+        title: t.get('company.offers.toast.updateErrorTitle'),
+        description: t.get('company.createJob.errors.createFailedDesc'),
+        variant: 'destructive',
+      });
     } finally {
       setLoadingList(false);
     }
   }
+
+  const stats = useMemo(() => {
+    let active = 0;
+    let paused = 0;
+    let closed = 0;
+    for (const j of catalog) {
+      if (j.status === 'active') active += 1;
+      else if (j.status === 'paused') paused += 1;
+      else if (j.status === 'closed' || j.status === 'rejected') closed += 1;
+    }
+    return { total: catalog.length, active, paused, closed };
+  }, [catalog]);
+
+  const filteredOffers = useMemo(() => {
+    let rows = [...catalog];
+
+    if (statusFilter === 'active') {
+      rows = rows.filter((j) => j.status === 'active');
+    } else if (statusFilter === 'in_review') {
+      rows = rows.filter((j) => j.status === 'pending_review');
+    } else if (statusFilter === 'paused') {
+      rows = rows.filter((j) => j.status === 'paused');
+    } else if (statusFilter === 'closed') {
+      rows = rows.filter((j) => j.status === 'closed' || j.status === 'rejected');
+    }
+
+    if (dateFrom) {
+      const fromIso = toIsoDateStart(dateFrom);
+      rows = rows.filter((j) => (j.created_at || '') >= fromIso);
+    }
+    if (dateTo) {
+      const toIso = toIsoDateEnd(dateTo);
+      rows = rows.filter((j) => (j.created_at || '') <= toIso);
+    }
+
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter((job) => {
+        const title = (job.title ?? '').toLowerCase();
+        const location = (job.location ?? '').toLowerCase();
+        return title.includes(q) || location.includes(q);
+      });
+    }
+
+    rows.sort((a, b) => {
+      const ta = new Date(a.created_at).getTime();
+      const tb = new Date(b.created_at).getTime();
+      const da = Number.isNaN(ta) ? 0 : ta;
+      const db = Number.isNaN(tb) ? 0 : tb;
+      return sortDir === 'desc' ? db - da : da - db;
+    });
+
+    return rows;
+  }, [catalog, statusFilter, dateFrom, dateTo, searchQuery, sortDir]);
+
+  const filteredCount = filteredOffers.length;
+
+  const pageSlice = useMemo(
+    () => filteredOffers.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE),
+    [filteredOffers, pageIndex]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadApplicationCounts() {
+      if (pageSlice.length === 0) {
+        setJobs([]);
+        return;
+      }
+      try {
+        const counts = await Promise.all(
+          pageSlice.map((job) => countDocuments('job_applications', [{ field: 'job_id', operator: '==', value: job.id }]))
+        );
+        if (cancelled) return;
+        setJobs(
+          pageSlice.map((job, idx) => ({
+            ...job,
+            applications_count: counts[idx],
+          }))
+        );
+      } catch (error) {
+        console.error('Error counting applications:', error);
+        if (!cancelled) {
+          setJobs(pageSlice.map((j) => ({ ...j, applications_count: null })));
+        }
+      }
+    }
+    void loadApplicationCounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [pageSlice]);
 
   const getStatusConfig = (status: string) => {
     const normalized = normalizeStatus(status);
@@ -318,40 +374,25 @@ export default function MyJobsPage() {
   );
 
   function formatDate(value: string) {
+    if (!value) return '—';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date);
+    return Number.isNaN(date.getTime()) ? '—' : dateFormatter.format(date);
   }
 
-  const visibleJobs = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return jobs;
-    return jobs.filter((job) => {
-      const title = (job.title ?? '').toLowerCase();
-      const location = (job.location ?? '').toLowerCase();
-      return title.includes(query) || location.includes(query);
-    });
-  }, [jobs, searchQuery]);
-
   const shownFrom = filteredCount === 0 ? 0 : pageIndex * PAGE_SIZE + 1;
-  const shownTo = Math.min(pageIndex * PAGE_SIZE + visibleJobs.length, filteredCount);
+  const shownTo = Math.min(pageIndex * PAGE_SIZE + jobs.length, filteredCount);
+  const hasNextPage = (pageIndex + 1) * PAGE_SIZE < filteredCount;
 
-  async function goToPrevPage() {
-    if (!companyId || jobOfferCompanyIds.length === 0 || pageIndex === 0) return;
-    const prevIndex = pageIndex - 1;
-    const cursor = pageCursors[prevIndex] ?? null;
-    setPageIndex(prevIndex);
-    await fetchPage({ companyIds: jobOfferCompanyIds, cursor, nextPageIndex: prevIndex });
+  function goToPrevPage() {
+    if (pageIndex === 0) return;
+    setPageIndex((p) => p - 1);
   }
 
   async function updateOfferStatus(job: JobOffer, nextStatus: 'active' | 'paused' | 'closed') {
     try {
       await updateDocument('job_offers', job.id, { status: nextStatus });
       toast({ title: t.get('company.offers.toast.updatedTitle'), description: t.get('company.offers.toast.updatedDesc') });
-      if (companyId && jobOfferCompanyIds.length > 0) {
-        void fetchStats(jobOfferCompanyIds);
-        const cursor = pageCursors[pageIndex] ?? null;
-        void fetchPage({ companyIds: jobOfferCompanyIds, cursor, nextPageIndex: pageIndex });
-      }
+      setCatalog((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: nextStatus } : j)));
     } catch (error) {
       console.error('Error updating offer status:', error);
       toast({
@@ -494,7 +535,7 @@ export default function MyJobsPage() {
         <div className="p-4 md:p-6">
           {loadingList ? (
             <div className="py-12 text-center text-sm text-muted-foreground">{t.get('company.offers.loading')}</div>
-          ) : filteredCount === 0 && statusFilter === 'all' && !dateFrom && !dateTo ? (
+          ) : catalog.length === 0 ? (
             <div className="py-14 text-center">
               <p className="text-lg font-semibold">{t.get('company.offers.empty.title')}</p>
               <p className="text-sm text-muted-foreground mt-2">{t.get('company.offers.empty.subtitle')}</p>
@@ -505,11 +546,11 @@ export default function MyJobsPage() {
                 </Button>
               </Link>
             </div>
-          ) : visibleJobs.length === 0 ? (
+          ) : filteredCount === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">{t.get('company.offers.empty.filtered')}</div>
           ) : (
             <div className="space-y-4">
-              {visibleJobs.map((job) => {
+              {jobs.map((job) => {
                 const statusConfig = getStatusConfig(job.status);
                 const normalized = normalizeStatus(job.status);
                 const isClosed = normalized === 'closed';
@@ -614,12 +655,9 @@ export default function MyJobsPage() {
             </button>
             <button
               type="button"
-              onClick={async () => {
-                if (!companyId || jobOfferCompanyIds.length === 0 || !hasNextPage) return;
-                const nextIndex = pageIndex + 1;
-                const cursor = pageCursors[nextIndex] ?? jobs[jobs.length - 1]?.created_at ?? null;
-                setPageIndex(nextIndex);
-                await fetchPage({ companyIds: jobOfferCompanyIds, cursor, nextPageIndex: nextIndex });
+              onClick={() => {
+                if (!hasNextPage || loadingList) return;
+                setPageIndex((p) => p + 1);
               }}
               className="h-10 w-10 rounded-xl border bg-background hover:bg-muted flex items-center justify-center disabled:opacity-50"
               aria-label={t.get('company.offers.pagination.next')}

@@ -5,6 +5,7 @@ import { isAdminUser } from './permissions';
 import { loadSmtpSettings } from './mailProcessor';
 import { createTransport } from './smtp';
 import { processMailDocument } from './mailProcessor';
+import { registerUserSecure } from './registerUserSecure';
 
 export const onMailCreated = onDocumentCreated('mail/{mailId}', async (event) => {
   const mailId = event.params.mailId;
@@ -31,3 +32,5 @@ export const testSmtpConnection = onCall(async (request) => {
     return { ok: false, message };
   }
 });
+
+export { registerUserSecure };

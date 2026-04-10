@@ -158,7 +158,9 @@ export async function getCollection<T>(collectionName: string): Promise<T[]> {
  */
 export async function addDocument<T>(collectionName: string, data: T): Promise<string> {
     try {
-        const docRef = await addDoc(collection(db, collectionName), data as unknown as Record<string, unknown>);
+        const docRef = await withRetry(() =>
+            addDoc(collection(db, collectionName), data as unknown as Record<string, unknown>)
+        );
         return docRef.id;
     } catch (error) {
         console.error(`Error adding document in ${collectionName}:`, error);
