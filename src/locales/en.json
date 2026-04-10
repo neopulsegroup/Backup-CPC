@@ -590,6 +590,7 @@
     "trails": "Trails",
     "sessions": "Sessions",
     "profile": "Profile",
+    "curriculum": "Resume",
     "messages": "Messages",
     "upcomingSessions": "Appointments",
     "notifications": "Notifications",
@@ -705,6 +706,108 @@
   "migrant": {
     "menu": {
       "title": "Migrant Menu"
+    },
+    "curriculum": {
+      "menuTitle": "Your Resume",
+      "menuSubtitle": "Complete all sections to build a clear professional resume.",
+      "title": "Resume Builder",
+      "subtitle": "Fill in key details and track the live preview while typing.",
+      "progressLabel": "Progress",
+      "completedFields": "{completed}/{total} fields completed",
+      "actions": {
+        "save": "Save resume",
+        "saving": "Saving..."
+      },
+      "feedback": {
+        "savedTitle": "Resume saved",
+        "savedDescription": "Your information was updated successfully.",
+        "errorTitle": "Save failed",
+        "errorDescription": "Could not save the resume. Please try again."
+      },
+      "sections": {
+        "personal": "Personal Information",
+        "personalHint": "Start with the basics. Recruiters need to know who you are and how to contact you.",
+        "experience": "Professional Experience",
+        "education": "Education",
+        "skills": "Skills and Languages"
+      },
+      "experience": {
+        "add": "Add experience",
+        "remove": "Remove",
+        "entryLabel": "Experience {n}"
+      },
+      "education": {
+        "add": "Add education",
+        "remove": "Remove",
+        "entryLabel": "Education {n}"
+      },
+      "degreeLevel": {
+        "unspecified": "Select…",
+        "secondary": "Secondary education",
+        "professional": "Vocational / technical education",
+        "bachelor": "Bachelor's degree",
+        "master": "Master's degree",
+        "doctorate": "Doctorate",
+        "other": "Other"
+      },
+      "workMode": {
+        "unspecified": "Select…",
+        "onsite": "On-site",
+        "remote": "Remote",
+        "hybrid": "Hybrid"
+      },
+      "fields": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "professionalTitle": "Professional Title",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "location": "Location",
+        "summary": "Professional Summary",
+        "experiencePlaceholder": "Describe your most relevant work experiences.",
+        "expTitle": "Title",
+        "expWorkMode": "Work arrangement",
+        "expOrganization": "Company or organization",
+        "expStartDate": "Start date",
+        "expEndDate": "End date",
+        "expCurrent": "I currently work in this role",
+        "expJobLocation": "Location",
+        "expDescription": "Description",
+        "eduInstitution": "Educational institution",
+        "eduDegreeLevel": "Level of education",
+        "eduCourse": "Program / course",
+        "eduStartDate": "Start date",
+        "eduEndDate": "End date",
+        "eduInProgress": "I am currently studying this program",
+        "eduDescription": "Description",
+        "educationPlaceholder": "Describe your education and most relevant courses.",
+        "skills": "Skills",
+        "skillsPlaceholder": "E.g. Customer support, Excel, Team leadership",
+        "languages": "Languages",
+        "languagesPlaceholder": "E.g. Portuguese (B2), English (B1), Spanish (A2)",
+        "tagSearchSkills": "Search or add a skill…",
+        "tagSearchLanguages": "Search or add a language…",
+        "tagAddCustom": "Add \"{value}\"",
+        "tagAlreadyAdded": "This item is already added.",
+        "removeTagAria": "Remove {tag}"
+      },
+      "preview": {
+        "title": "Preview",
+        "subtitle": "See how your resume will look while you fill in the data.",
+        "roleFallback": "Professional Title",
+        "summaryTitle": "Profile",
+        "summaryFallback": "Add a professional summary to present your profile.",
+        "experienceTitle": "Professional Experience",
+        "experienceFallback": "Add your professional experience.",
+        "present": "Present",
+        "educationTitle": "Education",
+        "educationFallback": "Add your education history.",
+        "inProgress": "In progress",
+        "skillsTitle": "Skills",
+        "skillsFallback": "Add skills to highlight your profile.",
+        "languagesTitle": "Languages",
+        "languagesFallback": "Add the languages you speak."
+      }
     }
   },
   "policies": {

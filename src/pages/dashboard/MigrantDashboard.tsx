@@ -51,6 +51,7 @@ import ModuleViewerPage from './migrant/ModuleViewerPage';
 import JobsPage from './migrant/JobsPage';
 import JobDetailPage from './migrant/JobDetailPage';
 import ProfilePage from './migrant/ProfilePage';
+import CurriculumPage from './migrant/CurriculumPage';
 import SessionsPage from './migrant/SessionsPage';
 import MigrantActivitiesListPage from './migrant/MigrantActivitiesListPage';
 import MigrantActivityDetailPage from './migrant/MigrantActivityDetailPage';
@@ -356,7 +357,7 @@ function MigrantHome() {
   const suggestedActions = useMemo(() => {
     const actions: Array<{ label: string; href: string }> = [];
     if (!(profileDoc?.professionalExperience || extras?.professionalExperience) || !(profileDoc?.professionalTitle || extras?.professionalTitle)) {
-      actions.push({ label: t.dashboard.complete_cv_action, href: '/dashboard/migrante/perfil' });
+      actions.push({ label: t.dashboard.complete_cv_action, href: '/dashboard/migrante/curriculo' });
     }
     if (progress.length === 0) actions.push({ label: t.dashboard.start_trail_action, href: '/dashboard/migrante/trilhas' });
     if (upcomingSessions.length === 0) actions.push({ label: t.dashboard.book_session_action, href: '#' });
@@ -705,7 +706,7 @@ function MigrantHome() {
             </div>
             <div className="flex flex-wrap gap-2 mb-4">
               <Button asChild variant="outline" size="sm">
-                <Link to="/dashboard/migrante/perfil">
+                <Link to="/dashboard/migrante/curriculo">
                   <FileText className="h-4 w-4 mr-2" />
                   {t.dashboard.completeCv}
                 </Link>
@@ -899,7 +900,10 @@ export default function MigrantDashboard() {
   ];
   const role = (profile?.role ?? '').toString().toLowerCase();
   const isMigrant = role === 'migrant' || role === 'migrante' || role.length === 0;
-  const sidebarItemsProfile = [{ to: '/dashboard/migrante/perfil', label: t.get('dashboard.profile'), icon: Building2 }];
+  const sidebarItemsProfile = [
+    { to: '/dashboard/migrante/perfil', label: t.get('dashboard.profile'), icon: Building2 },
+    { to: '/dashboard/migrante/curriculo', label: t.get('dashboard.curriculum'), icon: FileText },
+  ];
   const sidebarItemsMessages = [{ to: '/dashboard/migrante/mensagens', label: t.get('dashboard.messages'), icon: MessagesSquare }];
 
   return (
@@ -1001,6 +1005,7 @@ export default function MigrantDashboard() {
                 <Route path="atividades" element={<MigrantActivitiesListPage />} />
                 <Route path="atividades/:activityId" element={<MigrantActivityDetailPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
+                <Route path="curriculo" element={<CurriculumPage />} />
                 <Route path="mensagens" element={<MigrantMessagesPage />} />
               </Routes>
             </div>

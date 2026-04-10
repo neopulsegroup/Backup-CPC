@@ -590,6 +590,7 @@
     "trails": "Trilhas",
     "sessions": "Sessões",
     "profile": "Perfil",
+    "curriculum": "Currículo",
     "messages": "Mensagens",
     "upcomingSessions": "Agendamentos",
     "notifications": "Notificações",
@@ -705,6 +706,108 @@
   "migrant": {
     "menu": {
       "title": "Menu Migrante"
+    },
+    "curriculum": {
+      "menuTitle": "O seu Currículo",
+      "menuSubtitle": "Complete todas as secções para gerar um CV claro e profissional.",
+      "title": "Construtor de Currículo",
+      "subtitle": "Preencha os dados essenciais e acompanhe a pré-visualização em tempo real.",
+      "progressLabel": "Progresso",
+      "completedFields": "{completed}/{total} campos concluídos",
+      "actions": {
+        "save": "Guardar currículo",
+        "saving": "A guardar..."
+      },
+      "feedback": {
+        "savedTitle": "Currículo guardado",
+        "savedDescription": "As informações foram atualizadas com sucesso.",
+        "errorTitle": "Erro ao guardar",
+        "errorDescription": "Não foi possível guardar o currículo. Tente novamente."
+      },
+      "sections": {
+        "personal": "Informação Pessoal",
+        "personalHint": "Comece pelo básico. Os recrutadores precisam de saber quem é e como o contactar.",
+        "experience": "Experiência Profissional",
+        "education": "Habilitações Literárias",
+        "skills": "Competências e Idiomas"
+      },
+      "experience": {
+        "add": "Adicionar experiência",
+        "remove": "Remover",
+        "entryLabel": "Experiência {n}"
+      },
+      "education": {
+        "add": "Adicionar habilitação",
+        "remove": "Remover",
+        "entryLabel": "Habilitação {n}"
+      },
+      "degreeLevel": {
+        "unspecified": "Selecione…",
+        "secondary": "Ensino secundário",
+        "professional": "Ensino profissional / técnico",
+        "bachelor": "Licenciatura",
+        "master": "Mestrado",
+        "doctorate": "Doutoramento",
+        "other": "Outro"
+      },
+      "workMode": {
+        "unspecified": "Selecione…",
+        "onsite": "Presencial",
+        "remote": "Remoto",
+        "hybrid": "Híbrido"
+      },
+      "fields": {
+        "firstName": "Nome",
+        "lastName": "Apelido",
+        "professionalTitle": "Cargo Profissional",
+        "email": "Endereço de E-mail",
+        "phone": "Número de Telefone",
+        "location": "Morada / Localização",
+        "summary": "Resumo Profissional",
+        "experiencePlaceholder": "Descreva as suas experiências profissionais mais relevantes.",
+        "expTitle": "Título",
+        "expWorkMode": "Modo de trabalho",
+        "expOrganization": "Empresa ou organização",
+        "expStartDate": "Data de início",
+        "expEndDate": "Data de término",
+        "expCurrent": "Trabalho atualmente neste cargo",
+        "expJobLocation": "Localidade",
+        "expDescription": "Descrição",
+        "eduInstitution": "Instituição de ensino",
+        "eduDegreeLevel": "Grau de formação",
+        "eduCourse": "Curso",
+        "eduStartDate": "Data de início",
+        "eduEndDate": "Data de término",
+        "eduInProgress": "Em curso atualmente",
+        "eduDescription": "Descrição",
+        "educationPlaceholder": "Descreva a sua formação académica e cursos mais relevantes.",
+        "skills": "Competências",
+        "skillsPlaceholder": "Ex.: Atendimento, Excel, Gestão de equipa",
+        "languages": "Idiomas",
+        "languagesPlaceholder": "Ex.: Português (B2), Inglês (B1), Espanhol (A2)",
+        "tagSearchSkills": "Pesquisar ou adicionar competência…",
+        "tagSearchLanguages": "Pesquisar ou adicionar idioma…",
+        "tagAddCustom": "Adicionar \"{value}\"",
+        "tagAlreadyAdded": "Este item já foi adicionado.",
+        "removeTagAria": "Remover {tag}"
+      },
+      "preview": {
+        "title": "Pré-visualização",
+        "subtitle": "Veja como o seu currículo será apresentado enquanto preenche os dados.",
+        "roleFallback": "Cargo Profissional",
+        "summaryTitle": "Perfil",
+        "summaryFallback": "Adicione um resumo profissional para apresentar o seu perfil.",
+        "experienceTitle": "Experiência Profissional",
+        "experienceFallback": "Adicione as suas experiências profissionais.",
+        "present": "Atual",
+        "educationTitle": "Habilitações Literárias",
+        "educationFallback": "Adicione a sua formação académica.",
+        "inProgress": "Em curso",
+        "skillsTitle": "Competências",
+        "skillsFallback": "Adicione competências para destacar o seu perfil.",
+        "languagesTitle": "Idiomas",
+        "languagesFallback": "Adicione os idiomas que domina."
+      }
     }
   },
   "policies": {

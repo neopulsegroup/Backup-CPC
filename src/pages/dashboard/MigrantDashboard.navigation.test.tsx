@@ -57,6 +57,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
           'dashboard.employment': 'Emprego',
           'dashboard.trails': 'Trilhas',
           'dashboard.profile': 'Perfil',
+          'dashboard.curriculum': 'Currículo',
           'dashboard.messages': 'Mensagens',
           'dashboard.triage': 'Triagem',
           'migrant.menu.title': 'Menu Migrante',
@@ -98,6 +99,7 @@ vi.mock('./migrant/ModuleViewerPage', () => ({ default: () => <div>ModuleViewer<
 vi.mock('./migrant/JobsPage', () => ({ default: () => <div>Jobs</div> }));
 vi.mock('./migrant/JobDetailPage', () => ({ default: () => <div>JobDetail</div> }));
 vi.mock('./migrant/ProfilePage', () => ({ default: () => <div>Profile</div> }));
+vi.mock('./migrant/CurriculumPage', () => ({ default: () => <div>Curriculum</div> }));
 vi.mock('./migrant/SessionsPage', () => ({ default: () => <div>Sessions</div> }));
 vi.mock('./migrant/MessagesPage', () => ({ default: () => <div>Messages</div> }));
 vi.mock('./migrant/MigrantActivitiesListPage', () => ({ default: () => <div>MigrantActivities</div> }));
@@ -132,6 +134,7 @@ describe('MigrantDashboard - navegação', () => {
 
     expect(screen.getByText('Definições')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Perfil' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Currículo' })).toBeInTheDocument();
     expect(screen.getByText('Mensagens', { selector: 'p' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mensagens' })).toBeInTheDocument();
   });
@@ -188,6 +191,10 @@ describe('MigrantDashboard - navegação', () => {
         {
           "className": "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted",
           "label": "Perfil",
+        },
+        {
+          "className": "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted",
+          "label": "Currículo",
         },
         {
           "className": "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors bg-primary text-primary-foreground",
