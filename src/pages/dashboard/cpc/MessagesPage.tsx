@@ -69,6 +69,25 @@ function getInitials(value?: string | null): string {
   return initials || 'U';
 }
 
+function updatedAtMs(value: unknown): number {
+  if (!value) return 0;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string' || typeof value === 'number') {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+  if (typeof value === 'object') {
+    if ('toDate' in value && typeof (value as { toDate?: unknown }).toDate === 'function') {
+      const d = (value as { toDate: () => Date }).toDate();
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+    if ('seconds' in value && typeof (value as { seconds?: unknown }).seconds === 'number') {
+      return (value as { seconds: number }).seconds * 1000;
+    }
+  }
+  return 0;
+}
+
 export default function CPCMessagesPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -98,11 +117,11 @@ export default function CPCMessagesPage() {
     const unsubscribe = subscribeQuery<ConversationDoc>({
       collectionName: 'conversations',
       filters: [{ field: 'participants', operator: 'array-contains', value: user.uid }],
-      orderByField: { field: 'updatedAt', direction: 'desc' },
       onNext: (docs) => {
-        setConversations(docs);
+        const sorted = [...docs].sort((a, b) => updatedAtMs(b.updatedAt) - updatedAtMs(a.updatedAt));
+        setConversations(sorted);
         setLoading(false);
-        setActiveConversationId((prev) => (prev && docs.some((d) => d.id === prev) ? prev : docs[0]?.id || null));
+        setActiveConversationId((prev) => (prev && sorted.some((d) => d.id === prev) ? prev : sorted[0]?.id || null));
       },
       onError: () => {
         setError(t.messagesPage.errors.loadConversations);
@@ -200,7 +219,7 @@ export default function CPCMessagesPage() {
       const existingRaw = await queryDocuments<ConversationDoc>(
         'conversations',
         [{ field: 'participants', operator: 'array-contains', value: user.uid }],
-        { field: 'updatedAt', direction: 'desc' },
+        undefined,
         100
       );
       const existing = Array.isArray(existingRaw) ? existingRaw : [];

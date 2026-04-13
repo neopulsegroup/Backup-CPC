@@ -496,7 +496,7 @@ function MigrantHome() {
       const myConversations = await queryDocuments<{ id: string; participants?: string[] | null; type?: string | null }>(
         'conversations',
         [{ field: 'participants', operator: 'array-contains', value: user.uid }],
-        { field: 'updatedAt', direction: 'desc' },
+        undefined,
         100
       );
       let conversationId =

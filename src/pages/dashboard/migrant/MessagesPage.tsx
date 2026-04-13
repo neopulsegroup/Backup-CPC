@@ -107,13 +107,17 @@ export default function MigrantMessagesPage() {
     const unsubscribe = subscribeQuery<ConversationDoc>({
       collectionName: 'conversations',
       filters: [{ field: 'participants', operator: 'array-contains', value: user.uid }],
-      orderByField: { field: 'updatedAt', direction: 'desc' },
       onNext: (docs) => {
-        setConversations(docs);
+        const sorted = [...docs].sort((a, b) => {
+          const ams = parseUnknownDate(a.updatedAt)?.getTime() || 0;
+          const bms = parseUnknownDate(b.updatedAt)?.getTime() || 0;
+          return bms - ams;
+        });
+        setConversations(sorted);
         setLoading(false);
         setActiveConversationId((prev) => {
-          if (prev && docs.some((d) => d.id === prev)) return prev;
-          return docs[0]?.id ?? null;
+          if (prev && sorted.some((d) => d.id === prev)) return prev;
+          return sorted[0]?.id ?? null;
         });
       },
       onError: () => {
