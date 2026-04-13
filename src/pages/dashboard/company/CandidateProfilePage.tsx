@@ -43,10 +43,13 @@ export default function CandidateProfilePage() {
   async function fetchCandidate() {
     if (!candidateId) return;
     try {
-      const prof = await getDocument<{ name?: string | null; email?: string | null; phone?: string | null; avatar_url?: string | null }>(
-        'profiles',
-        candidateId
-      );
+      const prof = await getDocument<{
+        name?: string | null;
+        email?: string | null;
+        phone?: string | null;
+        avatar_url?: string | null;
+        resumeUrl?: string | null;
+      }>('profiles', candidateId);
 
       if (prof) {
         setProfile({
@@ -56,6 +59,11 @@ export default function CandidateProfilePage() {
           phone: prof.phone ?? null,
           avatar_url: prof.avatar_url ?? null,
         });
+        const firestoreUrl = typeof prof.resumeUrl === 'string' ? prof.resumeUrl.trim() : '';
+        const fromStorage = localStorage.getItem(`resume:${candidateId}`);
+        if (firestoreUrl) setResumeUrl(firestoreUrl);
+        else if (fromStorage) setResumeUrl(fromStorage);
+        else setResumeUrl(null);
       } else {
         const demo = getDemoProfile(candidateId);
         setProfile(demo);
@@ -112,11 +120,6 @@ export default function CandidateProfilePage() {
         setTrails({});
       }
 
-      // Try to resolve a stored resume url conventionally (optional bucket)
-      if (!resumeUrl && prof) {
-        const maybe = localStorage.getItem(`resume:${candidateId}`);
-        if (maybe) setResumeUrl(maybe);
-      }
     } catch (e) {
       console.error('Erro ao carregar candidato:', e);
     } finally {

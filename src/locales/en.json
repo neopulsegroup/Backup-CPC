@@ -707,6 +707,11 @@
     "menu": {
       "title": "Migrant Menu"
     },
+    "profile": {
+      "documents": {
+        "viewCvLink": "view résumé"
+      }
+    },
     "curriculum": {
       "menuTitle": "Your Resume",
       "menuSubtitle": "Complete all sections to build a clear professional resume.",
@@ -715,14 +720,19 @@
       "progressLabel": "Progress",
       "completedFields": "{completed}/{total} fields completed",
       "actions": {
+        "view": "View Resume",
         "save": "Save resume",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "exportPdf": "Export PDF",
+        "exportingPdf": "Exporting…"
       },
       "feedback": {
         "savedTitle": "Resume saved",
         "savedDescription": "Your information was updated successfully.",
         "errorTitle": "Save failed",
-        "errorDescription": "Could not save the resume. Please try again."
+        "errorDescription": "Could not save the resume. Please try again.",
+        "exportPdfErrorTitle": "PDF export failed",
+        "exportPdfErrorDescription": "Could not generate the PDF. Please try again or use another browser."
       },
       "sections": {
         "personal": "Personal Information",
@@ -807,6 +817,10 @@
         "skillsFallback": "Add skills to highlight your profile.",
         "languagesTitle": "Languages",
         "languagesFallback": "Add the languages you speak."
+      },
+      "view": {
+        "title": "Resume View",
+        "subtitle": "Full-page view with a unique URL for your resume."
       }
     }
   },
@@ -2483,9 +2497,21 @@
       },
       "details": {
         "title": "Candidate details",
-        "description": "Registered information and skills.",
+        "description": "Profile and résumé data (when available).",
         "matchHelp": "Match indicator (0-100).",
+        "firstName": "First name",
+        "lastName": "Last name",
+        "professionalTitle": "Professional title",
+        "email": "Email address",
+        "phone": "Phone number",
+        "location": "Address / location",
+        "summary": "Professional summary",
+        "emptySummary": "No summary provided.",
+        "skills": "Skills",
+        "languages": "Languages",
         "noSkills": "No skills registered.",
+        "noLanguages": "No languages registered.",
+        "viewCurriculum": "View résumé",
         "close": "Close",
         "goToJobs": "View Jobs"
       }

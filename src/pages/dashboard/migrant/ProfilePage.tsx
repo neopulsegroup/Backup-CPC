@@ -9,6 +9,7 @@ import { AlertCircle, Calendar, BookOpen, CheckCircle2, Clock, User, FileText, C
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { PhoneInput, formatPhoneValueForDisplay } from '@/components/ui/phone-input';
 import { fetchMigrantProfile, type MigrantProfileDoc, type MigrantProfileResponse } from '@/api/migrantProfile';
@@ -120,6 +121,8 @@ export default function ProfilePage() {
   const [profileSaveFeedback, setProfileSaveFeedback] = useState<'saved' | 'error' | null>(null);
   const [exportingFicha, setExportingFicha] = useState(false);
   const [exportingTriagem, setExportingTriagem] = useState(false);
+  const [updatingAvailability, setUpdatingAvailability] = useState(false);
+  const [availableForWork, setAvailableForWork] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const PHOTO_MAX_BYTES = 5 * 1024 * 1024;
   const PHOTO_ALLOWED_MIME = useMemo(() => new Set(['image/jpeg', 'image/png', 'image/gif']), []);
@@ -446,6 +449,11 @@ export default function ProfilePage() {
 
   const REGIONS = useMemo(() => ['Lisboa', 'Norte', 'Centro', 'Alentejo', 'Algarve', 'Outra'] as const, []);
 
+  useEffect(() => {
+    const next = profileDoc?.availableForWork === true;
+    setAvailableForWork(next);
+  }, [profileDoc?.availableForWork]);
+
   const normalizeCepInput = useCallback((raw: string) => {
     return raw.replace(/[^\d-]/g, '').slice(0, 14);
   }, []);
@@ -647,6 +655,41 @@ export default function ProfilePage() {
       });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleToggleAvailability(nextChecked: boolean) {
+    if (!targetUserId || isViewingOtherUser || updatingAvailability) return;
+    const previous = availableForWork;
+    setAvailableForWork(nextChecked);
+    setUpdatingAvailability(true);
+    try {
+      await updateDocument('profiles', targetUserId, { availableForWork: nextChecked });
+      setData((prev) => {
+        if (!prev?.profile) return prev;
+        return {
+          ...prev,
+          profile: {
+            ...prev.profile,
+            availableForWork: nextChecked,
+          },
+        };
+      });
+      toast({
+        title: nextChecked ? 'Disponível para trabalho' : 'Indisponível para trabalho',
+        description: nextChecked
+          ? 'Agora o seu perfil pode aparecer na listagem de candidatos para empresas.'
+          : 'O seu perfil deixou de aparecer na listagem de candidatos para empresas.',
+      });
+    } catch {
+      setAvailableForWork(previous);
+      toast({
+        title: 'Não foi possível atualizar',
+        description: 'Tente novamente em alguns segundos.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingAvailability(false);
     }
   }
 
@@ -1455,6 +1498,22 @@ export default function ProfilePage() {
               </>
             ) : (
               <>
+                {!isViewingOtherUser ? (
+                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <Label htmlFor="available-for-work-switch" className="text-sm font-medium cursor-pointer">
+                      Disponível para Trabalho
+                    </Label>
+                    <Switch
+                      id="available-for-work-switch"
+                      checked={availableForWork}
+                      disabled={updatingAvailability || uploadingPhoto}
+                      onCheckedChange={(checked) => {
+                        void handleToggleAvailability(checked === true);
+                      }}
+                      aria-label="Disponível para Trabalho"
+                    />
+                  </div>
+                ) : null}
                 {isViewingOtherUser ? (
                   <>
                     <Button type="button" variant="outline" onClick={handleExportFicha} disabled={uploadingPhoto || exportingFicha}>
@@ -1766,12 +1825,30 @@ export default function ProfilePage() {
                   className="mt-2"
                   placeholder="https://..."
                 />
-              ) : edit.resumeUrl ? (
-                <a href={edit.resumeUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-sm text-primary hover:underline">
-                  Visualizar documento anexado
-                </a>
               ) : (
-                <p className="mt-1 text-sm text-muted-foreground">—</p>
+                <div className="mt-1 space-y-2">
+                  {!isViewingOtherUser && user?.uid ? (
+                    <Link
+                      to={`/dashboard/migrante/curriculo/ver/${user.uid}`}
+                      className="inline-flex text-sm text-primary hover:underline"
+                    >
+                      {t.get('migrant.profile.documents.viewCvLink')}
+                    </Link>
+                  ) : null}
+                  {edit.resumeUrl ? (
+                    <a
+                      href={edit.resumeUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block text-sm text-muted-foreground hover:text-primary hover:underline"
+                    >
+                      Visualizar documento anexado
+                    </a>
+                  ) : null}
+                  {(isViewingOtherUser && !edit.resumeUrl) || (!user?.uid && !edit.resumeUrl) ? (
+                    <p className="text-sm text-muted-foreground">—</p>
+                  ) : null}
+                </div>
               )}
             </div>
 

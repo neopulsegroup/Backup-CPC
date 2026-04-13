@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { addDocument, countDocuments, deleteDocument, getDocument, queryDocuments, setDocument, updateDocument } from '@/integrations/firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -27,8 +28,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Eye,
-  Pencil,
-  Trash2,
+  FileText,
   ChevronDown,
 } from 'lucide-react';
 import {
@@ -48,21 +48,74 @@ interface CompanyCandidate {
   id: string;
   company_id: string;
   name: string;
+  firstName: string;
+  lastName: string;
   cpf: string;
   email: string;
   phone: string;
   desired_role: string;
   experience: ExperienceLevel;
   skills: string[] | null;
+  languages: string[] | null;
   job_offer_id: string | null;
   match_percent: number | null;
   stage: CandidateStage;
   created_at: string;
+  locationDisplay: string;
+  professionalSummary: string;
+  resumeUrl: string | null;
 }
 
 interface JobOfferLite {
   id: string;
   title: string;
+}
+
+type MigrantProfileAvailability = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  professionalTitle?: string | null;
+  professionalExperience?: string | null;
+  skills?: string | null;
+  languagesList?: string | null;
+  registeredAt?: unknown | null;
+  availableForWork?: boolean | null;
+  currentLocation?: string | null;
+  address?: string | null;
+  addressNumber?: string | null;
+  cep?: string | null;
+  region?: string | null;
+  regionOther?: string | null;
+  cvSummary?: string | null;
+  resumeUrl?: string | null;
+};
+
+function splitDisplayName(fullName: string): { firstName: string; lastName: string } {
+  const trimmed = fullName.trim();
+  if (!trimmed) return { firstName: '—', lastName: '—' };
+  const parts = trimmed.split(/\s+/);
+  const first = parts[0] ?? '—';
+  const last = parts.slice(1).join(' ').trim();
+  return { firstName: first, lastName: last || '—' };
+}
+
+function formatProfileLocation(p: {
+  currentLocation?: string | null;
+  address?: string | null;
+  addressNumber?: string | null;
+  cep?: string | null;
+  region?: string | null;
+  regionOther?: string | null;
+}): string {
+  const loc = p.currentLocation?.trim();
+  if (loc) return loc;
+  const line = [p.address?.trim(), p.addressNumber?.trim()].filter(Boolean).join(', ');
+  const regionLabel =
+    p.region === 'Outra' ? (p.regionOther?.trim() || 'Outra') : p.region?.trim();
+  const parts = [line, regionLabel, p.cep?.trim()].filter(Boolean);
+  return parts.join(' · ') || '—';
 }
 
 const PAGE_SIZE = 4;
@@ -360,50 +413,97 @@ export default function CandidatesPage() {
   }
 
   async function fetchStats(companyIdValue: string) {
+    const monthStart = startOfMonthIso();
+    const filtersBase: { field: string; operator: '==' | '>='; value: unknown }[] = [
+      { field: 'availableForWork', operator: '==', value: true },
+    ];
+    let total = 0;
+    let newMonth = 0;
     try {
-      const monthStart = startOfMonthIso();
-      const filtersBase: { field: string; operator: '==' | '>='; value: unknown }[] = [{ field: 'company_id', operator: '==', value: companyIdValue }];
-      const [total, newMonth, ideal] = await Promise.all([
-        countDocuments('company_candidates', filtersBase),
-        countDocuments('company_candidates', [...filtersBase, { field: 'created_at', operator: '>=', value: monthStart }]),
-        countDocuments('company_candidates', [...filtersBase, { field: 'match_percent', operator: '>=', value: 80 }]),
-      ]);
-      setStats({ total, newMonth, ideal });
+      total = await countDocuments('profiles', filtersBase);
     } catch (error) {
-      console.error('Error fetching candidate stats:', error);
-      setStats({ total: 0, newMonth: 0, ideal: 0 });
+      console.error('Error counting profiles (total):', error);
     }
-  }
-
-  function buildFilters(companyIdValue: string) {
-    const filters: { field: string; operator: '==' | '>='; value: unknown }[] = [{ field: 'company_id', operator: '==', value: companyIdValue }];
-    if (jobFilter !== 'all') filters.push({ field: 'job_offer_id', operator: '==', value: jobFilter });
-    if (experienceFilter !== 'all') filters.push({ field: 'experience', operator: '==', value: experienceFilter });
-    if (minMatch > 0) filters.push({ field: 'match_percent', operator: '>=', value: minMatch });
-    return filters;
+    try {
+      newMonth = await countDocuments('profiles', [
+        ...filtersBase,
+        { field: 'registeredAt', operator: '>=', value: monthStart },
+      ]);
+    } catch (error) {
+      console.error('Error counting profiles (newMonth):', error);
+    }
+    setStats({ total, newMonth, ideal: total });
   }
 
   async function fetchPage(args: { companyId: string; cursor: string | null; nextPageIndex: number }) {
     setLoadingList(true);
     try {
-      const data = await queryDocuments<CompanyCandidate>(
-        'company_candidates',
-        buildFilters(args.companyId),
-        { field: 'created_at', direction: 'desc' },
-        PAGE_SIZE + 1,
-        args.cursor ? [args.cursor] : undefined
+      // Sem orderBy no servidor: evita índice composto (availableForWork + name). Ordenação em memória.
+      const profiles = await queryDocuments<MigrantProfileAvailability>(
+        'profiles',
+        [{ field: 'availableForWork', operator: '==', value: true }],
+        undefined,
+        1000
       );
-      const slice = data.slice(0, PAGE_SIZE);
-      setCandidates(slice);
-      setHasNextPage(data.length > PAGE_SIZE);
-
-      const lastCursor = slice.length ? slice[slice.length - 1].created_at : null;
-      setPageCursors((prev) => {
-        const next = prev.slice(0);
-        next[args.nextPageIndex] = args.cursor;
-        if (next.length === args.nextPageIndex + 1) next.push(lastCursor);
-        return next;
+      const sorted = [...profiles].sort((a, b) => {
+        const na = (a.name || '').trim().toLocaleLowerCase();
+        const nb = (b.name || '').trim().toLocaleLowerCase();
+        return na.localeCompare(nb, undefined, { sensitivity: 'base' });
       });
+      const mapped = sorted.map<CompanyCandidate>((p) => {
+        const skills = (p.skills || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const languages = (p.languagesList || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const expText = (p.professionalExperience || '').toLowerCase();
+        const experience: ExperienceLevel =
+          expText.includes('senior') || expText.includes('sénior')
+            ? 'senior'
+            : expText.includes('junior')
+              ? 'junior'
+              : 'mid';
+        const registeredAtIso =
+          typeof p.registeredAt === 'string'
+            ? p.registeredAt
+            : p.registeredAt && typeof p.registeredAt === 'object' && 'toDate' in (p.registeredAt as Record<string, unknown>)
+              ? ((p.registeredAt as { toDate: () => Date }).toDate().toISOString())
+              : new Date().toISOString();
+        const rawName = p.name?.trim() || '';
+        const displayName = rawName || 'Sem nome';
+        const { firstName, lastName } = splitDisplayName(rawName);
+        const summaryText = (p.cvSummary || '').trim() || (p.professionalExperience || '').trim();
+        const resumeUrl =
+          typeof p.resumeUrl === 'string' && p.resumeUrl.trim() ? p.resumeUrl.trim() : null;
+        return {
+          id: p.id,
+          company_id: args.companyId,
+          name: displayName,
+          firstName,
+          lastName,
+          cpf: '',
+          email: p.email?.trim() || '—',
+          phone: p.phone?.trim() || '—',
+          desired_role: p.professionalTitle?.trim() || '—',
+          experience,
+          skills: skills.length ? skills : null,
+          languages: languages.length ? languages : null,
+          job_offer_id: null,
+          match_percent: 100,
+          stage: 'triage',
+          created_at: registeredAtIso,
+          locationDisplay: formatProfileLocation(p),
+          professionalSummary: summaryText,
+          resumeUrl,
+        };
+      });
+      setCandidates(mapped);
+      setHasNextPage(false);
+      setPageCursors([null]);
+      if (args.nextPageIndex !== 0) setPageIndex(0);
     } catch (error) {
       console.error('Error fetching candidates:', error);
       setCandidates([]);
@@ -412,6 +512,7 @@ export default function CandidatesPage() {
       setLoadingList(false);
     }
   }
+
 
   const filteredCandidates = useMemo(() => {
     const q = normalizeText(searchQuery);
@@ -448,25 +549,6 @@ export default function CandidatesPage() {
       job_offer_id: '',
       match_percent: '',
       stage: 'triage',
-    });
-    setFormOpen(true);
-  }
-
-  function openEdit(candidate: CompanyCandidate) {
-    setFormMode('edit');
-    setEditTargetId(candidate.id);
-    setFormErrors({});
-    setFormValues({
-      name: candidate.name,
-      cpf: formatCPF(candidate.cpf),
-      email: candidate.email,
-      phone: formatPhone(candidate.phone),
-      desired_role: candidate.desired_role,
-      experience: candidate.experience,
-      skills: (candidate.skills || []).join(', '),
-      job_offer_id: candidate.job_offer_id || '',
-      match_percent: candidate.match_percent !== null && candidate.match_percent !== undefined ? String(candidate.match_percent) : '',
-      stage: candidate.stage,
     });
     setFormOpen(true);
   }
@@ -894,7 +976,7 @@ export default function CandidatesPage() {
       </div>
 
       <Dialog open={!!detailsTarget} onOpenChange={(open) => { if (!open) setDetailsTarget(null); }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[min(90vh,720px)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{detailsTarget?.name || t.get('company.candidates.details.title')}</DialogTitle>
             <DialogDescription>{t.get('company.candidates.details.description')}</DialogDescription>
@@ -902,30 +984,41 @@ export default function CandidatesPage() {
           {detailsTarget ? (
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-xl border p-4">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.desired_role')}</p>
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.firstName')}</p>
+                <p className="mt-1 font-medium">{detailsTarget.firstName}</p>
+              </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.lastName')}</p>
+                <p className="mt-1 font-medium">{detailsTarget.lastName}</p>
+              </div>
+              <div className="rounded-xl border p-4 md:col-span-2">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.professionalTitle')}</p>
                 <p className="mt-1 font-medium">{detailsTarget.desired_role}</p>
               </div>
               <div className="rounded-xl border p-4">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.table.headers.match')}</p>
-                <div className="mt-2 flex items-center gap-3">
-                  <MatchRing value={detailsTarget.match_percent ?? 0} />
-                  <span className="text-sm text-muted-foreground">{t.get('company.candidates.details.matchHelp')}</span>
-                </div>
-              </div>
-              <div className="rounded-xl border p-4">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.cpf')}</p>
-                <p className="mt-1 font-medium">{formatCPF(detailsTarget.cpf)}</p>
-              </div>
-              <div className="rounded-xl border p-4">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.phone')}</p>
-                <p className="mt-1 font-medium">{formatPhone(detailsTarget.phone)}</p>
-              </div>
-              <div className="rounded-xl border p-4 md:col-span-2">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.email')}</p>
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.email')}</p>
                 <p className="mt-1 font-medium break-words">{detailsTarget.email}</p>
               </div>
+              <div className="rounded-xl border p-4">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.phone')}</p>
+                <p className="mt-1 font-medium">
+                  {detailsTarget.phone && detailsTarget.phone !== '—' ? formatPhone(detailsTarget.phone) : detailsTarget.phone}
+                </p>
+              </div>
               <div className="rounded-xl border p-4 md:col-span-2">
-                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.form.labels.skills')}</p>
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.location')}</p>
+                <p className="mt-1 font-medium whitespace-pre-wrap">{detailsTarget.locationDisplay}</p>
+              </div>
+              <div className="rounded-xl border p-4 md:col-span-2">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.summary')}</p>
+                <p className="mt-1 text-sm whitespace-pre-wrap">
+                  {detailsTarget.professionalSummary.trim()
+                    ? detailsTarget.professionalSummary
+                    : t.get('company.candidates.details.emptySummary')}
+                </p>
+              </div>
+              <div className="rounded-xl border p-4 md:col-span-2">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.skills')}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(detailsTarget.skills || []).length ? (
                     (detailsTarget.skills || []).map((s) => (
@@ -938,6 +1031,37 @@ export default function CandidatesPage() {
                   )}
                 </div>
               </div>
+              <div className="rounded-xl border p-4 md:col-span-2">
+                <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.details.languages')}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(detailsTarget.languages || []).length ? (
+                    (detailsTarget.languages || []).map((lang) => (
+                      <span key={lang} className="text-xs px-2 py-1 rounded-md bg-muted border">
+                        {lang}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{t.get('company.candidates.details.noLanguages')}</span>
+                  )}
+                </div>
+              </div>
+              <div className="md:col-span-2 flex flex-wrap gap-2">
+                {detailsTarget.resumeUrl ? (
+                  <Button asChild variant="default" className="w-full sm:w-auto">
+                    <a href={detailsTarget.resumeUrl} target="_blank" rel="noopener noreferrer">
+                      <FileText className="mr-2 h-4 w-4" />
+                      {t.get('company.candidates.details.viewCurriculum')}
+                    </a>
+                  </Button>
+                ) : (
+                  <Button asChild variant="default" className="w-full sm:w-auto">
+                    <Link to={`/dashboard/empresa/candidatos/${detailsTarget.id}`}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      {t.get('company.candidates.details.viewCurriculum')}
+                    </Link>
+                  </Button>
+                )}
+              </div>
               {detailsTarget.job_offer_id ? (
                 <div className="rounded-xl border p-4 md:col-span-2">
                   <p className="text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.candidates.filters.job')}</p>
@@ -948,36 +1072,10 @@ export default function CandidatesPage() {
               ) : null}
             </div>
           ) : null}
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDetailsTarget(null)}>
               {t.get('company.candidates.details.close')}
             </Button>
-            {detailsTarget ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const current = detailsTarget;
-                  setDetailsTarget(null);
-                  openEdit(current);
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                {t.get('company.candidates.actions.edit')}
-              </Button>
-            ) : null}
-            {detailsTarget ? (
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  const current = detailsTarget;
-                  setDetailsTarget(null);
-                  setDeleteTarget(current);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {t.get('company.candidates.actions.delete')}
-              </Button>
-            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>

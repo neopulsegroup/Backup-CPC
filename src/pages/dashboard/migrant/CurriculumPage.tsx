@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import { FileText, GraduationCap, Languages, Briefcase, User, Save, Mail, Phone, MapPin, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FileText, GraduationCap, Languages, Briefcase, User, Save, Mail, Phone, MapPin, Plus, Trash2, FileDown } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Language } from '@/lib/i18n';
 import { useToast } from '@/hooks/use-toast';
+import { exportCurriculumPreviewToPdf, sanitizeCurriculumPdfFileName } from '@/features/curriculum/exportCurriculumPdf';
 import { getCurriculumLanguageSuggestions, getCurriculumSkillSuggestions } from '@/features/curriculum/skillLanguageSuggestions';
 import { getDocument, updateDocument } from '@/integrations/firebase/firestore';
 import { CurriculumTagAutocomplete, splitCsvLike } from '@/components/curriculum/CurriculumTagAutocomplete';
@@ -229,6 +231,7 @@ function splitName(value: string): { firstName: string; lastName: string } {
 
 export default function CurriculumPage() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const { t, language } = useLanguage();
   const { toast } = useToast();
 
@@ -239,6 +242,8 @@ export default function CurriculumPage() {
   const [educations, setEducations] = useState<CvEducationEntry[]>([newEducationEntry()]);
   const [skillTags, setSkillTags] = useState<string[]>([]);
   const [languageTags, setLanguageTags] = useState<string[]>([]);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const pdfExportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -438,6 +443,31 @@ export default function CurriculumPage() {
     }
   }
 
+  async function handleExportPdf() {
+    const root = pdfExportRef.current;
+    if (!root) {
+      toast({
+        title: t.get('migrant.curriculum.feedback.exportPdfErrorTitle'),
+        description: t.get('migrant.curriculum.feedback.exportPdfErrorDescription'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      const safe = sanitizeCurriculumPdfFileName(previewFullName || 'curriculo');
+      await exportCurriculumPreviewToPdf(root, `${safe}.pdf`);
+    } catch {
+      toast({
+        title: t.get('migrant.curriculum.feedback.exportPdfErrorTitle'),
+        description: t.get('migrant.curriculum.feedback.exportPdfErrorDescription'),
+        variant: 'destructive',
+      });
+    } finally {
+      setExportingPdf(false);
+    }
+  }
+
   if (!user) {
     return <div className="py-12 text-center text-muted-foreground">Precisa de iniciar sessão.</div>;
   }
@@ -450,6 +480,8 @@ export default function CurriculumPage() {
     );
   }
 
+  const curriculumViewPath = `/dashboard/migrante/curriculo/ver/${user.uid}`;
+
   return (
     <div className="space-y-6">
       <header className="cpc-card p-6">
@@ -458,10 +490,25 @@ export default function CurriculumPage() {
             <h1 className="text-2xl font-bold">{t.get('migrant.curriculum.menuTitle')}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t.get('migrant.curriculum.menuSubtitle')}</p>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? t.get('migrant.curriculum.actions.saving') : t.get('migrant.curriculum.actions.save')}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={exportingPdf || saving}
+              onClick={() => navigate(curriculumViewPath)}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              {t.get('migrant.curriculum.actions.view')}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => void handleExportPdf()} disabled={exportingPdf || saving}>
+              <FileDown className="h-4 w-4 mr-2" />
+              {exportingPdf ? t.get('migrant.curriculum.actions.exportingPdf') : t.get('migrant.curriculum.actions.exportPdf')}
+            </Button>
+            <Button onClick={handleSave} disabled={saving || exportingPdf}>
+              <Save className="h-4 w-4 mr-2" />
+              {saving ? t.get('migrant.curriculum.actions.saving') : t.get('migrant.curriculum.actions.save')}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -846,34 +893,42 @@ export default function CurriculumPage() {
           </h2>
           <p className="text-sm text-muted-foreground mt-1">{t.get('migrant.curriculum.preview.subtitle')}</p>
 
-          <div className="mt-4 rounded-xl border bg-white p-6 text-slate-800 shadow-sm">
-            <h3 className="text-2xl font-bold leading-tight">{previewFullName || 'NOME COMPLETO'}</h3>
-            <p className="mt-1 text-base text-sky-700 font-medium">
-              {form.professionalTitle || t.get('migrant.curriculum.preview.roleFallback')}
-            </p>
+          <div
+            ref={pdfExportRef}
+            id="curriculum-pdf-export-root"
+            className="mt-4 rounded-xl border bg-white p-6 text-slate-800 shadow-sm"
+          >
+            <div className="cv-pdf-keep-together break-inside-avoid" style={{ breakInside: 'avoid' }}>
+              <h3 className="text-2xl font-bold leading-tight">{previewFullName || 'NOME COMPLETO'}</h3>
+              <p className="mt-1 text-base text-sky-700 font-medium">
+                {form.professionalTitle || t.get('migrant.curriculum.preview.roleFallback')}
+              </p>
 
-            <div className="mt-3 space-y-1.5 text-sm text-slate-600">
-              <p className="flex items-start gap-2">
-                <Mail className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" aria-hidden />
-                <span>{form.email || 'email@exemplo.com'}</span>
-              </p>
-              <p className="flex items-start gap-2">
-                <Phone className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" aria-hidden />
-                <span>{form.phone || '+351 000 000 000'}</span>
-              </p>
-              <p className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" aria-hidden />
-                <span>{form.location || 'Lisboa, Portugal'}</span>
-              </p>
+              <div className="mt-3 space-y-1.5 text-sm text-slate-600">
+                <p className="flex items-start gap-2">
+                  <Mail className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" aria-hidden />
+                  <span>{form.email || 'email@exemplo.com'}</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <Phone className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" aria-hidden />
+                  <span>{form.phone || '+351 000 000 000'}</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" aria-hidden />
+                  <span>{form.location || 'Lisboa, Portugal'}</span>
+                </p>
+              </div>
             </div>
 
             <div className="mt-5 border-t pt-4">
-              <h4 className="text-xs font-bold tracking-wider text-slate-500 uppercase">
-                {t.get('migrant.curriculum.preview.summaryTitle')}
-              </h4>
-              <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                {form.summary || t.get('migrant.curriculum.preview.summaryFallback')}
-              </p>
+              <div className="cv-pdf-keep-together break-inside-avoid" style={{ breakInside: 'avoid' }}>
+                <h4 className="text-xs font-bold tracking-wider text-slate-500 uppercase">
+                  {t.get('migrant.curriculum.preview.summaryTitle')}
+                </h4>
+                <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+                  {form.summary || t.get('migrant.curriculum.preview.summaryFallback')}
+                </p>
+              </div>
             </div>
 
             <div className="mt-5 border-t pt-4">
@@ -881,7 +936,9 @@ export default function CurriculumPage() {
                 {t.get('migrant.curriculum.preview.experienceTitle')}
               </h4>
               {experiences.filter(experienceEntryHasContent).length === 0 ? (
-                <p className="mt-2 text-sm text-slate-500">{t.get('migrant.curriculum.preview.experienceFallback')}</p>
+                <div className="cv-pdf-keep-together break-inside-avoid mt-2" style={{ breakInside: 'avoid' }}>
+                  <p className="text-sm text-slate-500">{t.get('migrant.curriculum.preview.experienceFallback')}</p>
+                </div>
               ) : (
                 <div className="mt-2 space-y-4">
                   {experiences.filter(experienceEntryHasContent).map((exp) => {
@@ -893,7 +950,11 @@ export default function CurriculumPage() {
                     const modeLabel = exp.workMode ? t.get(`migrant.curriculum.workMode.${exp.workMode}`) : '';
                     const meta = [exp.organization, exp.location, modeLabel].filter(Boolean).join(' · ');
                     return (
-                      <div key={exp.entryId} className="text-sm text-slate-700 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                      <div
+                        key={exp.entryId}
+                        className="cv-pdf-keep-together break-inside-avoid text-sm text-slate-700 border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                        style={{ breakInside: 'avoid' }}
+                      >
                         <p className="font-semibold text-slate-900">{exp.title.trim() || '—'}</p>
                         {meta ? <p className="text-slate-600 mt-0.5">{meta}</p> : null}
                         {range ? <p className="text-slate-500 text-xs mt-1">{range}</p> : null}
@@ -912,7 +973,9 @@ export default function CurriculumPage() {
                 {t.get('migrant.curriculum.preview.educationTitle')}
               </h4>
               {educations.filter(educationEntryHasContent).length === 0 ? (
-                <p className="mt-2 text-sm text-slate-500">{t.get('migrant.curriculum.preview.educationFallback')}</p>
+                <div className="cv-pdf-keep-together break-inside-avoid mt-2" style={{ breakInside: 'avoid' }}>
+                  <p className="text-sm text-slate-500">{t.get('migrant.curriculum.preview.educationFallback')}</p>
+                </div>
               ) : (
                 <div className="mt-2 space-y-4">
                   {educations.filter(educationEntryHasContent).map((edu) => {
@@ -929,7 +992,11 @@ export default function CurriculumPage() {
                       .filter((s) => s !== headline)
                       .join(' · ');
                     return (
-                      <div key={edu.entryId} className="text-sm text-slate-700 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
+                      <div
+                        key={edu.entryId}
+                        className="cv-pdf-keep-together break-inside-avoid text-sm text-slate-700 border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                        style={{ breakInside: 'avoid' }}
+                      >
                         <p className="font-semibold text-slate-900">{headline}</p>
                         {subLine ? <p className="text-slate-600 mt-0.5">{subLine}</p> : null}
                         {range ? <p className="text-slate-500 text-xs mt-1">{range}</p> : null}
@@ -944,37 +1011,41 @@ export default function CurriculumPage() {
             </div>
 
             <div className="mt-5 border-t pt-4">
-              <h4 className="text-xs font-bold tracking-wider text-slate-500 uppercase">
-                {t.get('migrant.curriculum.preview.skillsTitle')}
-              </h4>
-              {previewSkills.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {previewSkills.map((skill) => (
-                    <span key={skill} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-slate-500">{t.get('migrant.curriculum.preview.skillsFallback')}</p>
-              )}
+              <div className="cv-pdf-keep-together break-inside-avoid" style={{ breakInside: 'avoid' }}>
+                <h4 className="text-xs font-bold tracking-wider text-slate-500 uppercase">
+                  {t.get('migrant.curriculum.preview.skillsTitle')}
+                </h4>
+                {previewSkills.length ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {previewSkills.map((skill) => (
+                      <span key={skill} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-500">{t.get('migrant.curriculum.preview.skillsFallback')}</p>
+                )}
+              </div>
             </div>
 
             <div className="mt-5 border-t pt-4">
-              <h4 className="text-xs font-bold tracking-wider text-slate-500 uppercase">
-                {t.get('migrant.curriculum.preview.languagesTitle')}
-              </h4>
-              {languageTags.length ? (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {languageTags.map((lang) => (
-                    <span key={lang} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-2 text-sm text-slate-500">{t.get('migrant.curriculum.preview.languagesFallback')}</p>
-              )}
+              <div className="cv-pdf-keep-together break-inside-avoid" style={{ breakInside: 'avoid' }}>
+                <h4 className="text-xs font-bold tracking-wider text-slate-500 uppercase">
+                  {t.get('migrant.curriculum.preview.languagesTitle')}
+                </h4>
+                {languageTags.length ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {languageTags.map((lang) => (
+                      <span key={lang} className="text-xs px-2 py-1 rounded bg-slate-100 text-slate-700">
+                        {lang}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-500">{t.get('migrant.curriculum.preview.languagesFallback')}</p>
+                )}
+              </div>
             </div>
           </div>
         </aside>

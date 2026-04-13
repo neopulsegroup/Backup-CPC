@@ -707,6 +707,11 @@
     "menu": {
       "title": "Menu Migrante"
     },
+    "profile": {
+      "documents": {
+        "viewCvLink": "ver currículo"
+      }
+    },
     "curriculum": {
       "menuTitle": "O seu Currículo",
       "menuSubtitle": "Complete todas as secções para gerar um CV claro e profissional.",
@@ -715,14 +720,19 @@
       "progressLabel": "Progresso",
       "completedFields": "{completed}/{total} campos concluídos",
       "actions": {
+        "view": "Ver Currículo",
         "save": "Guardar currículo",
-        "saving": "A guardar..."
+        "saving": "A guardar...",
+        "exportPdf": "Exportar PDF",
+        "exportingPdf": "A exportar…"
       },
       "feedback": {
         "savedTitle": "Currículo guardado",
         "savedDescription": "As informações foram atualizadas com sucesso.",
         "errorTitle": "Erro ao guardar",
-        "errorDescription": "Não foi possível guardar o currículo. Tente novamente."
+        "errorDescription": "Não foi possível guardar o currículo. Tente novamente.",
+        "exportPdfErrorTitle": "Erro ao exportar PDF",
+        "exportPdfErrorDescription": "Não foi possível gerar o PDF. Tente novamente ou use outro navegador."
       },
       "sections": {
         "personal": "Informação Pessoal",
@@ -807,6 +817,10 @@
         "skillsFallback": "Adicione competências para destacar o seu perfil.",
         "languagesTitle": "Idiomas",
         "languagesFallback": "Adicione os idiomas que domina."
+      },
+      "view": {
+        "title": "Visualização do Currículo",
+        "subtitle": "Página completa com URL exclusiva para o seu currículo."
       }
     }
   },
@@ -2483,9 +2497,21 @@
       },
       "details": {
         "title": "Detalhes do candidato",
-        "description": "Informações e competências registadas.",
+        "description": "Dados do perfil e do currículo (quando disponíveis).",
         "matchHelp": "Indicador de match (0-100).",
+        "firstName": "Nome",
+        "lastName": "Apelido",
+        "professionalTitle": "Cargo profissional",
+        "email": "Endereço de e-mail",
+        "phone": "Número de telefone",
+        "location": "Morada / localização",
+        "summary": "Resumo profissional",
+        "emptySummary": "Sem resumo registado.",
+        "skills": "Competências",
+        "languages": "Idiomas",
         "noSkills": "Sem competências registadas.",
+        "noLanguages": "Sem idiomas registados.",
+        "viewCurriculum": "Ver currículo",
         "close": "Fechar",
         "goToJobs": "Ver Vagas"
       }

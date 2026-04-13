@@ -52,6 +52,7 @@ import JobsPage from './migrant/JobsPage';
 import JobDetailPage from './migrant/JobDetailPage';
 import ProfilePage from './migrant/ProfilePage';
 import CurriculumPage from './migrant/CurriculumPage';
+import CurriculumViewPage from './migrant/CurriculumViewPage';
 import SessionsPage from './migrant/SessionsPage';
 import MigrantActivitiesListPage from './migrant/MigrantActivitiesListPage';
 import MigrantActivityDetailPage from './migrant/MigrantActivityDetailPage';
@@ -1006,6 +1007,7 @@ export default function MigrantDashboard() {
                 <Route path="atividades/:activityId" element={<MigrantActivityDetailPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="curriculo" element={<CurriculumPage />} />
+                <Route path="curriculo/ver/:migrantId" element={<CurriculumViewPage />} />
                 <Route path="mensagens" element={<MigrantMessagesPage />} />
               </Routes>
             </div>
