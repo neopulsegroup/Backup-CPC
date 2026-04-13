@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -235,8 +235,10 @@ describe('ActivitiesPage - exportação', () => {
     await user.click(await screen.findByText('Exportar PDF'));
 
     expect(openSpy).toHaveBeenCalled();
-    expect(writtenHtml).toContain('<h1>Gestão de Atividades</h1>');
-    expect(writtenHtml).toContain('<table>');
+    await waitFor(() => {
+      expect(writtenHtml).toContain('<h1>Gestão de Atividades</h1>');
+    });
+    expect(writtenHtml).toMatch(/<table\s[^>]*class="[^"]*doc-branding-print-header/);
     expect(writtenHtml).toContain('<th>Nome</th>');
     expect(writtenHtml).toContain('Focus Group');
     expect(writtenHtml).toContain('Online');

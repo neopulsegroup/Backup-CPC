@@ -1,7 +1,20 @@
 import html2pdf from 'html2pdf.js';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 
-/** Margens ABNT (NBR 14724): superior e esquerda 3 cm; inferior e direita 2 cm — [top, left, bottom, right] em mm */
-const ABNT_MARGIN_MM: [number, number, number, number] = [30, 30, 20, 20];
+import { defaultBranding, fetchDocumentBranding } from '@/lib/documentBranding';
+import {
+  PDF_BRANDING_FOOTER_HEIGHT_PT,
+  PDF_BRANDING_HEADER_HEIGHT_PT,
+  applyBrandingToAllPdfLibPages,
+  embedBrandingImagesForPdfLib,
+} from '@/lib/pdfLibDocumentBranding';
+
+/** Margens ABNT (NBR 14724) + faixa para Identidade Visual (cabeçalho/rodapé) — [top, left, bottom, right] em mm */
+function abntMarginWithBrandingMm(): [number, number, number, number] {
+  const topExtra = (PDF_BRANDING_HEADER_HEIGHT_PT * 25.4) / 72;
+  const botExtra = (PDF_BRANDING_FOOTER_HEIGHT_PT * 25.4) / 72;
+  return [30 + topExtra, 30, 20 + botExtra, 20];
+}
 
 export function sanitizeCurriculumPdfFileName(name: string): string {
   const trimmed = name.trim();
@@ -53,7 +66,7 @@ function createPrintableClone(source: HTMLElement): { node: HTMLElement; cleanup
 export async function exportCurriculumPreviewToPdf(element: HTMLElement, filename: string): Promise<void> {
   const { node, cleanup } = createPrintableClone(element);
   const worker = html2pdf().set({
-    margin: ABNT_MARGIN_MM,
+    margin: abntMarginWithBrandingMm(),
     filename,
     image: { type: 'jpeg', quality: 0.92 },
     html2canvas: {
@@ -74,7 +87,22 @@ export async function exportCurriculumPreviewToPdf(element: HTMLElement, filenam
   });
 
   try {
-    await worker.from(node).save();
+    const blob = await worker.from(node).outputPdf('blob');
+    const pdfDoc = await PDFDocument.load(await blob.arrayBuffer());
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const branding = await fetchDocumentBranding().catch(() => defaultBranding());
+    const embedded = await embedBrandingImagesForPdfLib(pdfDoc, branding);
+    applyBrandingToAllPdfLibPages(pdfDoc, font, embedded, branding, 'Currículo');
+    const bytes = await pdfDoc.save();
+    const finalBlob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(finalBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
   } finally {
     cleanup();
   }

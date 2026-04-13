@@ -1,5 +1,14 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
+import type { BrandingSettings } from '@/lib/documentBranding';
+import { defaultBranding, fetchDocumentBranding } from '@/lib/documentBranding';
+import {
+  PDF_BRANDING_FOOTER_HEIGHT_PT,
+  PDF_BRANDING_HEADER_HEIGHT_PT,
+  applyBrandingToAllPdfLibPages,
+  embedBrandingImagesForPdfLib,
+} from '@/lib/pdfLibDocumentBranding';
+
 export type StatisticsPeriod = 'year' | 'q1' | 'q2' | 'q3' | 'q4';
 
 export type StatisticsRegionFilter = 'all' | 'Lisboa' | 'Norte' | 'Centro' | 'Alentejo' | 'Algarve' | 'Desconhecida';
@@ -129,7 +138,10 @@ function wrapText(text: string, maxWidth: number, font: { widthOfTextAtSize: (t:
   return lines;
 }
 
-export async function exportStatisticsPdf(report: StatisticsReport, opts?: { maxTrailRows?: number; maxRawUsers?: number }): Promise<Uint8Array> {
+export async function exportStatisticsPdf(
+  report: StatisticsReport,
+  opts?: { maxTrailRows?: number; maxRawUsers?: number; documentBranding?: BrandingSettings }
+): Promise<Uint8Array> {
   const maxTrailRows = opts?.maxTrailRows ?? 200;
   const maxRawUsers = opts?.maxRawUsers ?? 500;
 
@@ -141,27 +153,32 @@ export async function exportStatisticsPdf(report: StatisticsReport, opts?: { max
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
 
+  const branding = opts?.documentBranding ?? (await fetchDocumentBranding().catch(() => defaultBranding()));
+  const embeddedBranding = await embedBrandingImagesForPdfLib(pdf, branding);
+
   const pageSize = { width: 595.28, height: 841.89 };
-  const margin = 48;
+  const marginX = 48;
+  const marginTop = marginX + PDF_BRANDING_HEADER_HEIGHT_PT;
+  const marginBottom = marginX + PDF_BRANDING_FOOTER_HEIGHT_PT;
   const lineHeight = 14;
 
   let page = pdf.addPage([pageSize.width, pageSize.height]);
-  let cursorY = pageSize.height - margin;
+  let cursorY = pageSize.height - marginTop;
 
   const drawLine = (y: number) => {
-    page.drawLine({ start: { x: margin, y }, end: { x: pageSize.width - margin, y }, thickness: 1, color: rgb(0.9, 0.9, 0.9) });
+    page.drawLine({ start: { x: marginX, y }, end: { x: pageSize.width - marginX, y }, thickness: 1, color: rgb(0.9, 0.9, 0.9) });
   };
 
   const ensureSpace = (needed: number) => {
-    if (cursorY - needed < margin) {
+    if (cursorY - needed < marginBottom) {
       page = pdf.addPage([pageSize.width, pageSize.height]);
-      cursorY = pageSize.height - margin;
+      cursorY = pageSize.height - marginTop;
     }
   };
 
   const drawText = (text: string, size = 11, bold = false, color = rgb(0.1, 0.1, 0.1)) => {
     ensureSpace(lineHeight);
-    page.drawText(text, { x: margin, y: cursorY - size, size, font: bold ? fontBold : font, color });
+    page.drawText(text, { x: marginX, y: cursorY - size, size, font: bold ? fontBold : font, color });
     cursorY -= lineHeight;
   };
 
@@ -174,14 +191,14 @@ export async function exportStatisticsPdf(report: StatisticsReport, opts?: { max
 
   const drawKeyValue = (key: string, value: string) => {
     ensureSpace(lineHeight);
-    page.drawText(key, { x: margin, y: cursorY - 11, size: 10, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
-    page.drawText(value, { x: margin + 150, y: cursorY - 11, size: 10, font, color: rgb(0.2, 0.2, 0.2) });
+    page.drawText(key, { x: marginX, y: cursorY - 11, size: 10, font: fontBold, color: rgb(0.2, 0.2, 0.2) });
+    page.drawText(value, { x: marginX + 150, y: cursorY - 11, size: 10, font, color: rgb(0.2, 0.2, 0.2) });
     cursorY -= lineHeight;
   };
 
   const drawTable = (headers: string[], rows: (string | number)[][]) => {
     const colCount = headers.length;
-    const tableWidth = pageSize.width - margin * 2;
+    const tableWidth = pageSize.width - marginX * 2;
     const colWidth = tableWidth / colCount;
     const cellPaddingY = 4;
     const headerHeight = 18;
@@ -195,7 +212,7 @@ export async function exportStatisticsPdf(report: StatisticsReport, opts?: { max
       ensureSpace(rowHeight + 8);
       const y = cursorY - rowHeight;
       for (let i = 0; i < colCount; i += 1) {
-        const x = margin + i * colWidth;
+        const x = marginX + i * colWidth;
         page.drawRectangle({
           x,
           y,
@@ -263,6 +280,9 @@ export async function exportStatisticsPdf(report: StatisticsReport, opts?: { max
     ['Percurso', 'Conclusões'],
     report.trailPerf.map((t) => [t.trail, t.completed])
   );
+
+  const docTitle = 'Relatório de Estatísticas — CPC';
+  applyBrandingToAllPdfLibPages(pdf, font, embeddedBranding, branding, docTitle);
 
   return pdf.save();
 }

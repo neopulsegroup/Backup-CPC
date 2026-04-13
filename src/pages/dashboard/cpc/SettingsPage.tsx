@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { addDocument, getDocument, setDocument, serverTimestamp } from '@/integrations/firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/integrations/firebase/functionsClient';
+import { storage } from '@/integrations/firebase/client';
+import { getDownloadURL, ref as makeStorageRef, uploadBytes } from 'firebase/storage';
 
 import { isValidEmail, normalizeEmail, parsePort, redactSettingsForAudit, sanitizeHost, sanitizeUsername, type CpcSystemSettings, type SmtpSecurity } from './settingsUtils';
 
@@ -28,6 +30,27 @@ type SmtpSettingsDoc = {
   fromEmail?: string | null;
 };
 
+type BrandingSection = 'left' | 'center' | 'right';
+type BrandingContentType = 'image' | 'pagination' | 'title';
+type BrandingZone = 'header' | 'footer';
+
+type BrandingSlot = {
+  mode: BrandingContentType;
+  imageUrl: string;
+  imagePath: string;
+};
+
+type BrandingSettings = {
+  header: Record<BrandingSection, BrandingSlot>;
+  footer: Record<BrandingSection, BrandingSlot>;
+};
+
+type BrandingSettingsDoc = {
+  id: string;
+  header?: Partial<Record<BrandingSection, Partial<BrandingSlot> | null>> | null;
+  footer?: Partial<Record<BrandingSection, Partial<BrandingSlot> | null>> | null;
+};
+
 type Draft = {
   notificationEmail: string;
   notificationEmailConfirm: string;
@@ -38,6 +61,113 @@ type Draft = {
   smtpPassword: string;
   smtpFromEmail: string;
 };
+
+const BRANDING_SECTIONS: BrandingSection[] = ['left', 'center', 'right'];
+
+/** Logótipos incluídos na app (sem Storage) — servidos a partir de `/public/branding`. */
+const BRANDING_BUILTIN_HEADER_CENTER_URL = '/branding/logo-SF.png';
+const BRANDING_BUILTIN_FOOTER_CENTER_URL = '/branding/logos-cpc-sf.png';
+const BRANDING_BUILTIN_HEADER_CENTER_PATH = 'built-in:logo-SF.png';
+const BRANDING_BUILTIN_FOOTER_CENTER_PATH = 'built-in:logos-cpc-sf.png';
+
+function defaultBranding(): BrandingSettings {
+  const makeImageSlot = (): BrandingSlot => ({ mode: 'image', imageUrl: '', imagePath: '' });
+  return {
+    header: {
+      left: makeImageSlot(),
+      center: {
+        mode: 'image',
+        imageUrl: BRANDING_BUILTIN_HEADER_CENTER_URL,
+        imagePath: BRANDING_BUILTIN_HEADER_CENTER_PATH,
+      },
+      right: makeImageSlot(),
+    },
+    footer: {
+      left: { mode: 'title', imageUrl: '', imagePath: '' },
+      center: {
+        mode: 'image',
+        imageUrl: BRANDING_BUILTIN_FOOTER_CENTER_URL,
+        imagePath: BRANDING_BUILTIN_FOOTER_CENTER_PATH,
+      },
+      right: { mode: 'pagination', imageUrl: '', imagePath: '' },
+    },
+  };
+}
+
+function normalizeBranding(input: BrandingSettingsDoc | null | undefined): BrandingSettings {
+  const base = defaultBranding();
+  if (!input) return base;
+
+  for (const section of BRANDING_SECTIONS) {
+    const headerSlot = input.header?.[section];
+    const url =
+      headerSlot && typeof headerSlot.imageUrl === 'string' ? headerSlot.imageUrl.trim() : '';
+    if (url) {
+      base.header[section] = {
+        mode: 'image',
+        imageUrl: url,
+        imagePath: typeof headerSlot?.imagePath === 'string' ? headerSlot.imagePath : '',
+      };
+    }
+    // Sem URL no Firestore: mantém defaults (ex. logo central do cabeçalho).
+  }
+
+  for (const section of BRANDING_SECTIONS) {
+    const footerSlot = input.footer?.[section];
+    if (!footerSlot) continue;
+
+    const defaultFooter = defaultBranding().footer[section];
+    const mode =
+      footerSlot.mode === 'pagination' || footerSlot.mode === 'title' || footerSlot.mode === 'image'
+        ? footerSlot.mode
+        : defaultFooter.mode;
+    const url = typeof footerSlot.imageUrl === 'string' ? footerSlot.imageUrl.trim() : '';
+    const path = typeof footerSlot.imagePath === 'string' ? footerSlot.imagePath : '';
+
+    if (mode === 'image') {
+      if (url) {
+        base.footer[section] = { mode: 'image', imageUrl: url, imagePath: path };
+      } else if (section === 'center') {
+        base.footer[section] = {
+          mode: 'image',
+          imageUrl: BRANDING_BUILTIN_FOOTER_CENTER_URL,
+          imagePath: BRANDING_BUILTIN_FOOTER_CENTER_PATH,
+        };
+      } else {
+        base.footer[section] = { mode: 'image', imageUrl: '', imagePath: '' };
+      }
+    } else {
+      base.footer[section] = { mode, imageUrl: '', imagePath: '' };
+    }
+  }
+
+  return base;
+}
+
+function slotTitle(section: BrandingSection): string {
+  if (section === 'left') return 'Secção esquerda';
+  if (section === 'center') return 'Secção central';
+  return 'Secção direita';
+}
+
+function brandingSnapshot(input: BrandingSettings): Record<string, unknown> {
+  const pick = (slot: BrandingSlot) => ({
+    mode: slot.mode,
+    hasImage: Boolean(slot.imageUrl),
+  });
+  return {
+    header: {
+      left: pick(input.header.left),
+      center: pick(input.header.center),
+      right: pick(input.header.right),
+    },
+    footer: {
+      left: pick(input.footer.left),
+      center: pick(input.footer.center),
+      right: pick(input.footer.right),
+    },
+  };
+}
 
 export default function CPCSettingsPage() {
   const { user, profile } = useAuth();
@@ -59,10 +189,13 @@ export default function CPCSettingsPage() {
   const [loaded, setLoaded] = useState<CpcSystemSettings | null>(null);
 
   const [saving, setSaving] = useState<{ open: boolean; progress: number; message: string } | null>(null);
+  const [uploadingSlot, setUploadingSlot] = useState<string | null>(null);
   const [confirmEmailOpen, setConfirmEmailOpen] = useState(false);
   const [emailChangePending, setEmailChangePending] = useState<string | null>(null);
   const autosaveTimerRef = useRef<number | null>(null);
   const saveSeqRef = useRef(0);
+  const [branding, setBranding] = useState<BrandingSettings>(defaultBranding());
+  const [loadedBranding, setLoadedBranding] = useState<BrandingSettings>(defaultBranding());
 
   const validation = useMemo(() => {
     const errors: Record<string, string> = {};
@@ -109,9 +242,10 @@ export default function CPCSettingsPage() {
     if (!loaded) return true;
     const base = JSON.stringify({ ...loaded, updatedAt: undefined, updatedBy: undefined });
     const next = JSON.stringify({ ...desiredSettings, updatedAt: undefined, updatedBy: undefined });
+    const brandingChanged = JSON.stringify(loadedBranding) !== JSON.stringify(branding);
     const passwordChanged = draft.smtpPassword.trim().length > 0;
-    return base !== next || passwordChanged;
-  }, [desiredSettings, draft.smtpPassword, loaded]);
+    return base !== next || passwordChanged || brandingChanged;
+  }, [branding, desiredSettings, draft.smtpPassword, loaded, loadedBranding]);
 
   const canAutosave = isAdmin && !loading && validation.ok && hasChanges && emailChangePending === null;
 
@@ -120,9 +254,10 @@ export default function CPCSettingsPage() {
     async function load() {
       setLoading(true);
       try {
-        const [contactDoc, smtpDoc] = await Promise.all([
+        const [contactDoc, smtpDoc, brandingDoc] = await Promise.all([
           getDocument<ContactSettingsDoc>('system_settings', 'contact'),
           getDocument<SmtpSettingsDoc>('system_settings', 'smtp'),
+          getDocument<BrandingSettingsDoc>('system_settings', 'document_branding'),
         ]);
         if (ignore) return;
 
@@ -158,6 +293,9 @@ export default function CPCSettingsPage() {
           smtpPassword: '',
           smtpFromEmail: merged.smtp.fromEmail || '',
         });
+        const normalizedBranding = normalizeBranding(brandingDoc);
+        setBranding(normalizedBranding);
+        setLoadedBranding(normalizedBranding);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -180,7 +318,62 @@ export default function CPCSettingsPage() {
     return () => {
       if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
     };
-  }, [canAutosave, desiredSettings, draft.smtpPassword, loaded]);
+  }, [branding, canAutosave, desiredSettings, draft.smtpPassword, loaded]);
+
+  function updateBrandingMode(section: BrandingSection, mode: BrandingContentType) {
+    setBranding((prev) => ({
+      ...prev,
+      footer: {
+        ...prev.footer,
+        [section]: {
+          ...prev.footer[section],
+          mode,
+        },
+      },
+    }));
+  }
+
+  async function handleBrandingUpload(zone: BrandingZone, section: BrandingSection, file: File | null) {
+    if (!file || !user || !isAdmin) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Identidade Visual', description: 'Selecione um ficheiro de imagem válido.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Identidade Visual', description: 'A imagem deve ter no máximo 5MB.', variant: 'destructive' });
+      return;
+    }
+
+    const slotKey = `${zone}-${section}`;
+    setUploadingSlot(slotKey);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      // Caminho sob a pasta do utilizador (segmento == uid) para coincidir com regras de Storage típicas.
+      const path = `profile_photos/${user.uid}/document_branding/${zone}_${section}_${Date.now()}_${safeName}`;
+      const storageRef = makeStorageRef(storage, path);
+      await uploadBytes(storageRef, file, { contentType: file.type });
+      const url = await getDownloadURL(storageRef);
+
+      setBranding((prev) => ({
+        ...prev,
+        [zone]: {
+          ...prev[zone],
+          [section]: {
+            ...prev[zone][section],
+            mode: zone === 'header' ? 'image' : prev[zone][section].mode,
+            imageUrl: url,
+            imagePath: path,
+          },
+        },
+      }));
+      toast({ title: 'Identidade Visual', description: `Imagem carregada (${slotTitle(section)}).` });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Falha ao enviar imagem.';
+      toast({ title: 'Identidade Visual', description: message, variant: 'destructive' });
+    } finally {
+      setUploadingSlot(null);
+    }
+  }
 
   async function saveSettings() {
     if (!user || !isAdmin) return;
@@ -212,9 +405,17 @@ export default function CPCSettingsPage() {
         smtpUpdate.password = draft.smtpPassword;
       }
 
+      const brandingUpdate = {
+        header: branding.header,
+        footer: branding.footer,
+        updatedBy: user.uid,
+        updatedAt: serverTimestamp(),
+      };
+
       await Promise.all([
         setDocument('system_settings', 'contact', { notificationEmail: nextEmail, updatedBy: user.uid, updatedAt: serverTimestamp() }, true),
         setDocument('system_settings', 'smtp', smtpUpdate, true),
+        setDocument('system_settings', 'document_branding', brandingUpdate, true),
       ]);
       if (seq !== saveSeqRef.current) return;
 
@@ -232,6 +433,8 @@ export default function CPCSettingsPage() {
           fromEmail: smtpUpdate.fromEmail as string,
         },
       });
+      const beforeBranding = brandingSnapshot(loadedBranding);
+      const afterBranding = brandingSnapshot(branding);
 
       await addDocument('audit_logs', {
         action: 'system_settings_updated',
@@ -240,6 +443,8 @@ export default function CPCSettingsPage() {
         createdAt: serverTimestamp(),
         before,
         after,
+        beforeBranding,
+        afterBranding,
       });
 
       if (seq !== saveSeqRef.current) return;
@@ -257,6 +462,7 @@ export default function CPCSettingsPage() {
       };
 
       setLoaded(nextLoaded);
+      setLoadedBranding(branding);
       setDraft((s) => ({ ...s, smtpPassword: '' }));
       setEmailChangePending(null);
       setSaving({ open: true, progress: 100, message: 'Configurações guardadas.' });
@@ -341,12 +547,148 @@ export default function CPCSettingsPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Configurações</h1>
           <p className="text-sm text-muted-foreground">Gestão de notificações, SMTP e preferências do sistema.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleTestSmtp} disabled={loading || !validation.ok}>
-            Testar SMTP
-          </Button>
-        </div>
       </div>
+
+      <Card className="p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-semibold">Identidade Visual</h2>
+          <p className="text-sm text-muted-foreground">
+            Configure o padrão de cabeçalho e rodapé para os documentos exportados pelo sistema.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-sm font-semibold tracking-wide text-muted-foreground">Cabeçalho</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {BRANDING_SECTIONS.map((section) => {
+              const slot = branding.header[section];
+              const key = `header-${section}`;
+              const isUploading = uploadingSlot === key;
+              return (
+                <div key={key} className="rounded-xl border bg-muted/20 p-4 space-y-3">
+                  <p className="text-sm font-medium">{slotTitle(section)}</p>
+                  <div className="h-24 rounded-lg border bg-background overflow-hidden flex items-center justify-center">
+                    {slot.imageUrl ? (
+                      <img src={slot.imageUrl} alt={`Cabeçalho ${slotTitle(section)}`} className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Sem imagem</span>
+                    )}
+                  </div>
+                  <Input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                    disabled={loading || isUploading}
+                    onChange={(e) => {
+                      const file = e.currentTarget.files?.[0] ?? null;
+                      void handleBrandingUpload('header', section, file);
+                      e.currentTarget.value = '';
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold tracking-wide text-muted-foreground">Pré-visualização do cabeçalho</p>
+          <div className="rounded-xl border bg-muted/20 p-3">
+            <div className="rounded-lg bg-background border px-4 py-3 grid grid-cols-3 gap-4 items-center">
+              {BRANDING_SECTIONS.map((section) => (
+                <div key={`preview-header-${section}`} className="h-14 rounded-md border bg-muted/20 flex items-center justify-center overflow-hidden">
+                  {branding.header[section].imageUrl ? (
+                    <img src={branding.header[section].imageUrl} alt={`Prévia cabeçalho ${slotTitle(section)}`} className="h-full w-full object-contain" />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{slotTitle(section)}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <p className="text-sm font-semibold tracking-wide text-muted-foreground">Rodapé</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {BRANDING_SECTIONS.map((section) => {
+              const slot = branding.footer[section];
+              const key = `footer-${section}`;
+              const isUploading = uploadingSlot === key;
+              return (
+                <div key={key} className="rounded-xl border bg-muted/20 p-4 space-y-3">
+                  <p className="text-sm font-medium">{slotTitle(section)}</p>
+                  <Select
+                    value={slot.mode}
+                    onValueChange={(v) => updateBrandingMode(section, v as BrandingContentType)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="image">Upload de imagem</SelectItem>
+                      <SelectItem value="pagination">Paginação</SelectItem>
+                      <SelectItem value="title">Título do documento</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {slot.mode === 'image' ? (
+                    <>
+                      <div className="h-20 rounded-lg border bg-background overflow-hidden flex items-center justify-center">
+                        {slot.imageUrl ? (
+                          <img src={slot.imageUrl} alt={`Rodapé ${slotTitle(section)}`} className="h-full w-full object-contain" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Sem imagem</span>
+                        )}
+                      </div>
+                      <Input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                        disabled={loading || isUploading}
+                        onChange={(e) => {
+                          const file = e.currentTarget.files?.[0] ?? null;
+                          void handleBrandingUpload('footer', section, file);
+                          e.currentTarget.value = '';
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <div className="h-20 rounded-lg border bg-background/70 flex items-center justify-center text-sm text-muted-foreground">
+                      {slot.mode === 'pagination' ? 'Página 1 de 10' : 'Título do documento'}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm font-semibold tracking-wide text-muted-foreground">Pré-visualização do rodapé</p>
+          <div className="rounded-xl border bg-muted/20 p-3">
+            <div className="rounded-lg bg-background border px-4 py-3 grid grid-cols-3 gap-4 items-center">
+              {BRANDING_SECTIONS.map((section) => {
+                const slot = branding.footer[section];
+                return (
+                  <div key={`preview-footer-${section}`} className="h-14 rounded-md border bg-muted/20 flex items-center justify-center overflow-hidden text-xs text-muted-foreground">
+                    {slot.mode === 'image' ? (
+                      slot.imageUrl ? (
+                        <img src={slot.imageUrl} alt={`Prévia rodapé ${slotTitle(section)}`} className="h-full w-full object-contain" />
+                      ) : (
+                        <span>{slotTitle(section)}</span>
+                      )
+                    ) : slot.mode === 'pagination' ? (
+                      <span>Página 1 de 10</span>
+                    ) : (
+                      <span>Título do documento</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </Card>
 
       <Card className="p-6 space-y-5">
         <div>
@@ -463,6 +805,12 @@ export default function CPCSettingsPage() {
             />
             {validation.errors.smtpFromEmail ? <p className="text-sm font-medium text-destructive">{validation.errors.smtpFromEmail}</p> : null}
           </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={handleTestSmtp} disabled={loading || !validation.ok}>
+            Testar SMTP
+          </Button>
         </div>
       </Card>
 

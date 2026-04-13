@@ -22,6 +22,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { toast } from '@/hooks/use-toast';
 import { Users, Eye, Ban, CheckCircle, AlertTriangle, Clock, ClipboardList, Download, FileSpreadsheet, FileText, Loader2, Trash2 } from 'lucide-react';
 import { todayIsoAppCalendar } from '@/lib/appCalendar';
+import { defaultBranding, fetchDocumentBranding } from '@/lib/documentBranding';
+import {
+  buildPrintBrandingFooterWrappedRowHtml,
+  buildPrintBrandingHeaderWrappedRowHtml,
+  escapeHtmlForPrint,
+  printBrandingStylesCss,
+} from '@/lib/printDocumentBrandingHtml';
 
 type TriageAnswers = Record<string, unknown>;
 
@@ -263,6 +270,8 @@ export default function MigrantsAdminPage() {
       }
       setExporting('pdf');
       try {
+        const branding = await fetchDocumentBranding().catch(() => defaultBranding());
+        const docTitle = `${t.get('cpc.migrantsAdmin.title')} — ${t.get('cpc.migrantsAdmin.export.button')}`;
         const header = [
           t.get('cpc.migrantsAdmin.export.columns.name'),
           t.get('cpc.migrantsAdmin.export.columns.email'),
@@ -271,16 +280,17 @@ export default function MigrantsAdminPage() {
           t.get('cpc.migrantsAdmin.export.columns.legal_status'),
           t.get('cpc.migrantsAdmin.export.columns.arrival_date'),
         ];
+        const colCount = header.length;
         const rowsHtml = filtered.map(r => {
           const email = normalizeEmail(r.email).value;
           return `
             <tr>
-              <td>${getStringFromCell(r.name)}</td>
-              <td>${email}</td>
-              <td>${exportRowValue(r, 'birth_date')}</td>
-              <td>${exportRowValue(r, 'nationality')}</td>
-              <td>${legalLabel(r.legal_status)}</td>
-              <td>${exportRowValue(r, 'arrival_date')}</td>
+              <td>${escapeHtmlForPrint(getStringFromCell(r.name))}</td>
+              <td>${escapeHtmlForPrint(email)}</td>
+              <td>${escapeHtmlForPrint(exportRowValue(r, 'birth_date'))}</td>
+              <td>${escapeHtmlForPrint(exportRowValue(r, 'nationality'))}</td>
+              <td>${escapeHtmlForPrint(legalLabel(r.legal_status))}</td>
+              <td>${escapeHtmlForPrint(exportRowValue(r, 'arrival_date'))}</td>
             </tr>`;
         }).join('');
         const docHtml = `
@@ -288,15 +298,16 @@ export default function MigrantsAdminPage() {
           <html lang="pt">
             <head>
               <meta charset="utf-8" />
-              <title>${t.get('cpc.migrantsAdmin.title')} — PDF</title>
+              <title>${escapeHtmlForPrint(t.get('cpc.migrantsAdmin.title'))} — PDF</title>
               <style>
                 body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #0a0a0a; }
                 h1 { font-size: 20px; margin: 0 0 12px; }
                 p { margin: 0 0 12px; color: #444; }
-                table { border-collapse: collapse; width: 100%; font-size: 12px; }
-                th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
-                th { background: #f5f5f5; text-align: left; }
-                tfoot td { border: none; padding-top: 8px; font-size: 11px; color: #666; }
+                table.data-export { border-collapse: collapse; width: 100%; font-size: 12px; }
+                table.data-export th, table.data-export td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+                table.data-export th { background: #f5f5f5; text-align: left; }
+                table.data-export tfoot .export-meta td { border: none; padding-top: 8px; font-size: 11px; color: #666; }
+                ${printBrandingStylesCss()}
                 @media print {
                   @page { margin: 16mm; }
                   body { padding: 0; }
@@ -304,17 +315,19 @@ export default function MigrantsAdminPage() {
               </style>
             </head>
             <body>
-              <h1>${t.get('cpc.migrantsAdmin.title')} — ${t.get('cpc.migrantsAdmin.export.button')}</h1>
-              <p>${t.get('cpc.migrantsAdmin.subtitle')}</p>
-              <table>
+              <h1>${escapeHtmlForPrint(docTitle)}</h1>
+              <p>${escapeHtmlForPrint(t.get('cpc.migrantsAdmin.subtitle'))}</p>
+              <table class="doc-branding-print-header doc-branding-print-footer data-export">
                 <thead>
-                  <tr>${header.map(h => `<th>${h}</th>`).join('')}</tr>
+                  ${buildPrintBrandingHeaderWrappedRowHtml(branding, colCount)}
+                  <tr>${header.map(h => `<th>${escapeHtmlForPrint(h)}</th>`).join('')}</tr>
                 </thead>
                 <tbody>${rowsHtml}</tbody>
+                <tfoot>
+                  ${buildPrintBrandingFooterWrappedRowHtml(branding, docTitle, colCount)}
+                  <tr class="export-meta"><td colspan="${colCount}">${escapeHtmlForPrint(String(filtered.length))} ${escapeHtmlForPrint(t.get('cpc.migrantsAdmin.title').toLowerCase())}</td></tr>
+                </tfoot>
               </table>
-              <tfoot>
-                <tr><td colspan="${header.length}">${filtered.length} ${t.get('cpc.migrantsAdmin.title').toLowerCase()}</td></tr>
-              </tfoot>
               <script>
                 window.onload = function() {
                   setTimeout(function(){ window.print(); }, 300);

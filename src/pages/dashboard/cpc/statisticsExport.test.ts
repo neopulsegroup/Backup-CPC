@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
 import * as docx from 'docx';
 
+import { defaultBranding } from '@/lib/documentBranding';
+
 import { buildStatisticsReport, exportStatisticsDocx, exportStatisticsPdf, exportStatisticsXlsx } from './statisticsExport';
 
 describe('statisticsExport', () => {
@@ -32,7 +34,7 @@ describe('statisticsExport', () => {
       parseUnknownDate,
     });
 
-    const bytes = await exportStatisticsPdf(report, { maxTrailRows: 10, maxRawUsers: 10 });
+    const bytes = await exportStatisticsPdf(report, { maxTrailRows: 10, maxRawUsers: 10, documentBranding: defaultBranding() });
     const header = new TextDecoder().decode(bytes.slice(0, 5));
     expect(header).toBe('%PDF-');
   });

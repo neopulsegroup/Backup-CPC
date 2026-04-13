@@ -17,7 +17,13 @@ import { updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { storage } from '@/integrations/firebase/client';
 import { getDownloadURL, ref as makeStorageRef, uploadBytes } from 'firebase/storage';
-import logo from '@/assets/logo.png';
+import { defaultBranding, fetchDocumentBranding } from '@/lib/documentBranding';
+import {
+  PDF_BRANDING_FOOTER_HEIGHT_PT,
+  PDF_BRANDING_HEADER_HEIGHT_PT,
+  applyBrandingToAllPdfLibPages,
+  embedBrandingImagesForPdfLib,
+} from '@/lib/pdfLibDocumentBranding';
 import { APP_TIME_ZONE, todayIsoAppCalendar } from '@/lib/appCalendar';
 import { cepDigitsPortugal, formatPortugalCepDigits, lookupAddressFromPortugalCep } from '@/lib/portugalCepLookup';
 import { formatActivityDurationShort, formatActivityStatusListLabel } from '@/features/activities/model';
@@ -717,7 +723,6 @@ export default function ProfilePage() {
       ]);
 
       const fileDate = todayIsoAppCalendar();
-      const generatedAt = new Date();
       const safeName = (profile.name || profile.email || 'Migrante')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -730,28 +735,16 @@ export default function ProfilePage() {
       const pdfDoc = await PDFDocument.create();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-      const logoBytes = await fetch(logo).then((r) => r.arrayBuffer());
-      const logoImage = await pdfDoc.embedPng(logoBytes);
+      const branding = await fetchDocumentBranding().catch(() => defaultBranding());
+      const embeddedBranding = await embedBrandingImagesForPdfLib(pdfDoc, branding);
 
       const pageSize: [number, number] = [595.28, 841.89];
       const marginX = 48;
-      const marginTop = 72;
-      const marginBottom = 56;
+      const marginTop = marginX + PDF_BRANDING_HEADER_HEIGHT_PT;
+      const marginBottom = marginX + PDF_BRANDING_FOOTER_HEIGHT_PT;
       const lineGap = 4;
-      const headerHeight = 56;
 
-      const newPage = () => {
-        const page = pdfDoc.addPage(pageSize);
-        const { width, height } = page.getSize();
-        const logoMaxH = 28;
-        const logoScale = logoMaxH / logoImage.height;
-        const logoW = logoImage.width * logoScale;
-        const logoH = logoImage.height * logoScale;
-        page.drawImage(logoImage, { x: marginX, y: height - 40 - logoH, width: logoW, height: logoH });
-        page.drawText('Ficha do Migrante', { x: marginX + logoW + 12, y: height - 44, size: 14, font: fontBold, color: rgb(0.07, 0.07, 0.07) });
-        return page;
-      };
+      const newPage = () => pdfDoc.addPage(pageSize);
 
       const wrapText = (text: string, maxWidth: number, size: number, useBold: boolean) => {
         const f = useBold ? fontBold : font;
@@ -774,13 +767,13 @@ export default function ProfilePage() {
       };
 
       let page = newPage();
-      let cursorY = page.getSize().height - marginTop - headerHeight;
+      let cursorY = page.getSize().height - marginTop;
       const maxTextWidth = page.getSize().width - marginX * 2;
 
       const ensureSpace = (neededHeight: number) => {
         if (cursorY - neededHeight >= marginBottom) return;
         page = newPage();
-        cursorY = page.getSize().height - marginTop - headerHeight;
+        cursorY = page.getSize().height - marginTop;
       };
 
       const drawTitle = (text: string) => {
@@ -925,14 +918,7 @@ export default function ProfilePage() {
       drawTitle('Observações gerais');
       drawKeyValue('Desempenho', (profile.mainNeeds || '').trim() || '—');
 
-      const pages = pdfDoc.getPages();
-      const totalPages = pages.length;
-      pages.forEach((p, idx) => {
-        const { width } = p.getSize();
-        const label = `Gerado em ${generatedAt.toLocaleDateString('pt-PT', { timeZone: APP_TIME_ZONE })} · Página ${idx + 1} de ${totalPages}`;
-        p.drawText(label, { x: marginX, y: 28, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
-        p.drawText('CPC', { x: width - marginX - font.widthOfTextAtSize('CPC', 9), y: 28, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
-      });
+      applyBrandingToAllPdfLibPages(pdfDoc, font, embeddedBranding, branding, 'Ficha do Migrante');
 
       const bytes = await pdfDoc.save();
       const blob = new Blob([bytes], { type: 'application/pdf' });
@@ -993,7 +979,6 @@ export default function ProfilePage() {
       const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
 
       const fileDate = todayIsoAppCalendar();
-      const generatedAt = new Date();
       const safeName = (profile.name || profile.email || 'Migrante')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -1014,28 +999,16 @@ export default function ProfilePage() {
       const pdfDoc = await PDFDocument.create();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-      const logoBytes = await fetch(logo).then((r) => r.arrayBuffer());
-      const logoImage = await pdfDoc.embedPng(logoBytes);
+      const branding = await fetchDocumentBranding().catch(() => defaultBranding());
+      const embeddedBranding = await embedBrandingImagesForPdfLib(pdfDoc, branding);
 
       const pageSize: [number, number] = [595.28, 841.89];
       const marginX = 48;
-      const marginTop = 72;
-      const marginBottom = 56;
+      const marginTop = marginX + PDF_BRANDING_HEADER_HEIGHT_PT;
+      const marginBottom = marginX + PDF_BRANDING_FOOTER_HEIGHT_PT;
       const lineGap = 4;
-      const headerHeight = 56;
 
-      const newPage = () => {
-        const page = pdfDoc.addPage(pageSize);
-        const { width, height } = page.getSize();
-        const logoMaxH = 28;
-        const logoScale = logoMaxH / logoImage.height;
-        const logoW = logoImage.width * logoScale;
-        const logoH = logoImage.height * logoScale;
-        page.drawImage(logoImage, { x: marginX, y: height - 40 - logoH, width: logoW, height: logoH });
-        page.drawText('Triagem do Migrante', { x: marginX + logoW + 12, y: height - 44, size: 14, font: fontBold, color: rgb(0.07, 0.07, 0.07) });
-        return page;
-      };
+      const newPage = () => pdfDoc.addPage(pageSize);
 
       const wrapText = (text: string, maxWidth: number, size: number, useBold: boolean) => {
         const f = useBold ? fontBold : font;
@@ -1058,13 +1031,13 @@ export default function ProfilePage() {
       };
 
       let page = newPage();
-      let cursorY = page.getSize().height - marginTop - headerHeight;
+      let cursorY = page.getSize().height - marginTop;
       const maxTextWidth = page.getSize().width - marginX * 2;
 
       const ensureSpace = (neededHeight: number) => {
         if (cursorY - neededHeight >= marginBottom) return;
         page = newPage();
-        cursorY = page.getSize().height - marginTop - headerHeight;
+        cursorY = page.getSize().height - marginTop;
       };
 
       const drawTitle = (text: string) => {
@@ -1174,14 +1147,7 @@ export default function ProfilePage() {
         drawQuestionAnswer(it.question, formatAnswer(it.id, it.value), meta);
       });
 
-      const pages = pdfDoc.getPages();
-      const totalPages = pages.length;
-      pages.forEach((p, idx) => {
-        const { width } = p.getSize();
-        const label = `Gerado em ${generatedAt.toLocaleDateString('pt-PT', { timeZone: APP_TIME_ZONE })} · Página ${idx + 1} de ${totalPages}`;
-        p.drawText(label, { x: marginX, y: 28, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
-        p.drawText('CPC', { x: width - marginX - font.widthOfTextAtSize('CPC', 9), y: 28, size: 9, font, color: rgb(0.4, 0.4, 0.4) });
-      });
+      applyBrandingToAllPdfLibPages(pdfDoc, font, embeddedBranding, branding, 'Triagem do Migrante');
 
       const bytes = await pdfDoc.save();
       const blob = new Blob([bytes], { type: 'application/pdf' });

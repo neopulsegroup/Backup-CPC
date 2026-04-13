@@ -3,7 +3,6 @@ import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -24,7 +23,6 @@ import {
   Filter,
   CheckCircle,
   Ban,
-  MapPin,
   Mail,
   MoreVertical,
   UserCog,
@@ -50,6 +48,15 @@ import {
   previousMonthStartEndFromTodayIso,
   weekStartEndIsoMondayInAppCalendar,
 } from '@/lib/appCalendar';
+import {
+  computeMigrantProfileCompletenessPercent,
+  type MigrantProfileFieldsForCompleteness,
+} from '@/lib/migrantProfileCompleteness';
+
+type RecentMigrantProfileDoc = MigrantProfileFieldsForCompleteness & {
+  email?: string | null;
+  professionalTitle?: string | null;
+};
 
 type FirebaseUserDoc = {
   id: string;
@@ -1096,12 +1103,10 @@ export default function CPCDashboard() {
           .slice(0, 4);
         const recentIds = recentRaw.map((m) => m.id);
         const [recentProfiles, recentTriage, recentUsers] = await Promise.all([
+          Promise.all(recentIds.map((id) => getDocument<RecentMigrantProfileDoc>('profiles', id))),
           Promise.all(
-            recentIds.map((id) =>
-              getDocument<{ name?: string | null; professionalTitle?: string | null; email?: string | null }>('profiles', id)
-            )
+            recentIds.map((id) => getDocument<{ completed?: boolean | null; urgencies?: string[] | null }>('triage', id))
           ),
-          Promise.all(recentIds.map((id) => getDocument<{ urgencies?: string[] | null }>('triage', id))),
           Promise.all(recentIds.map((id) => getDocument<{ name?: string | null; email?: string | null }>('users', id))),
         ]);
 
@@ -1109,17 +1114,19 @@ export default function CPCDashboard() {
           const profileDoc = recentProfiles[idx];
           const userDoc = recentUsers[idx];
           const triageDoc = recentTriage[idx];
-          const urgenciesCount = (triageDoc?.urgencies || []).length;
-          const hasTriage = Boolean(triageDoc);
+          const triageComplete = triageDoc?.completed === true;
+          const profilePct = computeMigrantProfileCompletenessPercent(profileDoc ?? undefined, {
+            authName: userDoc?.name,
+          });
 
-          const statusLabel = !hasTriage
-            ? t.get('cpc.recentMigrants.status.pending_docs')
-            : urgenciesCount > 0
-              ? t.get('cpc.recentMigrants.status.in_review')
-              : t.get('cpc.recentMigrants.status.complete');
-          const statusClassName = !hasTriage
+          const statusLabel = !triageComplete
+            ? t.get('cpc.recentMigrants.status.triage_incomplete')
+            : profilePct < 100
+              ? t.get('cpc.recentMigrants.status.registration_incomplete')
+              : t.get('cpc.recentMigrants.status.registration_complete');
+          const statusClassName = !triageComplete
             ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'
-            : urgenciesCount > 0
+            : profilePct < 100
               ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
               : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
 
@@ -1502,55 +1509,6 @@ export default function CPCDashboard() {
                             <p className="font-semibold mt-3">{t.get('cpc.quickActions.create_offer')}</p>
                             <p className="text-sm text-muted-foreground mt-1">{t.get('cpc.quickActions.create_offer_subtitle')}</p>
                           </Link>
-                        </div>
-                      </div>
-
-                      <div className="cpc-card relative">
-                        <div className="relative h-44 bg-gradient-to-br from-emerald-100 via-emerald-50 to-slate-50">
-                          <div className="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold shadow-sm">
-                            <MapPin className="h-4 w-4 text-emerald-700" />
-                            {t.get('cpc.capacity.center')}
-                          </div>
-                        </div>
-                        <div className="p-6">
-                          <div className="flex items-center justify-between gap-4">
-                            <p className="font-semibold">{t.get('cpc.capacity.title')}</p>
-                            <p className="text-sm font-semibold text-muted-foreground">82%</p>
-                          </div>
-                          <div className="mt-3">
-                            <Progress value={82} />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="cpc-card p-6 relative">
-                        <div className="flex items-center justify-between">
-                          <h2 className="text-lg font-semibold">{t.get('cpc.teamOnDuty.title')}</h2>
-                          <span className="text-xs font-semibold text-muted-foreground">{t.get('cpc.teamOnDuty.today')}</span>
-                        </div>
-                        <div className="mt-6 space-y-5">
-                          {[
-                            { name: 'João Duarte', role: 'Mediador', tickets: 12, percent: 75 },
-                            { name: 'Sofia Costa', role: 'Psicóloga', tickets: 8, percent: 50 },
-                          ].map((m) => (
-                            <div key={m.name} className="flex items-center gap-4">
-                              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold shrink-0">
-                                {m.name.split(' ').slice(0, 2).map((p) => p.slice(0, 1)).join('').toUpperCase()}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-4">
-                                  <div className="min-w-0">
-                                    <p className="font-semibold truncate">{m.name}</p>
-                                    <p className="text-sm text-muted-foreground truncate">{m.role}</p>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground shrink-0">{t.get('cpc.teamOnDuty.tickets', { count: m.tickets })}</p>
-                                </div>
-                                <div className="mt-2">
-                                  <Progress value={m.percent} />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </div>
                     </div>

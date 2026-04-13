@@ -17,6 +17,13 @@ import { formatDuration, toActivityFormatLabel, toActivityStatusLabel, toActivit
 import type { ActivitiesUiFilters } from '@/features/activities/controller';
 import { loadActivitiesForExport, loadActivitiesPage, loadActivitiesSummary, removeActivity } from '@/features/activities/controller';
 import { listConsultants } from '@/features/activities/repository';
+import { defaultBranding, fetchDocumentBranding } from '@/lib/documentBranding';
+import {
+  buildPrintBrandingFooterWrappedRowHtml,
+  buildPrintBrandingHeaderWrappedRowHtml,
+  escapeHtmlForPrint,
+  printBrandingStylesCss,
+} from '@/lib/printDocumentBrandingHtml';
 
 type ConsultantOption = { id: string; name: string };
 
@@ -69,28 +76,49 @@ function buildCsv(rows: ActivityDoc[]): string {
   return lines.join('\n');
 }
 
-function openPrintableTable(rows: ActivityDoc[]) {
+async function openPrintableTable(rows: ActivityDoc[], documentTitle: string) {
   const w = window.open('', '_blank', 'noopener,noreferrer');
   if (!w) return;
+  const branding = await fetchDocumentBranding().catch(() => defaultBranding());
+  const headers = [
+    'Nome',
+    'Tipo',
+    'Formato',
+    'Estado',
+    'Data',
+    'Início',
+    'Fim',
+    'Duração',
+    'Consultores',
+    'Temáticas',
+    'Local/Link',
+  ] as const;
+  const colCount = headers.length;
   const html = `
-    <html>
+    <html lang="pt">
       <head>
         <meta charset="utf-8" />
-        <title>Atividades</title>
+        <title>${escapeHtmlForPrint(documentTitle)}</title>
         <style>
           body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; padding: 24px; }
           h1 { font-size: 18px; margin: 0 0 14px; }
-          table { width: 100%; border-collapse: collapse; font-size: 12px; }
-          th, td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; vertical-align: top; }
-          th { background: #f8fafc; }
+          table.data-export { width: 100%; border-collapse: collapse; font-size: 12px; }
+          table.data-export th, table.data-export td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; vertical-align: top; }
+          table.data-export th { background: #f8fafc; }
+          ${printBrandingStylesCss()}
+          @media print {
+            @page { margin: 16mm; }
+            body { padding: 0; }
+          }
         </style>
       </head>
       <body>
-        <h1>Gestão de Atividades</h1>
-        <table>
+        <h1>${escapeHtmlForPrint(documentTitle)}</h1>
+        <table class="doc-branding-print-header doc-branding-print-footer data-export">
           <thead>
+            ${buildPrintBrandingHeaderWrappedRowHtml(branding, colCount)}
             <tr>
-              <th>Nome</th><th>Tipo</th><th>Formato</th><th>Estado</th><th>Data</th><th>Início</th><th>Fim</th><th>Duração</th><th>Consultores</th><th>Temáticas</th><th>Local/Link</th>
+              ${headers.map((h) => `<th>${escapeHtmlForPrint(h)}</th>`).join('')}
             </tr>
           </thead>
           <tbody>
@@ -98,22 +126,25 @@ function openPrintableTable(rows: ActivityDoc[]) {
               .map(
                 (r) => `
                   <tr>
-                    <td>${escapeHtml(r.title)}</td>
-                    <td>${escapeHtml(toActivityTypeLabel(r.activityType))}</td>
-                    <td>${escapeHtml(toActivityFormatLabel(r.format))}</td>
-                    <td>${escapeHtml(toActivityStatusLabel(r.status))}</td>
-                    <td>${escapeHtml(r.date)}</td>
-                    <td>${escapeHtml(r.startTime)}</td>
-                    <td>${escapeHtml(r.endTime)}</td>
-                    <td>${escapeHtml(formatDuration(r.durationMinutes))}</td>
-                    <td>${escapeHtml((r.consultantNames || []).join(', '))}</td>
-                    <td>${escapeHtml((r.topics || []).join(', '))}</td>
-                    <td>${escapeHtml(r.location || '—')}</td>
+                    <td>${escapeHtmlForPrint(r.title)}</td>
+                    <td>${escapeHtmlForPrint(toActivityTypeLabel(r.activityType))}</td>
+                    <td>${escapeHtmlForPrint(toActivityFormatLabel(r.format))}</td>
+                    <td>${escapeHtmlForPrint(toActivityStatusLabel(r.status))}</td>
+                    <td>${escapeHtmlForPrint(r.date)}</td>
+                    <td>${escapeHtmlForPrint(r.startTime)}</td>
+                    <td>${escapeHtmlForPrint(r.endTime)}</td>
+                    <td>${escapeHtmlForPrint(formatDuration(r.durationMinutes))}</td>
+                    <td>${escapeHtmlForPrint((r.consultantNames || []).join(', '))}</td>
+                    <td>${escapeHtmlForPrint((r.topics || []).join(', '))}</td>
+                    <td>${escapeHtmlForPrint(r.location || '—')}</td>
                   </tr>
                 `
               )
               .join('')}
           </tbody>
+          <tfoot>
+            ${buildPrintBrandingFooterWrappedRowHtml(branding, documentTitle, colCount)}
+          </tfoot>
         </table>
         <script>
           window.onload = () => { window.print(); };
@@ -279,7 +310,7 @@ export default function ActivitiesPage() {
         downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `atividades_${new Date().toISOString().slice(0, 10)}.csv`);
         return;
       }
-      openPrintableTable(exportRows);
+      await openPrintableTable(exportRows, t.get('cpc.activities.title'));
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : t.get('common.error');
       toast({ title: t.get('common.error'), description: message, variant: 'destructive' });
@@ -624,13 +655,4 @@ export default function ActivitiesPage() {
       </AlertDialog>
     </div>
   );
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
 }

@@ -1340,9 +1340,9 @@
       "title": "Recent migrants",
       "empty": "No recent migrants",
       "status": {
-        "pending_docs": "Pending docs",
-        "in_review": "In review",
-        "complete": "Complete"
+        "triage_incomplete": "Triaje incompleto",
+        "registration_incomplete": "Registro incompleto",
+        "registration_complete": "Registro completo"
       }
     },
     "sessions": {
