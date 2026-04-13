@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDocument, subscribeDocument, subscribeQuery } from '@/integrations/firebase/firestore';
+import { addDocument, getDocument, queryDocuments, serverTimestamp, subscribeDocument, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
 import { formatActivityDurationShort, formatActivityStatusListLabel } from '@/features/activities/model';
 import { loadParticipantActivitiesForUser, MAX_PARTICIPANT_ACTIVITIES_QUERY_LIMIT } from '@/features/activities/participantActivityList';
 import { APP_TIME_ZONE } from '@/lib/appCalendar';
@@ -84,6 +84,24 @@ type MigrantDashboardProfileDoc = {
   contactPreference?: string | null;
 };
 
+type DashboardNotificationDoc = {
+  id: string;
+  recipient_id?: string | null;
+  title?: string | null;
+  body?: string | null;
+  href?: string | null;
+  type?: string | null;
+  created_at?: unknown;
+};
+
+function normalizeDashboardRole(value?: string | null): string {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 function MigrantHome() {
   const { t } = useLanguage();
   const { user, profile } = useAuth();
@@ -94,6 +112,7 @@ function MigrantHome() {
   const [progress, setProgress] = useState<Array<{ trail_id: string; progress_percent: number | null; modules_completed: number | null; completed_at: string | null }>>([]);
   const [trails, setTrails] = useState<Record<string, { id: string; title: string; modules_count: number | null }>>({});
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; body: string; date: string; type?: string; href?: string }>>([]);
+  const [dbNotifications, setDbNotifications] = useState<Array<{ id: string; title: string; body: string; date: string; type?: string; href?: string }>>([]);
   const [triage, setTriage] = useState<{ completed?: boolean; legal_status?: string | null; work_status?: string | null; language_level?: string | null; interests?: string[] | null; urgencies?: string[] | null } | null>(null);
   const [profileDoc, setProfileDoc] = useState<MigrantDashboardProfileDoc | null>(null);
   const [bookOpen, setBookOpen] = useState(false);
@@ -239,6 +258,40 @@ function MigrantHome() {
       unsubProgress();
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsubscribe = subscribeQuery<DashboardNotificationDoc>({
+      collectionName: 'notifications',
+      filters: [{ field: 'recipient_id', operator: '==', value: user.uid }],
+      orderByField: { field: 'created_at', direction: 'desc' },
+      limitCount: 20,
+      onNext: (docs) => {
+        const mapped = docs.map((d) => {
+          const created = d.created_at as { toDate?: () => Date; seconds?: number } | string | null | undefined;
+          const date =
+            created && typeof created === 'object' && typeof created.toDate === 'function'
+              ? created.toDate().toISOString()
+              : created && typeof created === 'object' && typeof created.seconds === 'number'
+                ? new Date(created.seconds * 1000).toISOString()
+                : typeof created === 'string'
+                  ? created
+                  : new Date().toISOString();
+          return {
+            id: d.id,
+            title: (d.title || 'Notificação').trim(),
+            body: (d.body || '').trim(),
+            date,
+            type: d.type || undefined,
+            href: d.href || undefined,
+          };
+        });
+        setDbNotifications(mapped);
+      },
+      onError: () => setDbNotifications([]),
+    });
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   const upcomingSessions = useMemo(() => {
     const now = todayIsoAppCalendar();
@@ -402,10 +455,11 @@ function MigrantHome() {
   const visibleNotifications = useMemo(() => {
     const list = [
       ...(profileRequiredAlert ? [profileRequiredAlert] : []),
+      ...dbNotifications,
       ...notifications,
     ];
     return list.slice(0, 4);
-  }, [notifications, profileRequiredAlert]);
+  }, [dbNotifications, notifications, profileRequiredAlert]);
 
   function addUrgentRequest() {
     if (!user || !urgentDesc) return;
@@ -420,13 +474,63 @@ function MigrantHome() {
     setUrgentDesc('');
   }
 
-  function sendChat() {
+  async function sendChat() {
     if (!user || !chatInput.trim()) return;
-    const msg = { id: String(Date.now()), text: chatInput.trim(), date: new Date().toISOString(), from: 'migrante' as const };
+    const text = chatInput.trim();
+    const msg = { id: String(Date.now()), text, date: new Date().toISOString(), from: 'migrante' as const };
     const next = [msg, ...chatMessages];
     setChatMessages(next);
     localStorage.setItem(`chat:${user.uid}`, JSON.stringify(next));
     setChatInput('');
+
+    try {
+      const cpcUsers = await queryDocuments<{ id: string; role?: string | null; name?: string | null; email?: string | null }>(
+        'users',
+        [{ field: 'role', operator: 'in', value: ['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer'] }],
+        undefined,
+        20
+      );
+      const firstCpc = cpcUsers[0];
+      if (!firstCpc?.id) return;
+
+      const myConversations = await queryDocuments<{ id: string; participants?: string[] | null; type?: string | null }>(
+        'conversations',
+        [{ field: 'participants', operator: 'array-contains', value: user.uid }],
+        { field: 'updatedAt', direction: 'desc' },
+        100
+      );
+      let conversationId =
+        myConversations.find((c) => (c.participants || []).includes(firstCpc.id) && (c.participants || []).length === 2)?.id || null;
+
+      if (!conversationId) {
+        conversationId = await addDocument('conversations', {
+          participants: [user.uid, firstCpc.id],
+          created_by: user.uid,
+          created_by_role: 'migrant',
+          type: 'support_request',
+          title: firstCpc.name || firstCpc.email || 'Equipa CPC',
+          subtitle: 'Equipa CPC',
+          recipient_role: 'cpc',
+          last_message_text: null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      await addDocument('conversation_messages', {
+        conversation_id: conversationId,
+        sender_id: user.uid,
+        text,
+        created_at: serverTimestamp(),
+      });
+      await updateDocument('conversations', conversationId, {
+        last_message_text: text,
+        last_sender_id: user.uid,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Erro ao iniciar conversa com equipa CPC:', error);
+    }
   }
 
   useEffect(() => {
@@ -846,7 +950,7 @@ export default function MigrantDashboard() {
     { to: '/dashboard/migrante/emprego', label: t.get('dashboard.employment'), icon: Briefcase },
     { to: '/dashboard/migrante/trilhas', label: t.get('dashboard.trails'), icon: BookOpen },
   ];
-  const role = (profile?.role ?? '').toString().toLowerCase();
+  const role = normalizeDashboardRole(profile?.role);
   const isMigrant = role === 'migrant' || role === 'migrante' || role.length === 0;
   const sidebarItemsProfile = [
     { to: '/dashboard/migrante/perfil', label: t.get('dashboard.profile'), icon: Building2 },

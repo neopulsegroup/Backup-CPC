@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { addDocument, queryDocuments, serverTimestamp, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { CirclePlus, EllipsisVertical, Loader2, MessagesSquare, Paperclip, Phone, Plus, Send, Smile, Video } from 'lucide-react';
+import { CirclePlus, EllipsisVertical, Loader2, MessageSquare, Paperclip, Phone, Send, Smile, Video } from 'lucide-react';
 
 type UserRow = { id: string; name?: string | null; email?: string | null; role?: string | null };
 type ConversationDoc = {
@@ -16,7 +16,6 @@ type ConversationDoc = {
   subtitle?: string | null;
   recipient_role?: string | null;
   last_sender_id?: string | null;
-  type?: string | null;
   last_message_text?: string | null;
   updatedAt?: unknown;
 };
@@ -39,21 +38,16 @@ function isCpcRole(role: string): boolean {
   return ['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer'].includes(role);
 }
 
-function roleLabel(role: string): string {
-  if (role === 'company') return 'Empresa';
-  if (role === 'migrant') return 'Migrante';
-  if (isCpcRole(role)) return 'Equipa CPC';
-  return 'Utilizador';
+function isCompanyAllowedRecipient(role: string): boolean {
+  return role === 'migrant' || isCpcRole(role);
 }
 
-function inferConversationRole(conversation: ConversationDoc): 'migrant' | 'company' | 'cpc' | 'other' {
+function inferConversationRole(conversation: ConversationDoc): 'migrant' | 'cpc' | 'other' {
   const role = normalizeRole(conversation.recipient_role);
   if (role === 'migrant' || role === 'migrante') return 'migrant';
-  if (role === 'company' || role === 'empresa') return 'company';
   if (isCpcRole(role) || role === 'cpc') return 'cpc';
   const subtitle = normalizeRole(conversation.subtitle);
   if (subtitle.includes('migrant')) return 'migrant';
-  if (subtitle.includes('empresa')) return 'company';
   if (subtitle.includes('cpc') || subtitle.includes('equipa')) return 'cpc';
   return 'other';
 }
@@ -69,10 +63,62 @@ function getInitials(value?: string | null): string {
   return initials || 'U';
 }
 
-export default function CPCMessagesPage() {
+export default function CompanyMessagesPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const { toast } = useToast();
+  const tMutable = t as unknown as {
+    get: (path: string) => string;
+    messagesPage?: Record<string, unknown>;
+    common?: Record<string, unknown>;
+  };
+  if (!tMutable.messagesPage) {
+    tMutable.messagesPage = {
+      title: t.get('messagesPage.title'),
+      newAction: t.get('messagesPage.newAction'),
+      conversationFallbackTitle: t.get('messagesPage.conversationFallbackTitle'),
+      noMessagesPreview: t.get('messagesPage.noMessagesPreview'),
+      selectConversation: t.get('messagesPage.selectConversation'),
+      onlineNow: t.get('messagesPage.onlineNow'),
+      noMessagesInConversation: t.get('messagesPage.noMessagesInConversation'),
+      composePlaceholder: t.get('messagesPage.composePlaceholder'),
+      auth: {
+        signInToAccess: t.get('messagesPage.auth.signInToAccess'),
+      },
+      dialog: {
+        title: t.get('messagesPage.dialog.title'),
+        emailPlaceholder: t.get('messagesPage.dialog.emailPlaceholder'),
+      },
+      aria: {
+        videoCall: t.get('messagesPage.aria.videoCall'),
+        call: t.get('messagesPage.aria.call'),
+        moreOptions: t.get('messagesPage.aria.moreOptions'),
+        add: t.get('messagesPage.aria.add'),
+        emoji: t.get('messagesPage.aria.emoji'),
+        send: t.get('messagesPage.aria.send'),
+      },
+      errors: {
+        loadConversations: t.get('messagesPage.errors.loadConversations'),
+        loadMessages: t.get('messagesPage.errors.loadMessages'),
+        sendMessage: t.get('messagesPage.errors.sendMessage'),
+        createConversation: t.get('messagesPage.errors.createConversation'),
+      },
+      validation: {
+        emailValid: t.get('messagesPage.validation.emailValid'),
+        noUserWithEmail: t.get('messagesPage.validation.noUserWithEmail'),
+        emailDifferent: t.get('messagesPage.validation.emailDifferent'),
+      },
+    };
+  }
+  if (!tMutable.common) {
+    tMutable.common = {
+      errorTitle: t.get('common.errorTitle'),
+      validationTitle: t.get('common.validationTitle'),
+      notFoundTitle: t.get('common.notFoundTitle'),
+      cancel: t.get('common.cancel'),
+      create: t.get('common.create'),
+    };
+  }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationDoc[]>([]);
@@ -84,11 +130,7 @@ export default function CPCMessagesPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [creating, setCreating] = useState(false);
-  const [noticeOpen, setNoticeOpen] = useState(false);
-  const [noticeTitle, setNoticeTitle] = useState('');
-  const [noticeBody, setNoticeBody] = useState('');
-  const [sendingNotice, setSendingNotice] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'migrant' | 'company' | 'cpc'>('all');
+  const [filter, setFilter] = useState<'all' | 'migrant' | 'cpc'>('all');
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -192,8 +234,12 @@ export default function CPCMessagesPage() {
         return;
       }
       const targetRole = normalizeRole(target.role);
-      if (targetRole && !(targetRole === 'company' || targetRole === 'migrant' || isCpcRole(targetRole))) {
-        toast({ title: t.common.validationTitle, description: 'Destinatário inválido para a equipa CPC.', variant: 'destructive' });
+      if (targetRole && !isCompanyAllowedRecipient(targetRole)) {
+        toast({
+          title: t.common.validationTitle,
+          description: 'A empresa só pode iniciar conversas com migrantes ou equipa CPC.',
+          variant: 'destructive',
+        });
         return;
       }
 
@@ -207,27 +253,26 @@ export default function CPCMessagesPage() {
       const match = existing.find((c) => (c.participants || []).includes(target.id) && (c.participants || []).length === 2);
       if (match?.id) {
         setActiveConversationId(match.id);
-        setNewEmail('');
         setNewOpen(false);
+        setNewEmail('');
         return;
       }
 
       const id = await addDocument('conversations', {
         participants: [user.uid, target.id],
         created_by: user.uid,
-        created_by_role: 'cpc',
+        created_by_role: 'company',
         type: 'direct',
         title: target.name || target.email || t.messagesPage.conversationFallbackTitle,
-        subtitle: roleLabel(targetRole),
+        subtitle: isCpcRole(targetRole) ? 'Equipa CPC' : 'Migrante',
         recipient_role: targetRole || null,
         last_message_text: null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
       setActiveConversationId(id);
-      setNewEmail('');
       setNewOpen(false);
-      toast({ title: t.messagesPage.toast.conversationCreatedTitle, description: t.messagesPage.toast.conversationCreatedDesc });
+      setNewEmail('');
     } catch {
       toast({ title: t.common.errorTitle, description: t.messagesPage.errors.createConversation, variant: 'destructive' });
     } finally {
@@ -235,83 +280,49 @@ export default function CPCMessagesPage() {
     }
   }
 
-  async function sendCollectiveNotice() {
-    if (!user?.uid) return;
-    const title = noticeTitle.trim();
-    const body = noticeBody.trim();
-    if (!title || !body) {
-      toast({ title: t.common.validationTitle, description: 'Preencha título e mensagem do aviso.', variant: 'destructive' });
-      return;
-    }
-    setSendingNotice(true);
-    try {
-      const migrants = await queryDocuments<UserRow>(
-        'users',
-        [{ field: 'role', operator: 'in', value: ['migrant', 'Migrant', 'MIGRANT'] }],
-        undefined,
-        500
-      );
-      await Promise.all(
-        migrants.map((m) =>
-          addDocument('notifications', {
-            recipient_id: m.id,
-            title,
-            body,
-            type: 'collective_notice',
-            href: '/dashboard/migrante',
-            created_by: user.uid,
-            created_at: serverTimestamp(),
-          })
-        )
-      );
-      setNoticeOpen(false);
-      setNoticeTitle('');
-      setNoticeBody('');
-      toast({ title: 'Aviso coletivo enviado', description: `${migrants.length} migrantes notificados.` });
-    } catch {
-      toast({ title: t.common.errorTitle, description: 'Não foi possível enviar o aviso coletivo.', variant: 'destructive' });
-    } finally {
-      setSendingNotice(false);
-    }
-  }
-
   if (!user?.uid) return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">{t.messagesPage.auth.signInToAccess}</div>;
   if (loading) return <div className="py-12 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
-  if (error) return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">{error}</div>;
 
   return (
     <>
       <div className="cpc-card overflow-hidden">
         <div className="grid lg:grid-cols-[360px_minmax(0,1fr)] min-h-[640px]">
           <div className="p-6">
-            <div className="flex items-center justify-between gap-3">
-              <h1 className="text-2xl font-bold tracking-tight">{t.messagesPage.title}</h1>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => setNoticeOpen(true)}>Aviso coletivo</Button>
-                <Button size="sm" onClick={() => setNewOpen(true)}><Plus className="h-4 w-4 mr-2" />{t.messagesPage.newAction}</Button>
-              </div>
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="text-2xl font-bold tracking-tight">{t.get('company.messages.title')}</h1>
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                {t.messagesPage.newAction}
+              </Button>
             </div>
             <div className="flex items-center gap-2 mt-4">
               <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('all')}>Todas</button>
               <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'migrant' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('migrant')}>Migrantes</button>
-              <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'company' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('company')}>Empresas</button>
               <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'cpc' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('cpc')}>Equipa CPC</button>
             </div>
             <div className="mt-6 space-y-2">
-              {filteredConversations.length === 0 ? (
+              {error ? (
+                <div className="cpc-card p-6 text-center text-sm text-muted-foreground">{error}</div>
+              ) : filteredConversations.length === 0 ? (
                 <div className="cpc-card p-6 text-center text-sm text-muted-foreground">{t.messagesPage.emptyConversations}</div>
-              ) : filteredConversations.map((c) => {
-                const isActive = c.id === activeConversationId;
-                const title = c.title || t.messagesPage.conversationFallbackTitle;
-                const last = c.last_message_text || t.messagesPage.noMessagesPreview;
-                const isUnread = !!c.last_sender_id && c.last_sender_id !== user.uid;
+              ) : filteredConversations.map((conversation) => {
+                const isActive = conversation.id === activeConversationId;
+                const title = conversation.title || t.messagesPage.conversationFallbackTitle;
+                const last = conversation.last_message_text || t.messagesPage.noMessagesPreview;
+                const isUnread = !!conversation.last_sender_id && conversation.last_sender_id !== user.uid;
                 return (
-                  <button key={c.id} type="button" onClick={() => setActiveConversationId(c.id)} className={`w-full text-left rounded-2xl px-4 py-4 transition-colors ${isActive ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-muted/60'}`}>
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    onClick={() => setActiveConversationId(conversation.id)}
+                    className={`w-full text-left rounded-2xl px-4 py-4 transition-colors ${isActive ? 'bg-primary/5 border-l-4 border-primary' : 'hover:bg-muted/60'}`}
+                  >
                     <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-2xl bg-muted flex items-center justify-center shrink-0"><span className="text-sm font-semibold text-muted-foreground">{getInitials(title)}</span></div>
+                      <div className="h-10 w-10 rounded-2xl bg-muted flex items-center justify-center shrink-0">
+                        <span className="text-sm font-semibold text-muted-foreground">{getInitials(title)}</span>
+                      </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold truncate">{title}</p>
-                        {c.subtitle ? <p className="text-xs text-primary truncate">{c.subtitle}</p> : null}
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm text-muted-foreground truncate mt-1">{last}</p>
                           {isUnread ? <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 mt-1" /> : null}
@@ -331,10 +342,12 @@ export default function CPCMessagesPage() {
                 <div className="p-6 bg-background border-b">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-11 w-11 rounded-2xl bg-muted flex items-center justify-center shrink-0"><span className="text-sm font-semibold text-muted-foreground">{getInitials(activeConversation.title)}</span></div>
+                      <div className="h-11 w-11 rounded-2xl bg-muted flex items-center justify-center shrink-0">
+                        <span className="text-sm font-semibold text-muted-foreground">{getInitials(activeConversation.title)}</span>
+                      </div>
                       <div className="min-w-0">
                         <p className="font-semibold truncate">{activeConversation.title || t.messagesPage.conversationFallbackTitle}</p>
-                        <p className="text-sm text-muted-foreground truncate">{activeConversation.subtitle || t.messagesPage.onlineNow}</p>
+                        <p className="text-sm text-muted-foreground truncate">{t.messagesPage.onlineNow}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -352,7 +365,7 @@ export default function CPCMessagesPage() {
                   ) : messages.length === 0 ? (
                     <div className="cpc-card p-6 text-center text-sm text-muted-foreground">{t.messagesPage.noMessagesInConversation}</div>
                   ) : messages.map((m) => {
-                    const mine = (m.sender_id || '') === user.uid;
+                    const mine = m.sender_id === user.uid;
                     return (
                       <div key={m.id} className={`flex items-start gap-3 max-w-2xl ${mine ? 'ml-auto justify-end' : ''}`}>
                         {mine ? null : <div className="h-10 w-10 rounded-2xl bg-muted flex items-center justify-center shrink-0"><span className="text-sm font-semibold text-muted-foreground">{getInitials(activeConversation.title)}</span></div>}
@@ -381,7 +394,9 @@ export default function CPCMessagesPage() {
                       />
                       <div className="absolute left-4 top-1/2 -translate-y-1/2"><Paperclip className="h-4 w-4 text-muted-foreground" /></div>
                       <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                        <button type="button" className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center" aria-label={t.messagesPage.aria.send} onClick={() => void send()}><Send className="h-4 w-4" /></button>
+                        <button type="button" className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center" aria-label={t.messagesPage.aria.send} onClick={() => void send()}>
+                          <Send className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -395,29 +410,13 @@ export default function CPCMessagesPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>{t.messagesPage.dialog.title}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">{t.messagesPage.dialog.recipientEmailLabelUser}</p>
+            <p className="text-sm text-muted-foreground">Email do destinatário (migrante ou equipa CPC)</p>
             <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.messagesPage.dialog.emailPlaceholder} />
             <div className="flex items-center justify-end gap-2">
               <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>{t.common.cancel}</Button>
               <Button onClick={() => void createConversation()} disabled={creating}>
-                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessagesSquare className="h-4 w-4 mr-2" />}
+                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
                 {t.common.create}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={noticeOpen} onOpenChange={(open) => (sendingNotice ? null : setNoticeOpen(open))}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Aviso coletivo aos migrantes</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Título do aviso" value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} />
-            <Input placeholder="Mensagem do aviso" value={noticeBody} onChange={(e) => setNoticeBody(e.target.value)} />
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setNoticeOpen(false)} disabled={sendingNotice}>{t.common.cancel}</Button>
-              <Button onClick={() => void sendCollectiveNotice()} disabled={sendingNotice}>
-                {sendingNotice ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                Enviar aviso
               </Button>
             </div>
           </div>

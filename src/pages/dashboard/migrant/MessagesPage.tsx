@@ -1,20 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { addDocument, queryDocuments, serverTimestamp, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
+import { addDocument, serverTimestamp, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { CirclePlus, EllipsisVertical, Loader2, MessageSquare, Paperclip, Phone, Send, Smile, Video } from 'lucide-react';
-
-type UserRow = { id: string; name?: string | null; email?: string | null; role?: string | null };
+import { CirclePlus, EllipsisVertical, Loader2, Paperclip, Phone, Send, Smile, Video } from 'lucide-react';
 
 type ConversationDoc = {
   id: string;
   participants?: string[] | null;
   title?: string | null;
   subtitle?: string | null;
+  recipient_role?: string | null;
+  last_sender_id?: string | null;
   last_message_text?: string | null;
   updatedAt?: unknown;
 };
@@ -26,12 +24,6 @@ type MessageDoc = {
   text?: string | null;
   created_at?: unknown;
 };
-
-function isValidEmail(value: string): boolean {
-  const v = value.trim();
-  if (!v) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-}
 
 function parseUnknownDate(value: unknown): Date | null {
   if (!value) return null;
@@ -68,13 +60,32 @@ function getInitials(value?: string | null): string {
   return initials || 'U';
 }
 
+function normalizeRole(value?: string | null): string {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function inferConversationRole(conversation: ConversationDoc): 'company' | 'cpc' | 'other' {
+  const fromRole = normalizeRole(conversation.recipient_role);
+  if (fromRole === 'company' || fromRole === 'empresa') return 'company';
+  if (['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer', 'cpc'].includes(fromRole)) return 'cpc';
+  const subtitle = normalizeRole(conversation.subtitle);
+  if (subtitle.includes('empresa')) return 'company';
+  if (subtitle.includes('cpc') || subtitle.includes('equipa')) return 'cpc';
+  return 'other';
+}
+
 export default function MigrantMessagesPage() {
   const { user, profile } = useAuth();
   const { language, t } = useLanguage();
   const { toast } = useToast();
 
-  const role = (profile?.role ?? '').toString().toLowerCase();
+  const role = normalizeRole(profile?.role);
   const isMigrant = role === 'migrant' || role === 'migrante' || role.length === 0;
+  const [filter, setFilter] = useState<'all' | 'cpc' | 'company'>('all');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,10 +98,6 @@ export default function MigrantMessagesPage() {
 
   const [compose, setCompose] = useState('');
   const endRef = useRef<HTMLDivElement | null>(null);
-
-  const [newOpen, setNewOpen] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!user?.uid || !isMigrant) return;
@@ -153,6 +160,10 @@ export default function MigrantMessagesPage() {
     () => (activeConversationId ? conversations.find((c) => c.id === activeConversationId) ?? null : null),
     [activeConversationId, conversations]
   );
+  const filteredConversations = useMemo(() => {
+    if (filter === 'all') return conversations;
+    return conversations.filter((c) => inferConversationRole(c) === filter);
+  }, [conversations, filter]);
 
   async function send() {
     if (!user?.uid || !isMigrant) return;
@@ -170,51 +181,12 @@ export default function MigrantMessagesPage() {
       });
       await updateDocument('conversations', activeConversationId, {
         last_message_text: text,
+        last_sender_id: user.uid,
         updatedAt: serverTimestamp(),
       });
     } catch {
       toast({ title: t.common.errorTitle, description: t.messagesPage.errors.sendMessage, variant: 'destructive' });
       setCompose(text);
-    }
-  }
-
-  async function createConversation() {
-    if (!user?.uid || !isMigrant) return;
-    if (!isValidEmail(newEmail)) {
-      toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailValid, variant: 'destructive' });
-      return;
-    }
-
-    setCreating(true);
-    try {
-      const users = await queryDocuments<UserRow>('users', [{ field: 'email', operator: '==', value: newEmail.trim() }], undefined, 1);
-      const target = users[0];
-      if (!target?.id) {
-        toast({ title: t.common.notFoundTitle, description: t.messagesPage.validation.noUserWithEmail, variant: 'destructive' });
-        return;
-      }
-      if (target.id === user.uid) {
-        toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailDifferent, variant: 'destructive' });
-        return;
-      }
-
-      const title = target.name || target.email || t.messagesPage.conversationFallbackTitle;
-      const id = await addDocument('conversations', {
-        participants: [user.uid, target.id],
-        title,
-        subtitle: target.role ? String(target.role).toUpperCase() : null,
-        last_message_text: null,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-      setNewOpen(false);
-      setNewEmail('');
-      setActiveConversationId(id);
-      toast({ title: t.messagesPage.toast.conversationCreatedTitle, description: t.messagesPage.toast.conversationCreatedDesc });
-    } catch {
-      toast({ title: t.common.errorTitle, description: t.messagesPage.errors.createConversation, variant: 'destructive' });
-    } finally {
-      setCreating(false);
     }
   }
 
@@ -249,10 +221,7 @@ export default function MigrantMessagesPage() {
           <div className="p-6">
             <div className="flex items-center justify-between gap-4">
               <h1 className="text-2xl font-bold tracking-tight">{t.messagesPage.title}</h1>
-              <Button size="sm" onClick={() => setNewOpen(true)}>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                {t.messagesPage.newAction}
-              </Button>
+              <span className="text-xs text-muted-foreground">Resposta apenas</span>
             </div>
 
             <p className="text-sm text-muted-foreground mt-3">
@@ -260,17 +229,24 @@ export default function MigrantMessagesPage() {
               <span className="font-medium">{t.messagesPage.hintPathLabel}</span>.
             </p>
 
+            <div className="flex items-center gap-2 mt-4">
+              <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'all' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('all')}>Todas</button>
+              <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'cpc' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('cpc')}>Equipa CPC</button>
+              <button type="button" className={`px-3 py-1.5 rounded-full text-xs ${filter === 'company' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`} onClick={() => setFilter('company')}>Empresas</button>
+            </div>
+
             <div className="mt-6 space-y-2">
-              {conversations.length === 0 ? (
+              {filteredConversations.length === 0 ? (
                 <div className="cpc-card p-6 text-center text-sm text-muted-foreground">
                   {t.messagesPage.emptyConversations}
                 </div>
               ) : (
-                conversations.map((conversation) => {
+                filteredConversations.map((conversation) => {
                   const isActive = conversation.id === activeConversationId;
                   const title = conversation.title || t.messagesPage.conversationFallbackTitle;
                   const subtitle = conversation.subtitle || '';
                   const last = conversation.last_message_text || t.messagesPage.noMessagesPreview;
+                  const isUnread = !!conversation.last_sender_id && conversation.last_sender_id !== user.uid;
                   const locale = language === 'pt' ? 'pt-PT' : language === 'en' ? 'en-GB' : 'es-ES';
                   const timeLabel = formatTimeLabel(conversation.updatedAt, locale) || '';
                   return (
@@ -293,7 +269,10 @@ export default function MigrantMessagesPage() {
                             {timeLabel ? <span className="text-xs text-muted-foreground shrink-0">{timeLabel}</span> : null}
                           </div>
                           {subtitle ? <p className="text-sm text-primary truncate mt-0.5">{subtitle}</p> : null}
-                          <p className="text-sm text-muted-foreground truncate mt-1">{last}</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm text-muted-foreground truncate mt-1">{last}</p>
+                            {isUnread ? <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 mt-1" /> : null}
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -443,28 +422,6 @@ export default function MigrantMessagesPage() {
         </div>
       </div>
 
-      <Dialog open={newOpen} onOpenChange={(open) => (creating ? null : setNewOpen(open))}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.messagesPage.dialog.title}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{t.messagesPage.dialog.recipientEmailLabel}</p>
-              <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.messagesPage.dialog.emailPlaceholder} />
-            </div>
-            <div className="flex items-center justify-end gap-2">
-              <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>
-                {t.common.cancel}
-              </Button>
-              <Button onClick={() => void createConversation()} disabled={creating}>
-                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
-                {t.common.create}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }

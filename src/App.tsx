@@ -144,7 +144,7 @@ function AppRoutes() {
       <Route
         path="/dashboard/cpc/*"
         element={
-          <ProtectedRoute allowedRoles={['mediator', 'lawyer', 'psychologist', 'manager', 'coordinator', 'admin']}>
+          <ProtectedRoute allowedRoles={['mediator', 'lawyer', 'psychologist', 'manager', 'coordinator', 'admin', 'trainer']}>
             <CPCDashboard />
           </ProtectedRoute>
         }

@@ -117,6 +117,65 @@ service cloud.firestore {
       return isAccountEnabled() && userRole() == 'migrant';
     }
 
+    function isCpcRoleName(role) {
+      return role in ['admin', 'mediator', 'lawyer', 'psychologist', 'manager', 'coordinator', 'trainer'];
+    }
+
+    function roleByUserId(uid) {
+      let userDoc = exists(/databases/$(database)/documents/users/$(uid))
+        ? get(/databases/$(database)/documents/users/$(uid)).data
+        : null;
+      let profileDoc = exists(/databases/$(database)/documents/profiles/$(uid))
+        ? get(/databases/$(database)/documents/profiles/$(uid)).data
+        : null;
+      let rawRole = userDoc != null && (userDoc.role is string) ? userDoc.role.lower()
+        : userDoc != null && (userDoc.profile is string) ? userDoc.profile.lower()
+        : userDoc != null && (userDoc.perfil is string) ? userDoc.perfil.lower()
+        : userDoc != null && (userDoc.type is string) ? userDoc.type.lower()
+        : profileDoc != null && (profileDoc.role is string) ? profileDoc.role.lower()
+        : profileDoc != null && (profileDoc.profile is string) ? profileDoc.profile.lower()
+        : profileDoc != null && (profileDoc.perfil is string) ? profileDoc.perfil.lower()
+        : profileDoc != null && (profileDoc.type is string) ? profileDoc.type.lower()
+        : null;
+      return rawRole in ['admin', 'administrador'] ? 'admin'
+        : rawRole in ['cpc', 'staff', 'equipa', 'team'] ? 'admin'
+        : rawRole in ['manager', 'gestor'] ? 'manager'
+        : rawRole in ['coordinator', 'coordenador'] ? 'coordinator'
+        : rawRole in ['mediator', 'mediador'] ? 'mediator'
+        : rawRole in ['lawyer', 'jurista'] ? 'lawyer'
+        : rawRole in ['psychologist', 'psicologo', 'psicóloga', 'psicologa'] ? 'psychologist'
+        : rawRole in ['trainer', 'formador'] ? 'trainer'
+        : rawRole in ['company', 'empresa', 'employer', 'business', 'empresario', 'empresário'] ? 'company'
+        : rawRole;
+    }
+
+    function otherParticipantId(participants) {
+      return participants[0] == request.auth.uid ? participants[1] : participants[0];
+    }
+
+    function canStartConversationWithTarget(targetRole, convoType) {
+      return userRole() == 'company'
+        ? (targetRole == 'migrant' || isCpcRoleName(targetRole))
+        : isCpcStaff()
+          ? (targetRole == 'migrant' || targetRole == 'company' || isCpcRoleName(targetRole))
+          : userRole() == 'migrant'
+            ? (convoType == 'support_request' && isCpcRoleName(targetRole))
+            : false;
+    }
+
+    function canCreateConversationDoc() {
+      let participants = request.resource.data.participants;
+      let convoType = request.resource.data.type;
+      return isAccountEnabled()
+        && (participants is list)
+        && participants.size() == 2
+        && request.auth.uid in participants
+        && (convoType is string)
+        && convoType in ['direct', 'support_request']
+        && request.resource.data.created_by == request.auth.uid
+        && canStartConversationWithTarget(roleByUserId(otherParticipantId(participants)), convoType);
+    }
+
     function jobOffer(jobId) {
       return get(/databases/$(database)/documents/job_offers/$(jobId));
     }
@@ -366,6 +425,54 @@ service cloud.firestore {
       allow update: if isCpcStaff() ||
         (isAccountEnabled() && resource.data.migrant_id == request.auth.uid);
       allow delete: if isCpcStaff();
+    }
+
+    match /conversations/{conversationId} {
+      allow read: if isAccountEnabled() && request.auth.uid in resource.data.participants;
+      allow create: if canCreateConversationDoc();
+      allow update: if isAccountEnabled()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.participants == resource.data.participants;
+      allow delete: if false;
+    }
+
+    match /conversation_messages/{messageId} {
+      function conversationDocRef() {
+        return get(/databases/$(database)/documents/conversations/$(request.resource.data.conversation_id));
+      }
+
+      function canCreateConversationMessage() {
+        let convo = conversationDocRef();
+        let senderIsParticipant = convo.exists() && request.auth.uid in convo.data.participants;
+        let senderIsMigrant = userRole() == 'migrant';
+        let migrantCanPost = convo.exists() && (
+          convo.data.type == 'support_request' ||
+          convo.data.created_by_role != 'migrant'
+        );
+        return isAccountEnabled()
+          && (request.resource.data.conversation_id is string)
+          && senderIsParticipant
+          && request.resource.data.sender_id == request.auth.uid
+          && (request.resource.data.text is string)
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 4000
+          && (!senderIsMigrant || migrantCanPost);
+      }
+
+      allow read: if isAccountEnabled()
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversation_id)).data.participants;
+      allow create: if canCreateConversationMessage();
+      allow update, delete: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isCpcStaff() || (isAccountEnabled() && resource.data.recipient_id == request.auth.uid);
+      allow create: if isCpcStaff()
+        && request.resource.data.keys().hasAll(['recipient_id', 'title', 'body', 'created_at'])
+        && request.resource.data.recipient_id is string
+        && request.resource.data.title is string
+        && request.resource.data.body is string;
+      allow update, delete: if false;
     }
 
     match /activities/{activityId} {
