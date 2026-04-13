@@ -130,7 +130,7 @@ describe('CPCProfilePage (dashboard/cpc)', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: 'Editar' }));
     await user.type(screen.getByLabelText('Nome'), ' Admin');
-    await user.type(screen.getByLabelText('Telefone'), '+351 910 000 000');
+    await user.type(screen.getByLabelText('Telefone'), '910000000');
     await user.click(screen.getByRole('button', { name: 'Guardar' }));
 
     await waitFor(() => {

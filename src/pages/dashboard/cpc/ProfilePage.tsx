@@ -4,6 +4,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  PhoneInput,
+  companyPhoneForPayload,
+  formatPhoneValueForDisplay,
+  isValidInternationalPhone,
+} from '@/components/ui/phone-input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateUserProfile } from '@/integrations/firebase/auth';
 import { getDocument, updateDocument } from '@/integrations/firebase/firestore';
@@ -20,16 +26,10 @@ type ProfileDoc = {
   photoUrl?: string | null;
 };
 
-function normalizePhone(value: string): string {
-  return value.replace(/[^\d+]/g, '');
-}
-
-function isValidPhone(value: string): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return true;
-  const normalized = normalizePhone(trimmed);
-  if (normalized.startsWith('+')) return normalized.length >= 8 && normalized.length <= 16;
-  return normalized.length >= 7 && normalized.length <= 15;
+function formatLoadedPhone(raw: string | null | undefined): string {
+  const s = typeof raw === 'string' ? raw.trim() : '';
+  if (!s) return '';
+  return formatPhoneValueForDisplay(s);
 }
 
 export default function CPCProfilePage() {
@@ -72,7 +72,7 @@ export default function CPCProfilePage() {
         setDoc(merged);
         setEdit({
           name: profile?.name || merged.name || '',
-          phone: merged.phone || profileData?.phone || '',
+          phone: formatLoadedPhone(merged.phone || profileData?.phone),
         });
         setEditMode(false);
       } catch (err: unknown) {
@@ -124,13 +124,13 @@ export default function CPCProfilePage() {
   async function save() {
     if (!user?.uid) return;
     const name = edit.name.trim();
-    const phone = edit.phone.trim();
+    const phonePayload = companyPhoneForPayload(edit.phone);
 
     if (!name) {
       toast({ title: t.common.validationTitle, description: t.cpc.profile.validation.nameRequired, variant: 'destructive' });
       return;
     }
-    if (!isValidPhone(phone)) {
+    if (!isValidInternationalPhone(edit.phone)) {
       toast({ title: t.common.validationTitle, description: t.cpc.profile.validation.phoneInvalid, variant: 'destructive' });
       return;
     }
@@ -138,7 +138,7 @@ export default function CPCProfilePage() {
     setSaving(true);
     try {
       await updateUserProfile(user.uid, { name });
-      await updateDocument('profiles', user.uid, { name, phone: phone || null });
+      await updateDocument('profiles', user.uid, { name, phone: phonePayload });
       await refreshProfile();
       setEditMode(false);
       toast({ title: t.cpc.profile.toast.updatedTitle, description: t.cpc.profile.toast.updatedDesc });
@@ -157,7 +157,7 @@ export default function CPCProfilePage() {
   function cancel() {
     setEdit({
       name: profile?.name || doc?.name || '',
-      phone: doc?.phone || profileData?.phone || '',
+      phone: formatLoadedPhone(doc?.phone || profileData?.phone),
     });
     setEditMode(false);
   }
@@ -268,12 +268,13 @@ export default function CPCProfilePage() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="cpc-profile-phone">{t.cpc.profile.labels.phone}</Label>
-              <Input
+              <PhoneInput
                 id="cpc-profile-phone"
                 value={edit.phone}
-                onChange={(e) => setEdit((p) => ({ ...p, phone: e.target.value }))}
+                onChange={(phone) => setEdit((p) => ({ ...p, phone }))}
                 disabled={!editMode}
                 placeholder={t.cpc.profile.placeholders.phone}
+                className="w-full"
               />
             </div>
           </div>

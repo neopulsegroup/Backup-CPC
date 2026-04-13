@@ -1565,11 +1565,26 @@
         "sun": "DOM"
       },
       "events": {
-        "legal-consult": { "title": "Consulta Legal", "subtitle": "M. Al-Fayed (ID ...)" },
-        "initial-assessment": { "title": "Evaluación Inicial", "subtitle": "S. Kovacs (ID ...)" },
-        "family-mediation": { "title": "Mediación Familiar", "subtitle": "Familia H. (Caso...)" },
-        "workplace-conflict": { "title": "Conflicto Laboral", "subtitle": "Caso #9912" },
-        "follow-up": { "title": "Seguimiento", "subtitle": "L. Dubois (ID: 4...)" }
+        "legal-consult": {
+          "title": "Consulta Legal",
+          "subtitle": "M. Al-Fayed (ID ...)"
+        },
+        "initial-assessment": {
+          "title": "Evaluación Inicial",
+          "subtitle": "S. Kovacs (ID ...)"
+        },
+        "family-mediation": {
+          "title": "Mediación Familiar",
+          "subtitle": "Familia H. (Caso...)"
+        },
+        "workplace-conflict": {
+          "title": "Conflicto Laboral",
+          "subtitle": "Caso #9912"
+        },
+        "follow-up": {
+          "title": "Seguimiento",
+          "subtitle": "L. Dubois (ID: 4...)"
+        }
       },
       "popover": {
         "title": "Seguimiento de Trauma",
@@ -2071,8 +2086,11 @@
         "activityArea": "ÁREA DE ACTIVIDAD",
         "fiscalAddress": "DIRECCIÓN FISCAL",
         "phone": "TELÉFONO",
-        "corporateEmail": "CORREO CORPORATIVO",
-        "notes": "NOTAS"
+        "notes": "NOTAS",
+        "email": "EMAIL",
+        "userFullName": "NOMBRE COMPLETO",
+        "showUserName": "MOSTRAR NOMBRE DE USUARIO",
+        "showUserNameHelp": "Activo: muestra el nombre de usuario. Desactivado: muestra el nombre legal."
       },
       "placeholders": {
         "notes": "Opcional"
@@ -2080,6 +2098,14 @@
       "actions": {
         "cancel": "Cancelar",
         "saveChanges": "Guardar cambios"
+      },
+      "loading": "Cargando perfil...",
+      "userDataTitle": "Datos del Usuario",
+      "toast": {
+        "savedTitle": "Perfil actualizado",
+        "savedDescription": "Los cambios se guardaron correctamente.",
+        "errorTitle": "Error",
+        "errorDescription": "No se pudo guardar el perfil de empresa."
       }
     },
     "messages": {

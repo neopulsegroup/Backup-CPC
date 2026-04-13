@@ -41,6 +41,7 @@ interface PhoneInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 function formatPhoneNumber(countryCode: string, raw: string) {
@@ -80,7 +81,33 @@ export function formatPhoneValueForDisplay(value: string) {
   return `${country.dial_code}${formatted ? ` ${formatted}` : ''}`.trim();
 }
 
-export function PhoneInput({ id, name, value = '', onChange, placeholder, className }: PhoneInputProps) {
+/** Dígitos da parte nacional (após o indicativo detetado). */
+export function nationalDigitsFromPhoneValue(value: string): string {
+  const val = value.trim();
+  if (!val) return '';
+  const sorted = [...COUNTRY_CODES].sort((a, b) => b.dial_code.length - a.dial_code.length);
+  const country = sorted.find((c) => val.startsWith(c.dial_code)) || COUNTRY_CODES[0];
+  const rest = val.startsWith(country.dial_code) ? val.slice(country.dial_code.length) : val;
+  return rest.replace(/\D/g, '');
+}
+
+/** Valor a gravar: `null` se não houver número nacional; caso contrário string formatada. */
+export function companyPhoneForPayload(value: string): string | null {
+  const t = value.trim();
+  if (!t) return null;
+  if (nationalDigitsFromPhoneValue(t).length === 0) return null;
+  return formatPhoneValueForDisplay(t).trim();
+}
+
+/** Vazio é válido; com texto, total de dígitos (indicativo + nacional) entre 8 e 15 (E.164). */
+export function isValidInternationalPhone(value: string): boolean {
+  const t = value.trim();
+  if (!t) return true;
+  const digits = t.replace(/\D/g, '');
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+export function PhoneInput({ id, name, value = '', onChange, placeholder, className, disabled }: PhoneInputProps) {
   const [open, setOpen] = React.useState(false)
   
   // Helper to find country from full phone string
@@ -116,6 +143,7 @@ export function PhoneInput({ id, name, value = '', onChange, placeholder, classN
   };
 
   const handleCountrySelect = (country: typeof COUNTRY_CODES[0]) => {
+    if (disabled) return;
     const currentNumber = getPhoneNumber();
     setSelectedCountry(country);
     setOpen(false);
@@ -123,6 +151,7 @@ export function PhoneInput({ id, name, value = '', onChange, placeholder, classN
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     const newNumber = e.target.value;
     const formatted = formatPhoneNumber(selectedCountry.code, newNumber);
     onChange(`${selectedCountry.dial_code} ${formatted}`.trim());
@@ -130,12 +159,18 @@ export function PhoneInput({ id, name, value = '', onChange, placeholder, classN
 
   return (
     <div className={cn("flex gap-2", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={disabled ? false : open}
+        onOpenChange={(next) => {
+          if (!disabled) setOpen(next);
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            disabled={disabled}
             className="w-[140px] justify-between px-3 shrink-0"
           >
             <span className="flex items-center gap-2 truncate">
@@ -180,6 +215,7 @@ export function PhoneInput({ id, name, value = '', onChange, placeholder, classN
         placeholder={placeholder || "912 345 678"}
         value={getPhoneNumber()}
         onChange={handlePhoneChange}
+        disabled={disabled}
         className="flex-1"
       />
     </div>

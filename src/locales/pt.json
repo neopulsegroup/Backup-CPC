@@ -2056,6 +2056,7 @@
       },
       "title": "Perfil da Empresa",
       "description": "Gerencie a identidade e informações legais da sua organização.",
+      "loading": "A carregar perfil...",
       "logoSection": "LOGOTIPO",
       "logoRecommendation": "Recomendado: SVG ou PNG transparente (512×512px).",
       "changeLogo": "Alterar Logotipo",
@@ -2064,6 +2065,7 @@
         "description": "As informações legais (Nome e NIF) só podem ser alteradas mediante contacto com o suporte para garantir a segurança fiscal."
       },
       "legalInfoTitle": "Informações Legais",
+      "userDataTitle": "Dados do Usuário",
       "contactLocationTitle": "Contacto e Localização",
       "labels": {
         "legalName": "NOME LEGAL",
@@ -2071,11 +2073,20 @@
         "activityArea": "ÁREA DE ATIVIDADE",
         "fiscalAddress": "MORADA FISCAL",
         "phone": "CONTACTO TELEFÓNICO",
-        "corporateEmail": "EMAIL CORPORATIVO",
+        "email": "EMAIL",
+        "userFullName": "NOME COMPLETO",
+        "showUserName": "EXIBIR NOME DE USUÁRIO",
+        "showUserNameHelp": "Ativo: exibe o nome de usuário. Desativado: exibe o nome legal.",
         "notes": "NOTAS"
       },
       "placeholders": {
         "notes": "Opcional"
+      },
+      "toast": {
+        "savedTitle": "Perfil atualizado",
+        "savedDescription": "As alterações foram guardadas com sucesso.",
+        "errorTitle": "Erro",
+        "errorDescription": "Não foi possível guardar o perfil da empresa."
       },
       "actions": {
         "cancel": "Cancelar",

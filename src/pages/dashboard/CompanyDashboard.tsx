@@ -1,11 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Routes, Route, Link, NavLink, useLocation } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PhoneInput, companyPhoneForPayload, formatPhoneValueForDisplay } from '@/components/ui/phone-input';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { getDocument, queryDocuments, setDocument, subscribeDocument, updateDocument } from '@/integrations/firebase/firestore';
 import {
   Building2,
   Briefcase,
@@ -26,6 +30,7 @@ import {
   Eye,
   CheckCircle,
   TrendingUp,
+  User,
 } from 'lucide-react';
 
 // Sub-pages
@@ -54,8 +59,186 @@ function deriveNameFromEmail(email?: string | null): string {
     .join(' ');
 }
 
+function normalizeTaxIdDigits(raw: string): string {
+  return raw.replace(/\D/g, '').slice(0, 9);
+}
+
+function formatNifPtDisplay(digits: string): string {
+  const d = digits.replace(/\D/g, '');
+  if (!d) return '';
+  if (d.length === 9) {
+    return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+  }
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0, 3)} ${d.slice(3)}`;
+  return `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+}
+
 function CompanyProfilePage() {
+  const { user, profile, profileData } = useAuth();
   const { t } = useLanguage();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [companyDocExists, setCompanyDocExists] = useState(false);
+  const [form, setForm] = useState({
+    legalName: '',
+    taxId: '',
+    activityArea: '',
+    fiscalAddress: '',
+    phone: '',
+    email: '',
+    notes: '',
+    userFullName: '',
+    showUserName: false,
+  });
+  const [initialForm, setInitialForm] = useState(form);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadCompanyProfile() {
+      const uid = user?.uid;
+      if (!uid) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
+      setLoading(true);
+      try {
+        const direct = await getDocument<Record<string, unknown>>('companies', uid);
+        const legacy =
+          direct ||
+          (
+            await queryDocuments<Record<string, unknown> & { id: string }>(
+              'companies',
+              [{ field: 'user_id', operator: '==', value: uid }],
+              undefined,
+              1
+            )
+          )[0] ||
+          null;
+
+        const legalName =
+          (typeof legacy?.company_name === 'string' && legacy.company_name.trim()) ||
+          (typeof legacy?.legal_name === 'string' && legacy.legal_name.trim()) ||
+          (profileData?.name && profileData.name.trim()) ||
+          (profile?.name && profile.name.trim()) ||
+          deriveNameFromEmail(user.email) ||
+          '';
+        const userFullName =
+          (typeof legacy?.user_display_name === 'string' && legacy.user_display_name.trim()) ||
+          (profileData?.name && profileData.name.trim()) ||
+          (profile?.name && profile.name.trim()) ||
+          deriveNameFromEmail(user.email) ||
+          '';
+        const taxIdRaw =
+          (typeof legacy?.nif === 'string' && legacy.nif.trim()) ||
+          (typeof legacy?.tax_id === 'string' && legacy.tax_id.trim()) ||
+          (typeof profileData?.nif === 'string' && profileData.nif.trim()) ||
+          '';
+        const taxId = normalizeTaxIdDigits(taxIdRaw);
+        const email =
+          (typeof user.email === 'string' && user.email.trim()) ||
+          (typeof profile?.email === 'string' && profile.email.trim()) ||
+          '';
+        const next = {
+          legalName,
+          taxId,
+          activityArea:
+            (typeof legacy?.activity_area === 'string' && legacy.activity_area.trim()) ||
+            (typeof legacy?.business_area === 'string' && legacy.business_area.trim()) ||
+            '',
+          fiscalAddress:
+            (typeof legacy?.fiscal_address === 'string' && legacy.fiscal_address.trim()) ||
+            (typeof legacy?.address === 'string' && legacy.address.trim()) ||
+            '',
+          phone: (() => {
+            const raw = (typeof legacy?.phone === 'string' && legacy.phone.trim()) || '';
+            return raw ? formatPhoneValueForDisplay(raw) : '';
+          })(),
+          email,
+          notes: (typeof legacy?.notes === 'string' && legacy.notes.trim()) || '',
+          userFullName,
+          showUserName: legacy?.show_user_name === true,
+        };
+        if (!cancelled) {
+          setCompanyDocExists(!!direct);
+          setForm(next);
+          setInitialForm(next);
+        }
+      } catch (error) {
+        console.error('Error loading company profile:', error);
+        if (!cancelled) {
+          toast({
+            title: t.get('company.profile.toast.errorTitle'),
+            description: t.get('company.profile.toast.errorDescription'),
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadCompanyProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.email, profile?.name, profileData?.name, profileData?.nif, t, toast, user?.email, user?.uid]);
+
+  async function handleSave() {
+    const uid = user?.uid;
+    if (!uid) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = {
+        user_id: uid,
+        company_name: form.legalName.trim() || null,
+        legal_name: form.legalName.trim() || null,
+        activity_area: form.activityArea.trim() || null,
+        fiscal_address: form.fiscalAddress.trim() || null,
+        phone: companyPhoneForPayload(form.phone),
+        notes: form.notes.trim() || null,
+        user_display_name: form.userFullName.trim() || null,
+        show_user_name: form.showUserName,
+      };
+
+      if (companyDocExists) {
+        await updateDocument('companies', uid, payload);
+      } else {
+        await setDocument(
+          'companies',
+          uid,
+          {
+            ...payload,
+            verified: false,
+            createdAt: new Date().toISOString(),
+          },
+          true
+        );
+        setCompanyDocExists(true);
+      }
+
+      setInitialForm(form);
+      toast({
+        title: t.get('company.profile.toast.savedTitle'),
+        description: t.get('company.profile.toast.savedDescription'),
+      });
+    } catch (error) {
+      console.error('Error saving company profile:', error);
+      toast({
+        title: t.get('company.profile.toast.errorTitle'),
+        description: t.get('company.profile.toast.errorDescription'),
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancel() {
+    setForm(initialForm);
+  }
 
   return (
     <div className="space-y-6">
@@ -105,6 +288,9 @@ function CompanyProfilePage() {
         </div>
 
         <div className="cpc-card p-8">
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">{t.get('company.profile.loading')}</div>
+          ) : null}
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
@@ -119,15 +305,54 @@ function CompanyProfilePage() {
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.legalName')}</label>
-              <Input defaultValue="Empresa Inovação Digital, Lda" />
+              <Input
+                value={form.legalName}
+                onChange={(e) => setForm((prev) => ({ ...prev, legalName: e.target.value }))}
+                disabled={loading || saving}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.taxId')}</label>
-              <Input defaultValue="500 000 000" />
+              <Input value={formatNifPtDisplay(form.taxId) || '—'} disabled />
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.activityArea')}</label>
-              <Input defaultValue="Tecnologia e Software" />
+              <Input
+                value={form.activityArea}
+                onChange={(e) => setForm((prev) => ({ ...prev, activityArea: e.target.value }))}
+                disabled={loading || saving}
+              />
+            </div>
+          </div>
+
+          <div className="mt-10 flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-muted flex items-center justify-center">
+              <User className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="font-semibold text-lg">{t.get('company.profile.userDataTitle')}</p>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.userFullName')}</label>
+              <Input
+                value={form.userFullName}
+                onChange={(e) => setForm((prev) => ({ ...prev, userFullName: e.target.value }))}
+                disabled={loading || saving}
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between rounded-xl border px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.showUserName')}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{t.get('company.profile.labels.showUserNameHelp')}</p>
+                </div>
+                <Switch
+                  checked={form.showUserName}
+                  onCheckedChange={(checked) => setForm((prev) => ({ ...prev, showUserName: checked }))}
+                  disabled={loading || saving}
+                />
+              </div>
             </div>
           </div>
 
@@ -141,25 +366,43 @@ function CompanyProfilePage() {
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.fiscalAddress')}</label>
-              <Input defaultValue="Avenida da Liberdade, nº 100, 4º Esq" />
+              <Input
+                value={form.fiscalAddress}
+                onChange={(e) => setForm((prev) => ({ ...prev, fiscalAddress: e.target.value }))}
+                disabled={loading || saving}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.phone')}</label>
-              <Input defaultValue="+351 910 000 000" />
+              <PhoneInput
+                id="company-profile-phone"
+                value={form.phone}
+                onChange={(phone) => setForm((prev) => ({ ...prev, phone }))}
+                disabled={loading || saving}
+                className="w-full"
+              />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.corporateEmail')}</label>
-              <Input defaultValue="geral@empresa.pt" />
+              <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.email')}</label>
+              <Input value={form.email || '—'} disabled />
             </div>
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-semibold tracking-widest text-muted-foreground">{t.get('company.profile.labels.notes')}</label>
-              <Textarea placeholder={t.get('company.profile.placeholders.notes')} className="min-h-28" />
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                placeholder={t.get('company.profile.placeholders.notes')}
+                className="min-h-28"
+                disabled={loading || saving}
+              />
             </div>
           </div>
 
           <div className="mt-10 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
-            <Button variant="outline">{t.get('company.profile.actions.cancel')}</Button>
-            <Button>
+            <Button variant="outline" onClick={handleCancel} disabled={saving || loading}>
+              {t.get('company.profile.actions.cancel')}
+            </Button>
+            <Button onClick={() => void handleSave()} disabled={saving || loading}>
               <Check className="h-4 w-4 mr-2" />
               {t.get('company.profile.actions.saveChanges')}
             </Button>
@@ -581,12 +824,71 @@ function CompanyHome() {
 
 export default function CompanyDashboard() {
   const location = useLocation();
-  const { profile, user } = useAuth();
+  const { profile, profileData, user } = useAuth();
   const { language, t } = useLanguage();
   const isHome = location.pathname === '/dashboard/empresa' || location.pathname === '/dashboard/empresa/';
+  const [namePreference, setNamePreference] = useState<{
+    legalName: string;
+    userName: string;
+    showUserName: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    const uid = user?.uid;
+    if (!uid) return;
+    const applyPreference = (doc: Record<string, unknown> | null) => {
+      const legalName =
+        (typeof doc?.company_name === 'string' && doc.company_name.trim()) ||
+        (typeof doc?.legal_name === 'string' && doc.legal_name.trim()) ||
+        '';
+      const userName =
+        (typeof doc?.user_display_name === 'string' && doc.user_display_name.trim()) ||
+        '';
+      const showUserName = doc?.show_user_name === true;
+      setNamePreference({ legalName, userName, showUserName });
+    };
+
+    const unsubscribe = subscribeDocument<Record<string, unknown>>({
+      collectionName: 'companies',
+      documentId: uid,
+      onNext: (doc) => {
+        if (doc) {
+          applyPreference(doc);
+        } else {
+          void (async () => {
+            try {
+              const legacy = await queryDocuments<Record<string, unknown> & { id: string }>(
+                'companies',
+                [{ field: 'user_id', operator: '==', value: uid }],
+                undefined,
+                1
+              );
+              applyPreference(legacy[0] || null);
+            } catch (error) {
+              console.error('Error loading legacy company name preference:', error);
+            }
+          })();
+        }
+      },
+      onError: (error) => {
+        console.error('Error subscribing company name preference:', error);
+      },
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [user?.uid]);
 
   const displayName = (() => {
-    const rawName = typeof profile?.name === 'string' ? profile.name.trim() : '';
+    const preferredUserName = namePreference?.userName?.trim() || '';
+    const preferredLegalName = namePreference?.legalName?.trim() || '';
+    if (namePreference?.showUserName && preferredUserName) return preferredUserName;
+    if (!namePreference?.showUserName && preferredLegalName) return preferredLegalName;
+
+    const rawName =
+      (typeof profileData?.name === 'string' && profileData.name.trim()) ||
+      (typeof profile?.name === 'string' ? profile.name.trim() : '');
     const rawEmail = typeof profile?.email === 'string' ? profile.email.trim() : '';
     const authEmail = typeof user?.email === 'string' ? user.email.trim() : '';
     const email = rawEmail || authEmail;
