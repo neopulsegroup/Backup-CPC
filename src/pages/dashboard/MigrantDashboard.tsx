@@ -4,6 +4,7 @@ import { Layout } from '@/components/layout/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { addDocument, getDocument, queryDocuments, serverTimestamp, subscribeDocument, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
+import { loadActiveJobOfferRows } from '@/features/jobs/loadActiveJobOffers';
 import { formatActivityDurationShort, formatActivityStatusListLabel } from '@/features/activities/model';
 import { loadParticipantActivitiesForUser, MAX_PARTICIPANT_ACTIVITIES_QUERY_LIMIT } from '@/features/activities/participantActivityList';
 import { APP_TIME_ZONE } from '@/lib/appCalendar';
@@ -140,6 +141,49 @@ function MigrantHome() {
       endTime?: string;
     }>
   >([]);
+  const [employmentPreviewLoading, setEmploymentPreviewLoading] = useState(false);
+  const [employmentPreview, setEmploymentPreview] = useState<
+    Array<{ id: string; title: string; subtitle: string }>
+  >([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    let cancelled = false;
+    setEmploymentPreviewLoading(true);
+    (async () => {
+      try {
+        const rows = await loadActiveJobOfferRows<{
+          id: string;
+          title: string;
+          location: string | null;
+          company_id?: string | null;
+        }>();
+        const top = rows.slice(0, 6);
+        const companyIds = Array.from(new Set(top.map((j) => j.company_id).filter(Boolean))) as string[];
+        const companyDocs = await Promise.all(
+          companyIds.map((id) => getDocument<{ company_name: string }>('companies', id))
+        );
+        const companyNameById = new Map<string, string>();
+        companyIds.forEach((id, idx) => {
+          const doc = companyDocs[idx];
+          if (doc?.company_name) companyNameById.set(id, doc.company_name);
+        });
+        const preview = top.map((j) => {
+          const companyName = j.company_id ? companyNameById.get(j.company_id) : undefined;
+          const subtitle = [companyName, j.location].filter(Boolean).join(' • ');
+          return { id: j.id, title: j.title, subtitle };
+        });
+        if (!cancelled) setEmploymentPreview(preview);
+      } catch {
+        if (!cancelled) setEmploymentPreview([]);
+      } finally {
+        if (!cancelled) setEmploymentPreviewLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!user) return;
@@ -771,15 +815,29 @@ function MigrantHome() {
               </Button>
             </div>
             <div className="grid md:grid-cols-2 gap-3">
-              {[{ id: '1', title: 'Auxiliar de Limpeza', company: 'CleanPro', location: 'Lisboa' }, { id: '2', title: 'Operador de Armazém', company: 'LogiTech', location: 'Sintra' }].map(job => (
-                <Link key={job.id} to="/dashboard/migrante/emprego" className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted">
-                  <div>
-                    <p className="text-sm font-medium">{job.title}</p>
-                    <p className="text-xs text-muted-foreground">{job.company} • {job.location}</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              ))}
+              {employmentPreviewLoading ? (
+                <div className="md:col-span-2 flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                </div>
+              ) : employmentPreview.length === 0 ? (
+                <p className="md:col-span-2 text-sm text-muted-foreground">{t.dashboard.migrant_jobs.preview_empty}</p>
+              ) : (
+                employmentPreview.map((job) => (
+                  <Link
+                    key={job.id}
+                    to={`/dashboard/migrante/emprego/${job.id}`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{job.title}</p>
+                      {job.subtitle ? (
+                        <p className="text-xs text-muted-foreground truncate">{job.subtitle}</p>
+                      ) : null}
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>

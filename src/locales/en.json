@@ -648,6 +648,33 @@
       "psicologico": "Psychological",
       "habitacional": "Housing",
       "necessidades": "Basic needs"
+    },
+    "migrant_jobs": {
+      "title": "Job openings",
+      "subtitle": "Find work opportunities in Portugal",
+      "search_placeholder": "Search by role, company or keyword...",
+      "all_sectors": "All sectors",
+      "all_locations": "All locations",
+      "offers_found": "{count} opening(s) found",
+      "empty_filtered_title": "No openings found",
+      "empty_filtered_hint": "Try adjusting your search filters",
+      "empty_active_title": "There are no active openings right now",
+      "empty_active_hint": "Check back later or contact the CPC team for support.",
+      "load_error": "Could not load openings. Check your connection and try again.",
+      "retry": "Try again",
+      "contract_full_time": "Full-time",
+      "contract_part_time": "Part-time",
+      "contract_temporary": "Temporary",
+      "contract_internship": "Internship",
+      "work_on_site": "On-site",
+      "work_hybrid": "Hybrid",
+      "work_remote": "Remote",
+      "time_today": "Today",
+      "time_yesterday": "Yesterday",
+      "time_days_ago": "{count} days ago",
+      "time_weeks_ago": "{count} weeks ago",
+      "time_months_ago": "{count} months ago",
+      "preview_empty": "No active openings to show."
     }
   },
   "sidebar": {

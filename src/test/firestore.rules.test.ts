@@ -246,4 +246,57 @@ describe("Firestore rules — job_offers (empresa)", () => {
     );
     expect(err).toBeDefined();
   });
+
+  it("permite migrante com conta ativa candidatar-se a vaga active", async () => {
+    const migrantUid = "migrantApply01";
+    const companyUid = "companyJobOwner01";
+    const jobId = "jobActive01";
+
+    await testEnv.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await db.collection("users").doc(migrantUid).set({
+        email: "m@t.com",
+        name: "Migrante",
+        role: "migrant",
+        active: true,
+        blocked: false,
+      });
+      await db.collection("users").doc(companyUid).set({
+        email: "c@t.com",
+        name: "Empresa",
+        role: "company",
+        active: true,
+        blocked: false,
+      });
+      await db.collection("companies").doc(companyUid).set({
+        user_id: companyUid,
+        company_name: "Empresa X",
+        verified: false,
+      });
+      await db.collection("job_offers").doc(jobId).set({
+        company_id: companyUid,
+        title: "Cargo",
+        description: "D",
+        location: "Lisboa",
+        sector: "TI",
+        contract_type: "full_time",
+        work_mode: "on_site",
+        salary_range: null,
+        requirements: null,
+        status: "active",
+        created_at: new Date().toISOString(),
+      });
+    });
+
+    const authed = testEnv.authenticatedContext(migrantUid);
+    await assertSucceeds(
+      authed.firestore().collection("job_applications").add({
+        job_id: jobId,
+        applicant_id: migrantUid,
+        cover_letter: "Olá",
+        status: "submitted",
+        created_at: new Date().toISOString(),
+      })
+    );
+  });
 });

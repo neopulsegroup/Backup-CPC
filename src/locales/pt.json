@@ -648,6 +648,33 @@
       "psicologico": "Psicológico",
       "habitacional": "Habitacional",
       "necessidades": "Necessidades básicas"
+    },
+    "migrant_jobs": {
+      "title": "Ofertas de Emprego",
+      "subtitle": "Encontre oportunidades de trabalho em Portugal",
+      "search_placeholder": "Pesquisar por cargo, empresa ou palavra-chave...",
+      "all_sectors": "Todos os setores",
+      "all_locations": "Todas as localizações",
+      "offers_found": "{count} oferta(s) encontrada(s)",
+      "empty_filtered_title": "Nenhuma oferta encontrada",
+      "empty_filtered_hint": "Tente ajustar os filtros de pesquisa",
+      "empty_active_title": "Não há ofertas ativas de momento",
+      "empty_active_hint": "Volte mais tarde ou contacte a equipa CPC para apoio.",
+      "load_error": "Não foi possível carregar as ofertas. Verifique a ligação e tente novamente.",
+      "retry": "Tentar novamente",
+      "contract_full_time": "Tempo inteiro",
+      "contract_part_time": "Part-time",
+      "contract_temporary": "Temporário",
+      "contract_internship": "Estágio",
+      "work_on_site": "Presencial",
+      "work_hybrid": "Híbrido",
+      "work_remote": "Remoto",
+      "time_today": "Hoje",
+      "time_yesterday": "Ontem",
+      "time_days_ago": "Há {count} dias",
+      "time_weeks_ago": "Há {count} semanas",
+      "time_months_ago": "Há {count} meses",
+      "preview_empty": "Sem ofertas ativas para mostrar."
     }
   },
   "sidebar": {
