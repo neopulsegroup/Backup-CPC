@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { addDocument, serverTimestamp, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { addDocument, queryDocuments, serverTimestamp, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { CirclePlus, EllipsisVertical, Loader2, Paperclip, Phone, Send, Smile, Video } from 'lucide-react';
+import { CirclePlus, EllipsisVertical, Loader2, MessageSquare, Paperclip, Phone, Send, Smile, Video } from 'lucide-react';
+
+type UserRow = { id: string; name?: string | null; email?: string | null; role?: string | null };
 
 type ConversationDoc = {
   id: string;
@@ -68,6 +72,10 @@ function normalizeRole(value?: string | null): string {
     .trim();
 }
 
+function isCpcRole(role: string): boolean {
+  return ['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer', 'cpc'].includes(role);
+}
+
 function inferConversationRole(conversation: ConversationDoc): 'company' | 'cpc' | 'other' {
   const fromRole = normalizeRole(conversation.recipient_role);
   if (fromRole === 'company' || fromRole === 'empresa') return 'company';
@@ -97,6 +105,9 @@ export default function MigrantMessagesPage() {
   const [messages, setMessages] = useState<MessageDoc[]>([]);
 
   const [compose, setCompose] = useState('');
+  const [newOpen, setNewOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [creating, setCreating] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -194,6 +205,68 @@ export default function MigrantMessagesPage() {
     }
   }
 
+  async function createConversation() {
+    if (!user?.uid || !isMigrant) return;
+    const email = newEmail.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailValid, variant: 'destructive' });
+      return;
+    }
+    setCreating(true);
+    try {
+      const users = await queryDocuments<UserRow>('users', [{ field: 'email', operator: '==', value: email }], undefined, 1);
+      const target = users[0];
+      if (!target?.id) {
+        toast({ title: t.common.notFoundTitle, description: t.messagesPage.validation.noUserWithEmail, variant: 'destructive' });
+        return;
+      }
+      if (target.id === user.uid) {
+        toast({ title: t.common.validationTitle, description: t.messagesPage.validation.emailDifferent, variant: 'destructive' });
+        return;
+      }
+      const targetRole = normalizeRole(target.role);
+      if (!isCpcRole(targetRole)) {
+        toast({ title: t.common.validationTitle, description: t.messagesPage.validation.targetMustBeCpc, variant: 'destructive' });
+        return;
+      }
+
+      const existing = await queryDocuments<ConversationDoc>(
+        'conversations',
+        [{ field: 'participants', operator: 'array-contains', value: user.uid }],
+        undefined,
+        100
+      );
+      const match = existing.find((c) => (c.participants || []).includes(target.id) && (c.participants || []).length === 2);
+      if (match?.id) {
+        setActiveConversationId(match.id);
+        setNewEmail('');
+        setNewOpen(false);
+        return;
+      }
+
+      const id = await addDocument('conversations', {
+        participants: [user.uid, target.id],
+        created_by: user.uid,
+        created_by_role: 'migrant',
+        type: 'support_request',
+        title: target.name || target.email || t.messagesPage.conversationFallbackTitle,
+        subtitle: 'Equipa CPC',
+        recipient_role: targetRole || null,
+        last_message_text: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      setActiveConversationId(id);
+      setNewEmail('');
+      setNewOpen(false);
+      toast({ title: t.messagesPage.toast.conversationCreatedTitle, description: t.messagesPage.toast.conversationCreatedDesc });
+    } catch {
+      toast({ title: t.common.errorTitle, description: t.messagesPage.errors.createConversation, variant: 'destructive' });
+    } finally {
+      setCreating(false);
+    }
+  }
+
   if (!user?.uid) {
     return <div className="cpc-card p-8 text-center text-sm text-muted-foreground">{t.messagesPage.auth.signInToAccess}</div>;
   }
@@ -225,7 +298,10 @@ export default function MigrantMessagesPage() {
           <div className="p-6">
             <div className="flex items-center justify-between gap-4">
               <h1 className="text-2xl font-bold tracking-tight">{t.messagesPage.title}</h1>
-              <span className="text-xs text-muted-foreground">Resposta apenas</span>
+              <Button size="sm" onClick={() => setNewOpen(true)}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                {t.messagesPage.newAction}
+              </Button>
             </div>
 
             <p className="text-sm text-muted-foreground mt-3">
@@ -425,6 +501,23 @@ export default function MigrantMessagesPage() {
           </div>
         </div>
       </div>
+
+      <Dialog open={newOpen} onOpenChange={(open) => (creating ? null : setNewOpen(open))}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{t.messagesPage.dialog.title}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t.messagesPage.dialog.recipientEmailLabelSupport}</p>
+            <Input value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder={t.messagesPage.dialog.emailPlaceholder} />
+            <div className="flex items-center justify-end gap-2">
+              <Button variant="outline" onClick={() => setNewOpen(false)} disabled={creating}>{t.common.cancel}</Button>
+              <Button onClick={() => void createConversation()} disabled={creating}>
+                {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+                {t.common.create}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </>
   );

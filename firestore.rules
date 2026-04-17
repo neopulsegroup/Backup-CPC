@@ -232,10 +232,18 @@ service cloud.firestore {
         && userRole() in ['migrant', 'migrante', 'refugiado', 'imigrante'];
     }
 
+    // Equipa CPC com perfil mas sem users/{uid} (legado / importação): isCpcStaff() exige isAccountEnabled() e falhava aqui.
+    function cpcStaffProfileFallbackWhenNoUserDoc() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && userRole() in ['admin', 'mediator', 'lawyer', 'psychologist', 'manager', 'coordinator', 'trainer'];
+    }
+
     function messagingAccountEnabled() {
       return isAccountEnabled()
         || employerProfileFallbackWhenNoUserDoc()
-        || migrantProfileFallbackWhenNoUserDoc();
+        || migrantProfileFallbackWhenNoUserDoc()
+        || cpcStaffProfileFallbackWhenNoUserDoc();
     }
 
     function employerPublisherRoleMatch() {

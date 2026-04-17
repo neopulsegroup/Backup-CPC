@@ -20,7 +20,22 @@ import {
 } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
-import { Users, Eye, Ban, CheckCircle, AlertTriangle, Clock, ClipboardList, Download, FileSpreadsheet, FileText, Loader2, Trash2 } from 'lucide-react';
+import {
+  Users,
+  Eye,
+  Ban,
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  ClipboardList,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { todayIsoAppCalendar } from '@/lib/appCalendar';
 import { defaultBranding, fetchDocumentBranding } from '@/lib/documentBranding';
 import {
@@ -126,6 +141,9 @@ export default function MigrantsAdminPage() {
   const [langFilter, setLangFilter] = useState<'all' | 'iniciante' | 'intermediario' | 'avancado'>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'juridico' | 'psicologico' | 'habitacional'>('all');
   const [triageFilter, setTriageFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
+  const [nameSortDir, setNameSortDir] = useState<'asc' | 'desc'>('asc');
+  const [pageSize, setPageSize] = useState<10 | 20 | 50>(10);
+  const [pageIndex, setPageIndex] = useState(0);
   const [selectedTriage, setSelectedTriage] = useState<MigrantRow | null>(null);
   const [exporting, setExporting] = useState<'csv' | 'xlsx' | 'pdf' | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MigrantRow | null>(null);
@@ -709,6 +727,36 @@ export default function MigrantsAdminPage() {
     });
   }, [rows, query, legalFilter, workFilter, langFilter, urgencyFilter, triageFilter]);
 
+  const filteredSorted = useMemo(() => {
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      const cmp = (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+      return nameSortDir === 'asc' ? cmp : -cmp;
+    });
+    return sorted;
+  }, [filtered, nameSortDir]);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [query, legalFilter, workFilter, langFilter, urgencyFilter, triageFilter, pageSize]);
+
+  useEffect(() => {
+    setPageIndex((p) => {
+      const totalPages = Math.max(1, Math.ceil(filteredSorted.length / pageSize));
+      return Math.min(p, totalPages - 1);
+    });
+  }, [filteredSorted.length, pageSize]);
+
+  const totalFiltered = filteredSorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const safePageIndex = Math.min(pageIndex, totalPages - 1);
+  const pagedRows = useMemo(() => {
+    const start = safePageIndex * pageSize;
+    return filteredSorted.slice(start, start + pageSize);
+  }, [filteredSorted, safePageIndex, pageSize]);
+  const showingFrom = totalFiltered === 0 ? 0 : safePageIndex * pageSize + 1;
+  const showingTo = Math.min(totalFiltered, safePageIndex * pageSize + pageSize);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -821,9 +869,74 @@ export default function MigrantsAdminPage() {
             </Select>
           </div>
         </div>
+
+        <div className="mt-6 pt-6 border-t flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-4">
+            <div className="min-w-[10rem]">
+              <Label className="text-muted-foreground">{t.get('cpc.migrantsAdmin.list.sortLabel')}</Label>
+              <Select value={nameSortDir} onValueChange={(v) => setNameSortDir(v as 'asc' | 'desc')}>
+                <SelectTrigger className="mt-1.5 h-11 w-full sm:w-[12rem]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="asc">{t.get('cpc.migrantsAdmin.list.sortAsc')}</SelectItem>
+                  <SelectItem value="desc">{t.get('cpc.migrantsAdmin.list.sortDesc')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="min-w-[10rem]">
+              <Label className="text-muted-foreground">{t.get('cpc.migrantsAdmin.list.pageSizeLabel')}</Label>
+              <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v) as 10 | 20 | 50)}>
+                <SelectTrigger className="mt-1.5 h-11 w-full sm:w-[8rem]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">{t.get('cpc.migrantsAdmin.list.pageSize10')}</SelectItem>
+                  <SelectItem value="20">{t.get('cpc.migrantsAdmin.list.pageSize20')}</SelectItem>
+                  <SelectItem value="50">{t.get('cpc.migrantsAdmin.list.pageSize50')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {totalFiltered > 0 ? (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                {t.get('cpc.migrantsAdmin.list.showing', { from: showingFrom, to: showingTo, total: totalFiltered })}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  disabled={safePageIndex <= 0}
+                  onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+                  aria-label={t.get('cpc.migrantsAdmin.list.prev')}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm tabular-nums text-center min-w-[8rem]">
+                  {t.get('cpc.migrantsAdmin.list.pageOf', { page: safePageIndex + 1, pages: totalPages })}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 shrink-0"
+                  disabled={safePageIndex >= totalPages - 1}
+                  onClick={() => setPageIndex((p) => Math.min(totalPages - 1, p + 1))}
+                  aria-label={t.get('cpc.migrantsAdmin.list.next')}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {totalFiltered === 0 ? (
         <div className="cpc-card p-12 text-center">
           <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="font-semibold mb-2">{t.get('cpc.migrantsAdmin.empty.title')}</h3>
@@ -831,7 +944,7 @@ export default function MigrantsAdminPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map(r => (
+          {pagedRows.map((r) => (
             <div key={r.user_id} className="cpc-card p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">

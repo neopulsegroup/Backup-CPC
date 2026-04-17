@@ -708,6 +708,7 @@
       "title": "Nueva conversación",
       "recipientEmailLabel": "Email del destinatario (empresa o equipo)",
       "recipientEmailLabelUser": "Email del usuario",
+      "recipientEmailLabelSupport": "Email del equipo CPC (soporte)",
       "emailPlaceholder": "email@dominio.com"
     },
     "auth": {
@@ -723,7 +724,8 @@
     "validation": {
       "emailValid": "Introduce un email válido.",
       "noUserWithEmail": "No existe un usuario con ese email.",
-      "emailDifferent": "Elige un email diferente al tuyo."
+      "emailDifferent": "Elige un email diferente al tuyo.",
+      "targetMustBeCpc": "Solo puedes iniciar conversaciones con el equipo CPC."
     },
     "toast": {
       "conversationCreatedTitle": "Conversación creada",
@@ -1897,6 +1899,19 @@
           "complete": "Completa",
           "incomplete": "Incompleta"
         }
+      },
+      "list": {
+        "sortLabel": "Ordenar por nombre",
+        "sortAsc": "A–Z (ascendente)",
+        "sortDesc": "Z–A (descendente)",
+        "pageSizeLabel": "Migrantes por página",
+        "pageSize10": "10",
+        "pageSize20": "20",
+        "pageSize50": "50",
+        "showing": "Mostrando {from}–{to} de {total}",
+        "pageOf": "Página {page} de {pages}",
+        "prev": "Página anterior",
+        "next": "Página siguiente"
       },
       "empty": {
         "title": "No migrants found",
