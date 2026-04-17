@@ -2162,12 +2162,12 @@
     },
     "home": {
       "stats": {
-        "activeOffers": "Active jobs",
+        "activeOffers": "Open job posts",
         "receivedApplications": "Applications received",
         "viewedCandidates": "Viewed candidates",
         "hires": "Hires"
       },
-      "activeJobsTitle": "Active jobs",
+      "activeJobsTitle": "Your job posts",
       "applicationsCount": "{count} applications",
       "recentApplicationsTitle": "Recent applications",
       "promo": {

@@ -20,6 +20,7 @@ import CandidateProfilePage from './company/CandidateProfilePage';
 import CandidatesPage from './company/CandidatesPage';
 import CompanyApplicationsPage from './company/CompanyApplicationsPage';
 import CompanyMessagesPage from './company/MessagesPage';
+import { bootstrapCompanyJobOfferScope, fetchCompanyHomeSnapshot, type CompanyHomeSnapshot } from './company/companyDashboardHomeData';
 
 function normalizeText(value?: string | null): string {
   if (!value) return '';
@@ -393,68 +394,113 @@ function CompanyProfilePage() {
   );
 }
 
+function companyHomeJobStatusClasses(status: string): string {
+  if (status === 'active') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'pending_review') return 'bg-sky-100 text-sky-700';
+  if (status === 'paused') return 'bg-amber-100 text-amber-700';
+  if (status === 'closed' || status === 'rejected') return 'bg-slate-100 text-slate-700';
+  return 'bg-muted text-muted-foreground';
+}
+
+function companyHomeJobStatusLabel(
+  status: string,
+  t: { get: (key: string, params?: Record<string, string | number>) => string }
+): string {
+  if (status === 'active') return t.get('company.offers.status.active');
+  if (status === 'pending_review') return t.get('company.offers.status.pending_review');
+  if (status === 'paused') return t.get('company.offers.status.paused');
+  if (status === 'closed' || status === 'rejected') return t.get('company.offers.status.closed');
+  return t.get('company.offers.status.other');
+}
+
+function companyHomeApplicationStatusClasses(status: string): string {
+  switch (status) {
+    case 'submitted':
+      return 'bg-blue-100 text-blue-700';
+    case 'reviewing':
+      return 'bg-yellow-100 text-yellow-700';
+    case 'interview':
+      return 'bg-purple-100 text-purple-700';
+    case 'accepted':
+      return 'bg-green-100 text-green-700';
+    case 'rejected':
+      return 'bg-red-100 text-red-700';
+    default:
+      return 'bg-muted text-muted-foreground';
+  }
+}
+
+const EMPTY_HOME_SNAPSHOT: CompanyHomeSnapshot = {
+  stats: { activeOffers: 0, receivedApplications: 0, viewedCandidates: 0, hires: 0 },
+  activeJobs: [],
+  recentApplications: [],
+};
+
 function CompanyHome() {
-  const { t } = useLanguage();
+  const { user, profile, profileData } = useAuth();
+  const { language, t } = useLanguage();
+  const { toast } = useToast();
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [snapshot, setSnapshot] = useState<CompanyHomeSnapshot>(EMPTY_HOME_SNAPSHOT);
+
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const shortDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        day: '2-digit',
+        month: 'short',
+      }),
+    [locale]
+  );
+  const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!user) {
+        if (!cancelled) {
+          setSnapshot(EMPTY_HOME_SNAPSHOT);
+          setLoading(false);
+        }
+        return;
+      }
+      setLoading(true);
+      try {
+        const scope = await bootstrapCompanyJobOfferScope(user, profile, profileData);
+        if (cancelled) return;
+        if (!scope.companyId || scope.jobOfferCompanyIds.length === 0) {
+          setSnapshot(EMPTY_HOME_SNAPSHOT);
+          return;
+        }
+        const data = await fetchCompanyHomeSnapshot(scope.jobOfferCompanyIds, t.get('company.applications.unknownApplicant'));
+        if (!cancelled) setSnapshot(data);
+      } catch (error) {
+        console.error('Error loading company home dashboard:', error);
+        if (!cancelled) {
+          toast({
+            title: t.get('company.createJob.errors.loadFailedTitle'),
+            description: t.get('company.createJob.errors.loadFailedDesc'),
+            variant: 'destructive',
+          });
+          setSnapshot(EMPTY_HOME_SNAPSHOT);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, profile, profileData, location.key, t, toast]);
 
   const stats = [
-    { label: t.get('company.home.stats.activeOffers'), value: 3, icon: Briefcase },
-    { label: t.get('company.home.stats.receivedApplications'), value: 12, icon: FileText },
-    { label: t.get('company.home.stats.viewedCandidates'), value: 8, icon: Eye },
-    { label: t.get('company.home.stats.hires'), value: 2, icon: CheckCircle },
+    { label: t.get('company.home.stats.activeOffers'), value: snapshot.stats.activeOffers, icon: Briefcase },
+    { label: t.get('company.home.stats.receivedApplications'), value: snapshot.stats.receivedApplications, icon: FileText },
+    { label: t.get('company.home.stats.viewedCandidates'), value: snapshot.stats.viewedCandidates, icon: Eye },
+    { label: t.get('company.home.stats.hires'), value: snapshot.stats.hires, icon: CheckCircle },
   ];
-
-  const activeJobs = [
-    {
-      id: 1,
-      title: 'Auxiliar de Limpeza',
-      location: 'Lisboa',
-      applications: 5,
-      status: 'active',
-      postedDate: '25 Nov',
-    },
-    {
-      id: 2,
-      title: 'Operador de Armazém',
-      location: 'Sintra',
-      applications: 4,
-      status: 'active',
-      postedDate: '20 Nov',
-    },
-    {
-      id: 3,
-      title: 'Assistente Administrativo',
-      location: 'Lisboa',
-      applications: 3,
-      status: 'in_review',
-      postedDate: '15 Nov',
-    },
-  ];
-
-  const recentCandidates = [
-    { id: 1, name: 'Maria Silva', position: 'Auxiliar de Limpeza', date: '02 Dez', status: 'new' },
-    { id: 2, name: 'Ahmed Hassan', position: 'Operador de Armazém', date: '01 Dez', status: 'viewed' },
-    { id: 3, name: 'Ana Pereira', position: 'Auxiliar de Limpeza', date: '30 Nov', status: 'in_analysis' },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-700';
-      case 'in_review':
-        return 'bg-yellow-100 text-yellow-700';
-      case 'new':
-        return 'bg-blue-100 text-blue-700';
-      case 'viewed':
-      case 'in_analysis':
-        return 'bg-muted text-muted-foreground';
-      default:
-        return 'bg-muted text-muted-foreground';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    return t.get(`company.status.${status}`);
-  };
 
   return (
     <>
@@ -469,7 +515,9 @@ function CompanyHome() {
             </div>
             <div className="mt-4">
               <p className="text-xs tracking-widest text-muted-foreground font-semibold">{stat.label}</p>
-              <p className="text-2xl font-bold leading-tight mt-1">{stat.value}</p>
+              <p className="text-2xl font-bold leading-tight mt-1">
+                {loading ? '—' : numberFormatter.format(stat.value)}
+              </p>
             </div>
           </div>
         ))}
@@ -488,66 +536,84 @@ function CompanyHome() {
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {activeJobs.map((job) => (
-              <Link
-                key={job.id}
-                to="/dashboard/empresa/ofertas"
-                className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 hover:bg-muted transition-colors"
-              >
-                <div>
-                  <p className="font-medium">{job.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {job.location} • {t.get('company.home.applicationsCount', { count: job.applications })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(job.status)}`}>
-                    {getStatusLabel(job.status)}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Link>
-            ))}
-          </div>
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">{t.get('company.offers.loading')}</div>
+          ) : snapshot.activeJobs.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6">{t.get('company.offers.empty.subtitle')}</p>
+          ) : (
+            <div className="space-y-3">
+              {snapshot.activeJobs.map((job) => (
+                <Link
+                  key={job.id}
+                  to={`/dashboard/empresa/ofertas/${job.id}/candidaturas`}
+                  className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 hover:bg-muted transition-colors"
+                >
+                  <div>
+                    <p className="font-medium">{job.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {job.location} • {t.get('company.home.applicationsCount', { count: job.applications })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded-full ${companyHomeJobStatusClasses(job.status)}`}>
+                      {companyHomeJobStatusLabel(job.status, t)}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Recent Candidates */}
+        {/* Recent applications */}
         <div className="cpc-card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-semibold flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
               {t.get('company.home.recentApplicationsTitle')}
             </h2>
-            <Link to="/dashboard/empresa/candidatos" className="text-sm text-primary hover:underline">
+            <Link to="/dashboard/empresa/candidaturas" className="text-sm text-primary hover:underline">
               {t.get('company.common.viewAll')}
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {recentCandidates.map((candidate) => (
-              <Link
-                key={candidate.id}
-                to={`/dashboard/empresa/candidatos/${candidate.id}`}
-                className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 hover:bg-muted transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-medium">
-                    {candidate.name.charAt(0)}
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">{t.get('company.offers.loading')}</div>
+          ) : snapshot.recentApplications.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6">{t.get('company.applicationsHub.empty.noApplicationsSubtitle')}</p>
+          ) : (
+            <div className="space-y-3">
+              {snapshot.recentApplications.map((row) => (
+                <Link
+                  key={row.id}
+                  to={`/dashboard/empresa/ofertas/${row.jobId}/candidaturas`}
+                  className="flex items-center justify-between p-4 rounded-2xl bg-muted/40 hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-medium shrink-0">
+                      {row.applicantName.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{row.applicantName}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {row.jobTitle} •{' '}
+                        {(() => {
+                          const d = new Date(row.createdAt || '');
+                          return Number.isNaN(d.getTime()) ? '—' : shortDateFormatter.format(d);
+                        })()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium">{candidate.name}</p>
-                    <p className="text-sm text-muted-foreground">{candidate.position}</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2 py-1 rounded-full ${companyHomeApplicationStatusClasses(row.status)}`}>
+                      {t.get(`company.applications.status.${row.status}`)}
+                    </span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(candidate.status)}`}>
-                    {getStatusLabel(candidate.status)}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info Card */}

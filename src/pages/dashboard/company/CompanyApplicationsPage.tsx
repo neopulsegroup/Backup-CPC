@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDocument, queryDocuments, setDocument, updateDocument } from '@/integrations/firebase/firestore';
+import { resolveJobOfferCompanyIds } from '@/pages/dashboard/company/companyDashboardHomeData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
@@ -122,7 +123,7 @@ export default function CompanyApplicationsPage() {
         if (typeof direct.verified !== 'boolean') patch.verified = false;
         if (Object.keys(patch).length > 0) await setDocument('companies', uid, patch, true);
         setCompanyId(uid);
-        setJobOfferCompanyIds([uid]);
+        setJobOfferCompanyIds(await resolveJobOfferCompanyIds(uid));
         return;
       }
 
@@ -153,7 +154,7 @@ export default function CompanyApplicationsPage() {
           true
         );
         setCompanyId(uid);
-        setJobOfferCompanyIds(legacy.id !== uid ? [uid, legacy.id] : [uid]);
+        setJobOfferCompanyIds(await resolveJobOfferCompanyIds(uid));
         return;
       }
 
@@ -175,7 +176,7 @@ export default function CompanyApplicationsPage() {
           true
         );
         setCompanyId(uid);
-        setJobOfferCompanyIds([uid]);
+        setJobOfferCompanyIds(await resolveJobOfferCompanyIds(uid));
         return;
       }
 
@@ -227,12 +228,16 @@ export default function CompanyApplicationsPage() {
           queryDocuments<ApplicationDoc>(
             'job_applications',
             [{ field: 'job_id', operator: '==', value: jobId }],
-            { field: 'created_at', direction: 'desc' },
+            undefined,
             APPLICATIONS_PER_JOB_LIMIT
           )
         )
       );
-      const flatApps = appsNested.flat();
+      const flatApps = appsNested.flat().sort((a, b) => {
+        const ta = new Date(createdAtToIso(a.created_at)).getTime();
+        const tb = new Date(createdAtToIso(b.created_at)).getTime();
+        return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
+      });
 
       const applicantIds = Array.from(new Set(flatApps.map((a) => a.applicant_id).filter((id): id is string => Boolean(id))));
       const profileDocs = await Promise.all(

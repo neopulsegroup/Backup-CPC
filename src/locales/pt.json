@@ -2147,12 +2147,12 @@
     },
     "home": {
       "stats": {
-        "activeOffers": "Ofertas Ativas",
+        "activeOffers": "Ofertas em curso",
         "receivedApplications": "Candidaturas Recebidas",
         "viewedCandidates": "Candidatos Visualizados",
         "hires": "Contratações"
       },
-      "activeJobsTitle": "Ofertas Ativas",
+      "activeJobsTitle": "As suas ofertas",
       "applicationsCount": "{count} candidaturas",
       "recentApplicationsTitle": "Candidaturas Recentes",
       "promo": {

@@ -53,11 +53,16 @@ export default function JobApplicationsPage() {
       if (jobData) setJob(jobData);
 
       // Fetch applications with applicant profiles
-      const appsData = await queryDocuments<{ id: string; cover_letter: string | null; status: string; created_at: string; applicant_id: string }>(
+      const appsDataRaw = await queryDocuments<{ id: string; cover_letter: string | null; status: string; created_at: string; applicant_id: string }>(
         'job_applications',
         [{ field: 'job_id', operator: '==', value: jobId }],
-        { field: 'created_at', direction: 'desc' }
+        undefined
       );
+      const appsData = [...appsDataRaw].sort((a, b) => {
+        const ta = new Date(a.created_at || '').getTime();
+        const tb = new Date(b.created_at || '').getTime();
+        return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
+      });
 
       if (appsData.length > 0) {
         // Fetch applicant profiles

@@ -2162,12 +2162,12 @@
     },
     "home": {
       "stats": {
-        "activeOffers": "Ofertas activas",
+        "activeOffers": "Ofertas en curso",
         "receivedApplications": "Candidaturas recibidas",
         "viewedCandidates": "Candidatos vistos",
         "hires": "Contrataciones"
       },
-      "activeJobsTitle": "Ofertas activas",
+      "activeJobsTitle": "Sus ofertas",
       "applicationsCount": "{count} candidaturas",
       "recentApplicationsTitle": "Candidaturas recientes",
       "promo": {

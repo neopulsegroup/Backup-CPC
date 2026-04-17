@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { countDocuments, getDocument, queryDocuments, setDocument, updateDocument } from '@/integrations/firebase/firestore';
+import { resolveJobOfferCompanyIds } from '@/pages/dashboard/company/companyDashboardHomeData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -117,7 +118,7 @@ export default function MyJobsPage() {
         if (typeof direct.verified !== 'boolean') patch.verified = false;
         if (Object.keys(patch).length > 0) await setDocument('companies', uid, patch, true);
         setCompanyId(uid);
-        setJobOfferCompanyIds([uid]);
+        setJobOfferCompanyIds(await resolveJobOfferCompanyIds(uid));
         return;
       }
 
@@ -151,7 +152,7 @@ export default function MyJobsPage() {
           true
         );
         setCompanyId(uid);
-        setJobOfferCompanyIds(legacy.id !== uid ? [uid, legacy.id] : [uid]);
+        setJobOfferCompanyIds(await resolveJobOfferCompanyIds(uid));
         return;
       }
 
@@ -169,7 +170,7 @@ export default function MyJobsPage() {
           true
         );
         setCompanyId(uid);
-        setJobOfferCompanyIds([uid]);
+        setJobOfferCompanyIds(await resolveJobOfferCompanyIds(uid));
         return;
       }
 

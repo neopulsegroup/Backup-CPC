@@ -70,11 +70,16 @@ export default function CandidateProfilePage() {
         setResumeUrl(getDemoResume(candidateId));
       }
 
-      const apps = await queryDocuments<{ id: string; created_at: string; status: string | null; job_id: string }>(
+      const appsRaw = await queryDocuments<{ id: string; created_at: string; status: string | null; job_id: string }>(
         'job_applications',
         [{ field: 'applicant_id', operator: '==', value: candidateId }],
-        { field: 'created_at', direction: 'desc' }
+        undefined
       );
+      const apps = [...appsRaw].sort((a, b) => {
+        const ta = new Date(a.created_at || '').getTime();
+        const tb = new Date(b.created_at || '').getTime();
+        return (Number.isNaN(tb) ? 0 : tb) - (Number.isNaN(ta) ? 0 : ta);
+      });
 
       if (apps.length > 0) {
         const jobIds = Array.from(new Set(apps.map(a => a.job_id).filter(Boolean)));
