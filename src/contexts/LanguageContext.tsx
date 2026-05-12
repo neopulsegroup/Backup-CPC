@@ -160,6 +160,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     (async () => {
       const nextSettings = await loadSettings();
       if (cancelled) return;
+
+      // In dev, bundled locale files are the source of truth unless explicitly testing remote copy.
+      // Otherwise Firestore `i18n_overrides` + localStorage cache hide local edits to pt/en/es.json.
+      if (import.meta.env.DEV && import.meta.env.VITE_I18N_FIRESTORE_OVERRIDES !== 'true') {
+        setPtOverrides(null);
+        setOverrides(null);
+        return;
+      }
+
       if (!nextSettings.enabled) {
         setOverrides(null);
         setPtOverrides(null);

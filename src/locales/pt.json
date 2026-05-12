@@ -159,24 +159,18 @@
   "hero": {
     "title": "Unindo Talento",
     "titleHighlight": "Sem Fronteiras",
-    "subtitle": "Uma plataforma para a integração socioprofissional, ligando migrantes com equipas técnicas e empresas visionárias prontas para crescerem juntas.",
+    "subtitle": "Uma plataforma para a integração socioprofissional, ligando migrantes com equipas técnicas e empresas visionárias prontas para crescerem juntas. Projeto desenvolvido para migrantes na região do Algarve.",
     "iAm": "Eu sou",
     "migrant": "Pessoa Migrante",
     "company": "Empresa"
-  },
-  "stats": {
-    "professionals": "Profissionais Ligados",
-    "companies": "Empresas Parceiras",
-    "success": "Taxa de Sucesso",
-    "trails": "Programas de Formação"
   },
   "process": {
     "badge": "O Nosso Processo",
     "title": "Como funciona o Portal CPC",
     "subtitle": "Simplificamos o percurso, tanto para o talento como para as organizações, em três pilares fundamentais de sucesso.",
     "step1": {
-      "title": "Formação Especializada",
-      "description": "Acesso a workshops técnicos, cursos de línguas e formação em competências transversais adaptadas às exigências atuais do mercado."
+      "title": "Apoio Especializado",
+      "description": "Informação e orientação sobre cultura, enquadramento legal, sistema de saúde e documentação, para uma integração clara e sem incertezas."
     },
     "step2": {
       "title": "Apoio Personalizado",

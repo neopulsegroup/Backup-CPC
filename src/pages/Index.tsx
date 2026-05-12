@@ -15,13 +15,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export default function Index() {
   const { t } = useLanguage();
 
-  const stats = [
-    { value: '500+', label: t.stats.professionals },
-    { value: '120+', label: t.stats.companies },
-    { value: '95%', label: t.stats.success },
-    { value: '15+', label: t.stats.trails },
-  ];
-
   const processSteps = [
     {
       icon: GraduationCap,
@@ -83,22 +76,6 @@ export default function Index() {
 
         {/* Background decorative blob */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-100/50 rounded-full blur-3xl -z-10 opacity-60 pointer-events-none" />
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 border-y border-slate-100 bg-white">
-        <div className="cpc-container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-100/0 md:divide-slate-100">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center p-4">
-                <div className="text-4xl md:text-5xl font-bold text-primary mb-2 tracking-tight">
-                  {stat.value}
-                </div>
-                <div className="text-sm font-medium text-slate-500 uppercase tracking-wide">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* Process Section */}

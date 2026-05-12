@@ -159,24 +159,18 @@
   "hero": {
     "title": "Uniting Talent",
     "titleHighlight": "Without Borders",
-    "subtitle": "A platform for socio-professional integration, connecting migrants with technical teams and visionary companies ready to grow together.",
+    "subtitle": "Una plataforma para la integración socioprofesional, conectando migrantes con equipos técnicos y empresas visionarias listas para crecer juntas. Proyecto desarrollado para migrantes en la región del Algarve.",
     "iAm": "I am a",
     "migrant": "Migrant",
     "company": "Company"
-  },
-  "stats": {
-    "professionals": "Connected Professionals",
-    "companies": "Partner Companies",
-    "success": "Success Rate",
-    "trails": "Training Programs"
   },
   "process": {
     "badge": "Our Process",
     "title": "How Portal CPC works",
     "subtitle": "We simplify the journey, for both talent and organizations, across three fundamental pillars of success.",
     "step1": {
-      "title": "Specialized Training",
-      "description": "Access to technical workshops, language courses, and soft skills training adapted to current market demands."
+      "title": "Apoyo Especializado",
+      "description": "Información y orientación sobre cultura, marco legal, sistema de salud y documentación, para una integración clara y sin incertidumbres."
     },
     "step2": {
       "title": "Personalized Support",
