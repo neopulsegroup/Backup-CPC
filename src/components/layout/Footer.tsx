@@ -107,6 +107,15 @@ export function Footer() {
         </div>
 
 
+        {/* Portugal Inovação Social — contexto */}
+        <div className="border-t border-border pt-8 mb-8">
+          <div className="max-w-4xl mx-auto text-sm text-muted-foreground leading-relaxed space-y-4 text-center md:text-left">
+            <p>{t.footer.socialInclusionIntro}</p>
+            <p className="font-medium text-foreground/90">{t.footer.socialInclusionPhases}</p>
+            <p>{t.footer.socialInclusionClosing}</p>
+          </div>
+        </div>
+
         {/* Support Logos */}
         <div className="border-t border-border pt-8 mb-8 flex flex-col items-center gap-4">
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t.footer.coFunded}</p>
