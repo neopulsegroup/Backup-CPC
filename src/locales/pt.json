@@ -66,8 +66,8 @@
     "info": {
       "email": "E-mail",
       "phone": "Telefone",
-      "address": "Morada",
-      "hours": "Horário"
+      "hours": "Horário",
+      "hoursValue": "09-17h"
     },
     "form": {
       "name": "Nome",

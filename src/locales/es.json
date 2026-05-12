@@ -66,8 +66,8 @@
     "info": {
       "email": "Email",
       "phone": "Phone",
-      "address": "Address",
-      "hours": "Hours"
+      "hours": "Hours",
+      "hoursValue": "09-17h"
     },
     "form": {
       "name": "Name",

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
+import { Mail, Phone, Clock, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { addDocument, getDocument, serverTimestamp } from '@/integrations/firebase/firestore';
 import { buildContactNotificationMail, isValidEmail, normalizeEmail } from '@/pages/dashboard/cpc/settingsUtils';
@@ -66,8 +66,7 @@ export default function Contact() {
   const contactInfo = [
     { icon: Mail, label: t.contact.info.email, value: 'geral@cibea.eu' },
     { icon: Phone, label: t.contact.info.phone, value: '+351 225 088 015' },
-    { icon: MapPin, label: t.contact.info.address, value: 'Algarve (Portugal)' },
-    { icon: Clock, label: t.contact.info.hours, value: 'Seg-Sex: 9h-18h' },
+    { icon: Clock, label: t.contact.info.hours, value: t.contact.info.hoursValue },
   ];
 
   const faqs = t.contact.faqs;
