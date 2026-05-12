@@ -43,20 +43,30 @@
   "howItWorks": {
     "title": "How It Works",
     "subtitle": "A structured path to your success.",
-    "steps": {
+    "migrantHeading": "As a migrant",
+    "migrantSteps": {
       "step1": {
-        "title": "Specialized Training",
-        "description": "Technical and cultural training."
+        "title": "Registration & triage",
+        "description": "Account creation with an initial questionnaire to assess needs. This gathers information on legal status, housing, existing skills and interests, as well as warning signs or urgent situations to be addressed."
       },
       "step2": {
-        "title": "Close Support",
-        "description": "Mentoring and legal/social support."
+        "title": "Profile & actions",
+        "description": "The system builds a needs profile and suggests first steps."
       },
       "step3": {
-        "title": "Market Integration",
-        "description": "Direct connection to partner companies."
+        "title": "Scheduling",
+        "description": "Booking sessions with the technical team (lawyer, psychologist)."
+      },
+      "step4": {
+        "title": "Training",
+        "description": "Access to learning paths with suitable recommendations."
       }
     },
+    "companyHeading": "As a company",
+    "companyLead": "The CPC portal works both ways:",
+    "companyBullet1": "the candidate builds their profile, CV and searches for opportunities",
+    "companyBullet2": "the employer posts their vacancies and finds talent",
+    "companyMatch": "The system itself matches the most suitable profiles to the openings.",
     "ctaTitle": "Ready to start your journey?",
     "ctaSubtitle": "Register for free and start your integration journey today."
   },

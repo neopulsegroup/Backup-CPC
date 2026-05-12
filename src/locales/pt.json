@@ -43,20 +43,30 @@
   "howItWorks": {
     "title": "Como Funciona",
     "subtitle": "Um percurso estruturado para o seu sucesso.",
-    "steps": {
+    "migrantHeading": "Enquanto migrante",
+    "migrantSteps": {
       "step1": {
-        "title": "Formação Especializada",
-        "description": "Capacitação técnica e cultural."
+        "title": "Registo & Triagem",
+        "description": "Criação de conta com questionário inicial para avaliar as necessidades. Trata-se de recolher informações sobre a situação legal, habitação, competências adquiridas e interesses, além de sinais de alerta ou situações urgentes a serem resolvidas."
       },
       "step2": {
-        "title": "Apoio de Proximidade",
-        "description": "Mentoria e suporte jurídico/social."
+        "title": "Perfil & Ações",
+        "description": "O sistema cria um perfil de necessidades e sugere os primeiros passos."
       },
       "step3": {
-        "title": "Integração no Mercado",
-        "description": "Ligação direta a empresas parceiras."
+        "title": "Agendamento",
+        "description": "Marcação de sessões com a equipa técnica (jurista, psicólogo)."
+      },
+      "step4": {
+        "title": "Formação",
+        "description": "Acesso a trilhas formativas com recomendações adequadas."
       }
     },
+    "companyHeading": "Enquanto empresa",
+    "companyLead": "O portal CPC é uma via com 2 sentidos:",
+    "companyBullet1": "o candidato constrói o seu perfil, currículo e procura oportunidades",
+    "companyBullet2": "o empregador coloca as suas ofertas e encontra talento",
+    "companyMatch": "O próprio sistema dá match entre os perfis mais adequados e as vagas.",
     "ctaTitle": "Pronto para iniciar o seu percurso?",
     "ctaSubtitle": "Registe-se gratuitamente e comece hoje a sua jornada de integração."
   },

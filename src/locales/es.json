@@ -41,24 +41,34 @@
     }
   },
   "howItWorks": {
-    "title": "How It Works",
-    "subtitle": "A structured path to your success.",
-    "steps": {
+    "title": "Cómo funciona",
+    "subtitle": "Un recorrido estructurado para tu éxito.",
+    "migrantHeading": "Como persona migrante",
+    "migrantSteps": {
       "step1": {
-        "title": "Specialized Training",
-        "description": "Technical and cultural training."
+        "title": "Registro y triaje",
+        "description": "Creación de cuenta con un cuestionario inicial para evaluar las necesidades. Se recopila información sobre la situación legal, la vivienda, las competencias adquiridas y los intereses, además de señales de alerta o situaciones urgentes a resolver."
       },
       "step2": {
-        "title": "Close Support",
-        "description": "Mentoring and legal/social support."
+        "title": "Perfil y acciones",
+        "description": "El sistema crea un perfil de necesidades y sugiere los primeros pasos."
       },
       "step3": {
-        "title": "Market Integration",
-        "description": "Direct connection to partner companies."
+        "title": "Agenda",
+        "description": "Reserva de sesiones con el equipo técnico (abogado, psicólogo)."
+      },
+      "step4": {
+        "title": "Formación",
+        "description": "Acceso a itinerarios formativos con recomendaciones adecuadas."
       }
     },
-    "ctaTitle": "Ready to start your journey?",
-    "ctaSubtitle": "Register for free and start your integration journey today."
+    "companyHeading": "Como empresa",
+    "companyLead": "El portal CPC es una vía de doble sentido:",
+    "companyBullet1": "el candidato construye su perfil, currículum y busca oportunidades",
+    "companyBullet2": "el empleador publica sus ofertas y encuentra talento",
+    "companyMatch": "El propio sistema empareja los perfiles más adecuados con las vacantes.",
+    "ctaTitle": "¿Listo para empezar tu recorrido?",
+    "ctaSubtitle": "Regístrate gratis y comienza hoy tu proceso de integración."
   },
   "contact": {
     "title": "Contact Us",
