@@ -18,10 +18,27 @@
     "title": "Sobre o Portal CPC",
     "subtitle": "Conheça a nossa missão e os valores que nos movem.",
     "mission": "A Nossa Missão",
-    "missionText": "Facilitar a integração socioprofissional de pessoas migrantes em Portugal, criando pontes sustentáveis entre talento e oportunidade.",
+    "missionText": "Facilitar a integração socioprofissional de pessoas migrantes no Algarve, criando pontes sustentáveis entre talento e oportunidade.",
     "missionQuote": "O CPC nasceu da necessidade de criar pontes entre pessoas migrantes e o mercado de trabalho português, oferecendo um percurso completo de capacitação, apoio e integração.",
     "values": "Os Nossos Valores",
-    "areas": "Áreas de Atuação"
+    "valuesCards": {
+      "inclusion": {
+        "title": "Inclusão",
+        "description": "Acreditamos que todos merecem oportunidades iguais."
+      },
+      "empathy": {
+        "title": "Empatia",
+        "description": "Tratamos cada pessoa com respeito e consideração."
+      },
+      "cooperation": {
+        "title": "Cooperação",
+        "description": "Trabalhamos juntos para alcançar objetivos comuns."
+      },
+      "sustainability": {
+        "title": "Sustentabilidade",
+        "description": "Construímos soluções duradouras e impactantes."
+      }
+    }
   },
   "howItWorks": {
     "title": "Como Funciona",
