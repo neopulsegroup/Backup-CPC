@@ -107,6 +107,7 @@ function experiencesToPlainText(entries: CvExperienceEntry[]): string {
 function localeTag(language: Language): string {
   if (language === 'pt') return 'pt-PT';
   if (language === 'es') return 'es';
+  if (language === 'fr') return 'fr-FR';
   return 'en';
 }
 

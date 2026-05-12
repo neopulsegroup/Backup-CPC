@@ -1826,8 +1826,10 @@ export default function ProfilePage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pt">Português</SelectItem>
-                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="pt">{t.common.languages.pt}</SelectItem>
+                    <SelectItem value="en">{t.common.languages.en}</SelectItem>
+                    <SelectItem value="es">{t.common.languages.es}</SelectItem>
+                    <SelectItem value="fr">{t.common.languages.fr}</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (

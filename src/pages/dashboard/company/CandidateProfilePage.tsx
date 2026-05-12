@@ -179,7 +179,7 @@ export default function CandidateProfilePage() {
     );
   }
 
-  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
 
   return (
     <Layout>

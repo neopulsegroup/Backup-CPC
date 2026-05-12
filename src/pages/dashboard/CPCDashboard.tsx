@@ -204,6 +204,7 @@ export default function CPCDashboard() {
   const locale = useMemo(() => {
     if (language === 'en') return 'en-GB';
     if (language === 'es') return 'es-ES';
+    if (language === 'fr') return 'fr-FR';
     return 'pt-PT';
   }, [language]);
 

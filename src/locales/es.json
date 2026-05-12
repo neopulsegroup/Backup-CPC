@@ -269,7 +269,8 @@
     "languages": {
       "pt": "Portugués",
       "en": "Inglés",
-      "es": "Español"
+      "es": "Español",
+      "fr": "Francés"
     }
   },
   "auth": {
@@ -2121,37 +2122,37 @@
     }
   },
   "cpcTranslations": {
-    "title": "Translations",
-    "subtitle": "Manage translations (PT/EN/ES), validate completeness and publish a new cached version.",
-    "no_permission": "You do not have permission to manage translations.",
+    "title": "Traducciones",
+    "subtitle": "Gestiona traducciones (PT/EN/ES/FR), valida la completitud y publica una nueva versión con caché.",
+    "no_permission": "No tienes permisos para gestionar traducciones.",
     "actions": {
-      "validate": "Validate",
-      "publish": "Publish ({count})"
+      "validate": "Validar",
+      "publish": "Publicar ({count})"
     },
     "search": {
-      "label": "Search by key",
-      "placeholder": "E.g.: dashboard.overview"
+      "label": "Buscar por clave",
+      "placeholder": "Ej.: dashboard.overview"
     },
     "settings": {
-      "enabled": "Remote overrides enabled",
-      "version": "Version: {version}"
+      "enabled": "Overrides remotos activos",
+      "version": "Versión: {version}"
     },
     "runtimeMissing": {
-      "title": "Missing keys (runtime)",
-      "clear": "Clear log",
-      "cleared": "Log cleared."
+      "title": "Claves faltantes (runtime)",
+      "clear": "Limpiar registro",
+      "cleared": "Registro limpiado."
     },
     "table": {
-      "key": "Key"
+      "key": "Clave"
     },
     "validation": {
-      "title": "Translation validation",
-      "hint": "Missing content should be filled (in code or via overrides) before publishing.",
-      "incomplete_draft": "{count} draft keys are incomplete (fill PT/EN/ES)."
+      "title": "Validación de traducciones",
+      "hint": "El contenido faltante debe completarse (en código o mediante overrides) antes de publicar.",
+      "incomplete_draft": "{count} claves del borrador están incompletas (completa PT/EN/ES/FR)."
     },
     "publish": {
-      "nothing_to_publish": "There are no changes to publish.",
-      "success": "Translations published. Version {version}."
+      "nothing_to_publish": "No hay cambios para publicar.",
+      "success": "Traducciones publicadas. Versión {version}."
     }
   },
   "company": {

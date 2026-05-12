@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Cookies() {
   const { language, t } = useLanguage();
-  const dateLocale = language === 'pt' ? 'pt-PT' : language === 'es' ? 'es-ES' : 'en-GB';
+  const dateLocale = language === 'pt' ? 'pt-PT' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'en-GB';
   const updatedAt = new Intl.DateTimeFormat(dateLocale, {
     year: 'numeric',
     month: '2-digit',

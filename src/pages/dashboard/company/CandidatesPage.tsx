@@ -208,7 +208,7 @@ export default function CandidatesPage() {
   const { toast } = useToast();
 
   const numberFormatter = useMemo(() => {
-    const locale = language === 'pt' ? 'pt-PT' : language === 'es' ? 'es-ES' : 'en-US';
+    const locale = language === 'pt' ? 'pt-PT' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'en-US';
     return new Intl.NumberFormat(locale);
   }, [language]);
 

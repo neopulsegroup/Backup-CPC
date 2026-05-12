@@ -11,7 +11,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 type I18nSettingsDoc = { id: string; enabled?: boolean; version?: number };
-type I18nOverrideDoc = { id: string; pt?: string; en?: string; es?: string; updatedAt?: unknown };
+type I18nOverrideDoc = { id: string; pt?: string; en?: string; es?: string; fr?: string; updatedAt?: unknown };
 
 function safeJsonParse<T>(value: string | null): T | null {
   if (!value) return null;
@@ -39,7 +39,7 @@ function safeLocalStorageSet(key: string, value: string) {
 }
 
 function isLanguage(value: unknown): value is Language {
-  return value === 'pt' || value === 'en' || value === 'es';
+  return value === 'pt' || value === 'en' || value === 'es' || value === 'fr';
 }
 
 function trackMissingKey(lang: Language, path: string) {
@@ -162,7 +162,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
 
       // In dev, bundled locale files are the source of truth unless explicitly testing remote copy.
-      // Otherwise Firestore `i18n_overrides` + localStorage cache hide local edits to pt/en/es.json.
+      // Otherwise Firestore `i18n_overrides` + localStorage cache hide local edits to locale files.
       if (import.meta.env.DEV && import.meta.env.VITE_I18N_FIRESTORE_OVERRIDES !== 'true') {
         setPtOverrides(null);
         setOverrides(null);

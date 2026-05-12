@@ -362,7 +362,7 @@ export default function MyJobsPage() {
     return { label: t.get('company.offers.status.other'), color: 'bg-muted text-muted-foreground' };
   };
 
-  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
   const numberFormatter = new Intl.NumberFormat(locale);
   const dateFormatter = useMemo(
     () =>

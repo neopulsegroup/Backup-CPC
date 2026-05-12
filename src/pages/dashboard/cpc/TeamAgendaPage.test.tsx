@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import TeamAgendaPage from './TeamAgendaPage';
 
-let currentLanguage: 'pt' | 'en' | 'es' = 'pt';
+let currentLanguage: 'pt' | 'en' | 'es' | 'fr' = 'pt';
 
 const messages = {
   pt: {
@@ -239,7 +239,7 @@ function interpolate(template: string, params?: Record<string, string | number>)
 vi.mock('@/contexts/LanguageContext', () => ({
   useLanguage: () => ({
     language: currentLanguage,
-    setLanguage: (next: 'pt' | 'en' | 'es') => {
+    setLanguage: (next: 'pt' | 'en' | 'es' | 'fr') => {
       currentLanguage = next;
     },
     t: {

@@ -116,7 +116,7 @@ export default function JobApplicationsPage() {
     }
   };
 
-  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
 
   if (loading) {
     return (

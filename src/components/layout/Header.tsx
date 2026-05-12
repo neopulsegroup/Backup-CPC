@@ -107,6 +107,13 @@ export function Header() {
               >
                 ES
               </button>
+              <span>|</span>
+              <button
+                onClick={() => setLanguage('fr')}
+                className={`hover:text-primary transition-colors ${language === 'fr' ? 'text-primary' : ''}`}
+              >
+                FR
+              </button>
             </div>
 
             {/* Auth Buttons / User Menu */}

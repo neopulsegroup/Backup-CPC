@@ -444,7 +444,7 @@ function CompanyHome() {
   const [loading, setLoading] = useState(true);
   const [snapshot, setSnapshot] = useState<CompanyHomeSnapshot>(EMPTY_HOME_SNAPSHOT);
 
-  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
   const shortDateFormatter = useMemo(
     () =>
       new Intl.DateTimeFormat(locale, {
@@ -718,7 +718,7 @@ export default function CompanyDashboard() {
     return isGeneric ? (derivedFromEmail || t.get('company.menu.user_fallback')) : rawName;
   })();
 
-  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
   const longDateFormatter = new Intl.DateTimeFormat(locale);
 
   const sidebarItemsMain = [

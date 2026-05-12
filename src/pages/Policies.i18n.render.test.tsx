@@ -3,7 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import Cookies from '@/pages/Cookies';
 import Privacy from '@/pages/Privacy';
 
-type Language = 'pt' | 'en' | 'es';
+type Language = 'pt' | 'en' | 'es' | 'fr';
 
 const mockedLanguageState = vi.hoisted(() => ({
   language: 'pt' as Language,
@@ -58,7 +58,7 @@ async function renderPrivacy(lang: Language) {
 }
 
 describe('Policies pages - render in multiple languages', () => {
-  it('renders Cookies in PT/EN/ES', async () => {
+  it('renders Cookies in PT/EN/ES/FR', async () => {
     await renderCookies('pt');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
     cleanup();
@@ -69,9 +69,13 @@ describe('Policies pages - render in multiple languages', () => {
 
     await renderCookies('es');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    cleanup();
+
+    await renderCookies('fr');
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 
-  it('renders Privacy in PT/EN/ES', async () => {
+  it('renders Privacy in PT/EN/ES/FR', async () => {
     await renderPrivacy('pt');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
     cleanup();
@@ -81,6 +85,10 @@ describe('Policies pages - render in multiple languages', () => {
     cleanup();
 
     await renderPrivacy('es');
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    cleanup();
+
+    await renderPrivacy('fr');
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
   });
 });

@@ -33,16 +33,18 @@ function scanCodeForGetKeys(rootDir: string): Set<string> {
 }
 
 describe('i18n - integridade', () => {
-  it('PT/EN/ES têm o mesmo conjunto de chaves (strings) e nenhuma chave vazia', () => {
+  it('PT/EN/ES/FR têm o mesmo conjunto de chaves (strings) e nenhuma chave vazia', () => {
     const ptKeys = new Set(flattenTranslationStringKeys(translations.pt));
     const enKeys = new Set(flattenTranslationStringKeys(translations.en));
     const esKeys = new Set(flattenTranslationStringKeys(translations.es));
+    const frKeys = new Set(flattenTranslationStringKeys(translations.fr));
 
     expect(toSortedArray(enKeys)).toEqual(toSortedArray(ptKeys));
     expect(toSortedArray(esKeys)).toEqual(toSortedArray(ptKeys));
+    expect(toSortedArray(frKeys)).toEqual(toSortedArray(ptKeys));
 
     for (const key of ptKeys) {
-      for (const lang of ['pt', 'en', 'es'] as const) {
+      for (const lang of ['pt', 'en', 'es', 'fr'] as const) {
         const value = getTranslationStringAtPath(lang, key);
         expect(value, `${lang}:${key} deve existir`).toBeTypeOf('string');
         expect(value?.trim(), `${lang}:${key} não deve ser vazio`).not.toBe('');

@@ -98,6 +98,7 @@ function formatMonthYear(ym: string, locale: string): string {
 function localeForLanguage(language: string): string {
   if (language === 'pt') return 'pt-PT';
   if (language === 'es') return 'es-ES';
+  if (language === 'fr') return 'fr-FR';
   return 'en-US';
 }
 

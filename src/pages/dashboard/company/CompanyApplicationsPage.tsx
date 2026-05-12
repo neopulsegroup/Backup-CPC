@@ -88,7 +88,7 @@ export default function CompanyApplicationsPage() {
   const [dateTo, setDateTo] = useState('');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
-  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : 'pt-PT';
+  const locale = language === 'en' ? 'en-GB' : language === 'es' ? 'es-ES' : language === 'fr' ? 'fr-FR' : 'pt-PT';
   const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
 
   useEffect(() => {

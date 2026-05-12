@@ -10,9 +10,9 @@ import { flattenTranslationStringKeys, getTranslationStringAtPath, Language, tra
 import { toast } from 'sonner';
 
 type I18nSettingsDoc = { id: string; enabled?: boolean; version?: number };
-type I18nOverrideDoc = { id: string; pt?: string; en?: string; es?: string; updatedAt?: unknown };
+type I18nOverrideDoc = { id: string; pt?: string; en?: string; es?: string; fr?: string; updatedAt?: unknown };
 
-type DraftRow = { pt: string; en: string; es: string };
+type DraftRow = { pt: string; en: string; es: string; fr: string };
 
 const ALLOWED_ROLES = new Set(['admin', 'manager', 'coordinator']);
 
@@ -38,9 +38,9 @@ function getDisplayValue(args: {
 }
 
 function buildMissingReport(keys: string[]) {
-  const out: Record<Language, string[]> = { pt: [], en: [], es: [] };
+  const out: Record<Language, string[]> = { pt: [], en: [], es: [], fr: [] };
   for (const key of keys) {
-    (['pt', 'en', 'es'] as const).forEach((lang) => {
+    (['pt', 'en', 'es', 'fr'] as const).forEach((lang) => {
       const value = getTranslationStringAtPath(lang, key);
       if (!value || !value.trim()) out[lang].push(key);
     });
@@ -61,7 +61,7 @@ export default function TranslationsAdminPage() {
   const [query, setQuery] = useState('');
   const [validating, setValidating] = useState(false);
   const [validationOpen, setValidationOpen] = useState(false);
-  const [missing, setMissing] = useState<Record<Language, string[]>>({ pt: [], en: [], es: [] });
+  const [missing, setMissing] = useState<Record<Language, string[]>>({ pt: [], en: [], es: [], fr: [] });
 
   const baseKeys = useMemo(() => flattenTranslationStringKeys(translations.pt), []);
 
@@ -106,6 +106,7 @@ export default function TranslationsAdminPage() {
         pt: getDisplayValue({ keyPath, lang: 'pt', draft: prev, overrides }),
         en: getDisplayValue({ keyPath, lang: 'en', draft: prev, overrides }),
         es: getDisplayValue({ keyPath, lang: 'es', draft: prev, overrides }),
+        fr: getDisplayValue({ keyPath, lang: 'fr', draft: prev, overrides }),
       };
       return { ...prev, [keyPath]: { ...current, [lang]: value } };
     });
@@ -114,7 +115,7 @@ export default function TranslationsAdminPage() {
   function validateDraftCompleteness() {
     const incomplete: string[] = [];
     for (const [key, row] of Object.entries(draft)) {
-      if (!row.pt.trim() || !row.en.trim() || !row.es.trim()) incomplete.push(key);
+      if (!row.pt.trim() || !row.en.trim() || !row.es.trim() || !row.fr.trim()) incomplete.push(key);
     }
     return incomplete;
   }
@@ -145,7 +146,7 @@ export default function TranslationsAdminPage() {
 
     try {
       for (const [keyPath, row] of entries) {
-        await setDocument('i18n_overrides', keyPath, { pt: row.pt, en: row.en, es: row.es }, true);
+        await setDocument('i18n_overrides', keyPath, { pt: row.pt, en: row.en, es: row.es, fr: row.fr }, true);
       }
 
       const nextVersion = (settings.version ?? 0) + 1;
@@ -250,11 +251,12 @@ export default function TranslationsAdminPage() {
       </div>
 
       <div className="cpc-card p-0 overflow-hidden">
-        <div className="grid grid-cols-[minmax(220px,1.1fr)_minmax(220px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)] gap-px bg-border">
+        <div className="grid grid-cols-[minmax(220px,1.1fr)_minmax(220px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)_minmax(220px,1fr)] gap-px bg-border">
           <div className="bg-background p-3 text-xs font-semibold text-muted-foreground">{t.get('cpcTranslations.table.key')}</div>
           <div className="bg-background p-3 text-xs font-semibold text-muted-foreground">PT</div>
           <div className="bg-background p-3 text-xs font-semibold text-muted-foreground">EN</div>
           <div className="bg-background p-3 text-xs font-semibold text-muted-foreground">ES</div>
+          <div className="bg-background p-3 text-xs font-semibold text-muted-foreground">FR</div>
 
           {filteredKeys.map((keyPath) => (
             <div key={keyPath} className="contents">
@@ -277,6 +279,12 @@ export default function TranslationsAdminPage() {
                   onChange={(e) => updateDraft(keyPath, 'es', e.target.value)}
                 />
               </div>
+              <div className="bg-background p-2">
+                <Input
+                  value={getDisplayValue({ keyPath, lang: 'fr', draft, overrides })}
+                  onChange={(e) => updateDraft(keyPath, 'fr', e.target.value)}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -288,7 +296,7 @@ export default function TranslationsAdminPage() {
             <DialogTitle>{t.get('cpcTranslations.validation.title')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 text-sm">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="rounded-lg border p-3">
                 <p className="text-xs font-semibold text-muted-foreground">PT</p>
                 <p className="text-lg font-bold mt-1">{missing.pt.length}</p>
@@ -300,6 +308,10 @@ export default function TranslationsAdminPage() {
               <div className="rounded-lg border p-3">
                 <p className="text-xs font-semibold text-muted-foreground">ES</p>
                 <p className="text-lg font-bold mt-1">{missing.es.length}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs font-semibold text-muted-foreground">FR</p>
+                <p className="text-lg font-bold mt-1">{missing.fr.length}</p>
               </div>
             </div>
 

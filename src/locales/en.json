@@ -269,7 +269,8 @@
     "languages": {
       "pt": "Portuguese",
       "en": "English",
-      "es": "Spanish"
+      "es": "Spanish",
+      "fr": "French"
     }
   },
   "auth": {
@@ -2122,7 +2123,7 @@
   },
   "cpcTranslations": {
     "title": "Translations",
-    "subtitle": "Manage translations (PT/EN/ES), validate completeness and publish a new cached version.",
+    "subtitle": "Manage translations (PT/EN/ES/FR), validate completeness and publish a new cached version.",
     "no_permission": "You do not have permission to manage translations.",
     "actions": {
       "validate": "Validate",
@@ -2147,7 +2148,7 @@
     "validation": {
       "title": "Translation validation",
       "hint": "Missing content should be filled (in code or via overrides) before publishing.",
-      "incomplete_draft": "{count} draft keys are incomplete (fill PT/EN/ES)."
+      "incomplete_draft": "{count} draft keys are incomplete (fill PT/EN/ES/FR)."
     },
     "publish": {
       "nothing_to_publish": "There are no changes to publish.",
