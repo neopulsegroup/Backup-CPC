@@ -730,6 +730,38 @@
     "toast": {
       "conversationCreatedTitle": "Conversation created",
       "conversationCreatedDesc": "The new conversation was created successfully."
+    },
+    "export": {
+      "button": "Export",
+      "formats": {
+        "pdf": "PDF",
+        "docx": "DOCX",
+        "xlsx": "XLSX"
+      },
+      "nothingToExport": "There are no conversations to export with the current filter.",
+      "documentTitle": "Messages — CPC",
+      "intro": "Generated on {date}. Filter: {filter}.",
+      "filterAll": "All",
+      "filterMigrant": "Migrants",
+      "filterCompany": "Companies",
+      "filterCpc": "CPC team",
+      "tableConversations": "Conversations",
+      "colConvId": "ID",
+      "colConvTitle": "Title",
+      "colConvSubtitle": "Counterpart",
+      "colConvLast": "Last message",
+      "sectionMessages": "Messages (selected conversation)",
+      "noteActiveConversation": "Includes only messages from the currently selected conversation.",
+      "noteNoConversation": "No conversation selected: the messages table has no rows.",
+      "colMsgId": "ID",
+      "colMsgSender": "Sender",
+      "colMsgText": "Text",
+      "colMsgDate": "Date",
+      "sheets": {
+        "conversations": "Conversations",
+        "messages": "Messages"
+      },
+      "errorGeneric": "Could not complete the export."
     }
   },
   "migrant": {
@@ -1577,6 +1609,10 @@
       }
     },
     "agenda": {
+      "page": {
+        "title": "Agenda",
+        "subtitle": "View and manage team sessions."
+      },
       "header": {
         "today": "Today",
         "filterBy": "Filter by",
@@ -2011,7 +2047,8 @@
     },
     "pages": {
       "applications": {
-        "title": "Submitted applications",
+        "title": "Applications",
+        "subtitle": "Review applications submitted by migrants to job postings.",
         "empty": "No applications in this period"
       },
       "offers": {
@@ -2034,6 +2071,28 @@
           "reject": "Reject",
           "delete": "Delete"
         }
+      },
+      "statistics": {
+        "title": "Statistics",
+        "subtitle": "Indicators and reports with time and regional filters.",
+        "export": {
+          "button": "Export",
+          "formats": {
+            "pdf": "PDF",
+            "docx": "DOCX",
+            "xlsx": "XLSX"
+          }
+        }
+      },
+      "trails": {
+        "title": "Trails",
+        "subtitle": "Create and edit learning trails and their modules."
+      },
+      "settings": {
+        "title": "Settings",
+        "subtitle": "Manage notifications, SMTP and exported document branding.",
+        "loginRequired": "Sign in to access this page.",
+        "noPermission": "You do not have permission to access this section."
       }
     }
   },

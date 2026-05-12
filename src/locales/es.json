@@ -730,6 +730,38 @@
     "toast": {
       "conversationCreatedTitle": "Conversación creada",
       "conversationCreatedDesc": "La nueva conversación se creó correctamente."
+    },
+    "export": {
+      "button": "Exportar",
+      "formats": {
+        "pdf": "PDF",
+        "docx": "DOCX",
+        "xlsx": "XLSX"
+      },
+      "nothingToExport": "No hay conversaciones para exportar con el filtro actual.",
+      "documentTitle": "Mensajes — CPC",
+      "intro": "Generado el {date}. Filtro: {filter}.",
+      "filterAll": "Todas",
+      "filterMigrant": "Migrantes",
+      "filterCompany": "Empresas",
+      "filterCpc": "Equipo CPC",
+      "tableConversations": "Conversaciones",
+      "colConvId": "ID",
+      "colConvTitle": "Título",
+      "colConvSubtitle": "Interlocutor",
+      "colConvLast": "Último mensaje",
+      "sectionMessages": "Mensajes (conversación seleccionada)",
+      "noteActiveConversation": "Incluye solo los mensajes de la conversación seleccionada actualmente.",
+      "noteNoConversation": "Sin conversación seleccionada: la tabla de mensajes queda sin filas.",
+      "colMsgId": "ID",
+      "colMsgSender": "Remitente",
+      "colMsgText": "Texto",
+      "colMsgDate": "Fecha",
+      "sheets": {
+        "conversations": "Conversaciones",
+        "messages": "Mensajes"
+      },
+      "errorGeneric": "No se pudo completar la exportación."
     }
   },
   "migrant": {
@@ -1577,6 +1609,10 @@
       }
     },
     "agenda": {
+      "page": {
+        "title": "Agenda",
+        "subtitle": "Ver y gestionar las sesiones del equipo."
+      },
       "header": {
         "today": "Hoy",
         "filterBy": "Filtrar por",
@@ -2011,8 +2047,9 @@
     },
     "pages": {
       "applications": {
-        "title": "Submitted applications",
-        "empty": "No applications in this period"
+        "title": "Candidaturas",
+        "subtitle": "Consulte las candidaturas presentadas por migrantes a las ofertas de empleo.",
+        "empty": "No hay candidaturas en este periodo"
       },
       "offers": {
         "title": "Ofertas",
@@ -2034,6 +2071,28 @@
           "reject": "Rechazar",
           "delete": "Eliminar"
         }
+      },
+      "statistics": {
+        "title": "Estadísticas",
+        "subtitle": "Indicadores e informes con filtros temporales y regionales.",
+        "export": {
+          "button": "Exportar",
+          "formats": {
+            "pdf": "PDF",
+            "docx": "DOCX",
+            "xlsx": "XLSX"
+          }
+        }
+      },
+      "trails": {
+        "title": "Rutas formativas",
+        "subtitle": "Crear y editar rutas formativas y sus módulos."
+      },
+      "settings": {
+        "title": "Configuración",
+        "subtitle": "Gestión de notificaciones, SMTP e identidad visual de los documentos exportados.",
+        "loginRequired": "Inicie sesión para acceder.",
+        "noPermission": "No tiene permiso para acceder a esta sección."
       }
     }
   },

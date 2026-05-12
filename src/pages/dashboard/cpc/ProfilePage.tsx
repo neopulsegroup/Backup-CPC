@@ -16,7 +16,7 @@ import { getDocument, updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { storage } from '@/integrations/firebase/client';
 import { getDownloadURL, ref as makeStorageRef, uploadBytes } from 'firebase/storage';
-import { Camera, Loader2, Save, UserCog } from 'lucide-react';
+import { Building2, Camera, Loader2, Save, UserCog } from 'lucide-react';
 
 type ProfileDoc = {
   id: string;
@@ -183,12 +183,15 @@ export default function CPCProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t.cpc.profile.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t.cpc.profile.subtitle}</p>
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <Building2 className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            {t.cpc.profile.title}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t.cpc.profile.subtitle}</p>
         </div>
-        <div className="shrink-0 flex items-center gap-2">
+        <div className="shrink-0 flex items-center gap-2 self-start md:self-auto">
           {editMode ? (
             <>
               <Button variant="outline" onClick={cancel} disabled={saving || uploadingPhoto}>

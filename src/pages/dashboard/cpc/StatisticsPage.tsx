@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { queryDocuments, getDocument } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BarChart3, PieChart, Download, FileText, FileSpreadsheet, Users, CheckCircle } from 'lucide-react';
+import { Loader2, BarChart3, PieChart, Download, FileText, FileSpreadsheet, Users, CheckCircle, TrendingUp } from 'lucide-react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -88,7 +89,7 @@ function startEndForPeriod(year: number, period: 'year' | 'q1' | 'q2' | 'q3' | '
 }
 
 export default function StatisticsPage() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { toast } = useToast();
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [period, setPeriod] = useState<'year' | 'q1' | 'q2' | 'q3' | 'q4'>('year');
@@ -414,12 +415,15 @@ export default function StatisticsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Estatísticas</h1>
-          <p className="text-sm text-muted-foreground">Indicadores e relatórios com filtros temporais</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <TrendingUp className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            {t.get('cpc.pages.statistics.title')}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t.get('cpc.pages.statistics.subtitle')}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Ano" />
@@ -457,15 +461,28 @@ export default function StatisticsPage() {
               <SelectItem value="Desconhecida">Desconhecida</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleExportPdf} disabled={exporting !== null}>
-            {exporting?.format === 'pdf' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />} PDF
-          </Button>
-          <Button variant="outline" onClick={handleExportDocx} disabled={exporting !== null}>
-            {exporting?.format === 'docx' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />} DOCX
-          </Button>
-          <Button onClick={handleExportXlsx} disabled={exporting !== null}>
-            {exporting?.format === 'xlsx' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />} XLSX
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="gap-2" disabled={exporting !== null}>
+                {exporting !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {t.get('cpc.pages.statistics.export.button')}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExportPdf()}>
+                <FileText className="h-4 w-4 mr-2" />
+                {t.get('cpc.pages.statistics.export.formats.pdf')}
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExportDocx()}>
+                <Download className="h-4 w-4 mr-2" />
+                {t.get('cpc.pages.statistics.export.formats.docx')}
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExportXlsx()}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                {t.get('cpc.pages.statistics.export.formats.xlsx')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

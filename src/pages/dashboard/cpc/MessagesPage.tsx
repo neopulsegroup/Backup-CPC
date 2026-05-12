@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { addDocument, queryDocuments, serverTimestamp, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { CirclePlus, EllipsisVertical, Loader2, MessagesSquare, Paperclip, Phone, Plus, Send, Smile, Video } from 'lucide-react';
+import { CirclePlus, Download, EllipsisVertical, FileSpreadsheet, FileText, Loader2, MessagesSquare, Paperclip, Phone, Plus, Send, Smile, Video } from 'lucide-react';
+import { buildCpcMessagesDocx, buildCpcMessagesPrintHtml, buildCpcMessagesXlsx, formatMessageExportDate } from './messagesExport';
 
 type UserRow = { id: string; name?: string | null; email?: string | null; role?: string | null };
 type ConversationDoc = {
@@ -25,6 +27,7 @@ type MessageDoc = {
   conversation_id?: string | null;
   sender_id?: string | null;
   text?: string | null;
+  created_at?: unknown;
 };
 
 function normalizeRole(value?: string | null): string {
@@ -88,9 +91,18 @@ function updatedAtMs(value: unknown): number {
   return 0;
 }
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export default function CPCMessagesPage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +120,28 @@ export default function CPCMessagesPage() {
   const [noticeBody, setNoticeBody] = useState('');
   const [sendingNotice, setSendingNotice] = useState(false);
   const [filter, setFilter] = useState<'all' | 'migrant' | 'company' | 'cpc'>('all');
+  const [exporting, setExporting] = useState<'pdf' | 'docx' | 'xlsx' | null>(null);
+  const xlsxModuleRef = useRef<typeof import('xlsx') | null>(null);
+  const xlsxLoaderRef = useRef<Promise<typeof import('xlsx')> | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+
+  const locale = useMemo(() => {
+    if (language === 'en') return 'en-GB';
+    if (language === 'es') return 'es-ES';
+    return 'pt-PT';
+  }, [language]);
+
+  const filterLabel = useMemo(() => {
+    const key =
+      filter === 'all'
+        ? 'messagesPage.export.filterAll'
+        : filter === 'migrant'
+          ? 'messagesPage.export.filterMigrant'
+          : filter === 'company'
+            ? 'messagesPage.export.filterCompany'
+            : 'messagesPage.export.filterCpc';
+    return t.get(key);
+  }, [filter, t]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -167,6 +200,133 @@ export default function CPCMessagesPage() {
     if (filter === 'all') return conversations;
     return conversations.filter((c) => inferConversationRole(c) === filter);
   }, [conversations, filter]);
+
+  const handleExport = useCallback(
+    async (format: 'pdf' | 'docx' | 'xlsx') => {
+      if (filteredConversations.length === 0) {
+        toast({
+          title: t.common.validationTitle,
+          description: t.get('messagesPage.export.nothingToExport'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const convHeaders = [
+        t.get('messagesPage.export.colConvId'),
+        t.get('messagesPage.export.colConvTitle'),
+        t.get('messagesPage.export.colConvSubtitle'),
+        t.get('messagesPage.export.colConvLast'),
+      ];
+      const convRows = filteredConversations.map((c) => [
+        c.id,
+        c.title || '',
+        c.subtitle || '',
+        c.last_message_text || '',
+      ]);
+
+      const msgHeaders = [
+        t.get('messagesPage.export.colMsgId'),
+        t.get('messagesPage.export.colMsgSender'),
+        t.get('messagesPage.export.colMsgText'),
+        t.get('messagesPage.export.colMsgDate'),
+      ];
+      const msgRows = messages.map((m) => [
+        m.id,
+        m.sender_id || '',
+        m.text || '',
+        formatMessageExportDate(m.created_at, locale),
+      ]);
+
+      const dateStr = new Date().toLocaleString(locale);
+      const intro = t.get('messagesPage.export.intro', { date: dateStr, filter: filterLabel });
+      const messagesNote = activeConversationId
+        ? t.get('messagesPage.export.noteActiveConversation')
+        : t.get('messagesPage.export.noteNoConversation');
+
+      const ts = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+
+      setExporting(format);
+      try {
+        if (format === 'pdf') {
+          const html = buildCpcMessagesPrintHtml({
+            documentTitle: t.get('messagesPage.export.documentTitle'),
+            intro,
+            tableCaption: t.get('messagesPage.export.tableConversations'),
+            conversationHeaders: convHeaders,
+            conversationRows: convRows,
+            messagesSectionTitle: t.get('messagesPage.export.sectionMessages'),
+            messagesNote,
+            messageHeaders: msgHeaders,
+            messageRows: msgRows,
+          });
+          const w = window.open('', '_blank', 'noopener,noreferrer');
+          if (w) {
+            w.document.open();
+            w.document.write(html);
+            w.document.close();
+            try {
+              w.focus();
+            } catch {
+              /* no-op */
+            }
+          } else {
+            downloadBlob(new Blob([html], { type: 'text/html;charset=utf-8' }), `mensagens_cpc_${ts}.html`);
+          }
+          return;
+        }
+
+        if (format === 'xlsx') {
+          if (!xlsxModuleRef.current) {
+            if (!xlsxLoaderRef.current) {
+              xlsxLoaderRef.current = import('xlsx');
+            }
+            xlsxModuleRef.current = await xlsxLoaderRef.current;
+          }
+          const XLSX = xlsxModuleRef.current;
+          const buf = buildCpcMessagesXlsx(XLSX, {
+            conversationsSheetName: t.get('messagesPage.export.sheets.conversations'),
+            conversationHeaders: convHeaders,
+            conversationRows: convRows,
+            messagesSheetName: t.get('messagesPage.export.sheets.messages'),
+            messageHeaders: msgHeaders,
+            messageRows: msgRows,
+          });
+          downloadBlob(
+            new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+            `mensagens_cpc_${ts}.xlsx`
+          );
+          return;
+        }
+
+        const docx = await import('docx');
+        const blob = await buildCpcMessagesDocx(docx, {
+          title: t.get('messagesPage.export.documentTitle'),
+          paragraphs: [intro, messagesNote],
+          conversationHeaders: convHeaders,
+          conversationRows: convRows,
+          messagesHeading: t.get('messagesPage.export.sectionMessages'),
+          messageHeaders: msgHeaders,
+          messageRows: msgRows,
+        });
+        downloadBlob(blob, `mensagens_cpc_${ts}.docx`);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : t.get('messagesPage.export.errorGeneric');
+        toast({ title: t.common.errorTitle, description: message, variant: 'destructive' });
+      } finally {
+        setExporting(null);
+      }
+    },
+    [
+      activeConversationId,
+      filteredConversations,
+      filterLabel,
+      locale,
+      messages,
+      t,
+      toast,
+    ]
+  );
 
   async function send() {
     if (!user?.uid || !activeConversationId) return;
@@ -306,6 +466,28 @@ export default function CPCMessagesPage() {
             <div className="flex items-center justify-between gap-3">
               <h1 className="text-2xl font-bold tracking-tight">{t.messagesPage.title}</h1>
               <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-2" disabled={exporting !== null}>
+                      {exporting !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      {t.get('messagesPage.export.button')}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('pdf')}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      {t.get('messagesPage.export.formats.pdf')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('docx')}>
+                      <Download className="h-4 w-4 mr-2" />
+                      {t.get('messagesPage.export.formats.docx')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={exporting !== null} onSelect={() => void handleExport('xlsx')}>
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      {t.get('messagesPage.export.formats.xlsx')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button size="sm" variant="outline" onClick={() => setNoticeOpen(true)}>Aviso coletivo</Button>
                 <Button size="sm" onClick={() => setNewOpen(true)}><Plus className="h-4 w-4 mr-2" />{t.messagesPage.newAction}</Button>
               </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,7 @@ import { httpsCallable } from 'firebase/functions';
 import { functions } from '@/integrations/firebase/functionsClient';
 import { storage } from '@/integrations/firebase/client';
 import { getDownloadURL, ref as makeStorageRef, uploadBytes } from 'firebase/storage';
+import { Settings } from 'lucide-react';
 
 import { isValidEmail, normalizeEmail, parsePort, redactSettingsForAudit, sanitizeHost, sanitizeUsername, type CpcSystemSettings, type SmtpSecurity } from './settingsUtils';
 
@@ -171,6 +173,7 @@ function brandingSnapshot(input: BrandingSettings): Record<string, unknown> {
 
 export default function CPCSettingsPage() {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const isAdmin = profile?.role === 'admin';
@@ -522,18 +525,32 @@ export default function CPCSettingsPage() {
 
   if (!user || !profile) {
     return (
-      <div className="cpc-card p-6">
-        <h1 className="text-xl font-semibold">Configurações</h1>
-        <p className="text-sm text-muted-foreground mt-2">Inicie sessão para aceder.</p>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <Settings className="h-7 w-7 text-primary shrink-0" aria-hidden />
+              {t.get('cpc.pages.settings.title')}
+            </h1>
+            <p className="text-muted-foreground mt-1">{t.get('cpc.pages.settings.loginRequired')}</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="cpc-card p-6">
-        <h1 className="text-xl font-semibold">Configurações</h1>
-        <p className="text-sm text-destructive mt-2">Sem permissão para aceder a esta secção.</p>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <Settings className="h-7 w-7 text-primary shrink-0" aria-hidden />
+              {t.get('cpc.pages.settings.title')}
+            </h1>
+            <p className="text-destructive mt-1">{t.get('cpc.pages.settings.noPermission')}</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -542,10 +559,13 @@ export default function CPCSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Configurações</h1>
-          <p className="text-sm text-muted-foreground">Gestão de notificações, SMTP e preferências do sistema.</p>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <Settings className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            {t.get('cpc.pages.settings.title')}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t.get('cpc.pages.settings.subtitle')}</p>
         </div>
       </div>
 

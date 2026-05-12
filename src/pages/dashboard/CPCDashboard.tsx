@@ -738,36 +738,47 @@ export default function CPCDashboard() {
     }, []);
 
     return (
-      <div className="cpc-section">
-        <div className="cpc-container">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold">{t.get('cpc.pages.applications.title')}</h2>
-            <Link to="/dashboard/cpc" className="text-sm text-primary hover:underline">{t.get('cpc.actions.back')}</Link>
+      <div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+              <FileText className="h-7 w-7 text-primary shrink-0" aria-hidden />
+              {t.get('cpc.pages.applications.title')}
+            </h1>
+            <p className="text-muted-foreground mt-1">{t.get('cpc.pages.applications.subtitle')}</p>
           </div>
-          {loadingList ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {rows.map(r => (
-                <div key={r.id} className="cpc-card p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{r.applicant}</p>
-                    <p className="text-sm text-muted-foreground">{r.email} • {r.job}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm">{new Date(r.created_at).toLocaleString(locale)}</p>
-                    <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">{r.status}</span>
-                  </div>
-                </div>
-              ))}
-              {rows.length === 0 && (
-                <div className="cpc-card p-12 text-center text-muted-foreground">{t.get('cpc.pages.applications.empty')}</div>
-              )}
-            </div>
-          )}
+          <Link
+            to="/dashboard/cpc"
+            className="text-sm text-primary hover:underline shrink-0 self-start md:self-auto"
+          >
+            {t.get('cpc.actions.back')}
+          </Link>
         </div>
+        {loadingList ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {rows.map((r) => (
+              <div key={r.id} className="cpc-card p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{r.applicant}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {r.email} • {r.job}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm">{new Date(r.created_at).toLocaleString(locale)}</p>
+                  <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">{r.status}</span>
+                </div>
+              </div>
+            ))}
+            {rows.length === 0 && (
+              <div className="cpc-card p-12 text-center text-muted-foreground">{t.get('cpc.pages.applications.empty')}</div>
+            )}
+          </div>
+        )}
       </div>
     );
   }

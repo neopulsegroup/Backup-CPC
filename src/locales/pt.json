@@ -730,6 +730,38 @@
     "toast": {
       "conversationCreatedTitle": "Conversa criada",
       "conversationCreatedDesc": "A nova conversa foi criada com sucesso."
+    },
+    "export": {
+      "button": "Exportar",
+      "formats": {
+        "pdf": "PDF",
+        "docx": "DOCX",
+        "xlsx": "XLSX"
+      },
+      "nothingToExport": "Não há conversas para exportar com o filtro atual.",
+      "documentTitle": "Mensagens — CPC",
+      "intro": "Gerado em {date}. Filtro: {filter}.",
+      "filterAll": "Todas",
+      "filterMigrant": "Migrantes",
+      "filterCompany": "Empresas",
+      "filterCpc": "Equipa CPC",
+      "tableConversations": "Conversas",
+      "colConvId": "ID",
+      "colConvTitle": "Título",
+      "colConvSubtitle": "Interlocutor",
+      "colConvLast": "Última mensagem",
+      "sectionMessages": "Mensagens (conversa selecionada)",
+      "noteActiveConversation": "Inclui apenas as mensagens da conversa atualmente selecionada.",
+      "noteNoConversation": "Sem conversa selecionada: a tabela de mensagens fica sem linhas.",
+      "colMsgId": "ID",
+      "colMsgSender": "Remetente",
+      "colMsgText": "Texto",
+      "colMsgDate": "Data",
+      "sheets": {
+        "conversations": "Conversas",
+        "messages": "Mensagens"
+      },
+      "errorGeneric": "Não foi possível concluir a exportação."
     }
   },
   "migrant": {
@@ -1296,7 +1328,7 @@
     },
     "profile": {
       "title": "Perfil",
-      "subtitle": "Gerencie os dados da sua conta e preferências de contacto.",
+      "subtitle": "Gerir os dados da sua conta e preferências de contacto.",
       "actions": {
         "edit": "Editar"
       },
@@ -1577,6 +1609,10 @@
       }
     },
     "agenda": {
+      "page": {
+        "title": "Agenda",
+        "subtitle": "Ver e gerir sessões da equipa."
+      },
       "header": {
         "today": "Hoje",
         "filterBy": "Filtrar por",
@@ -1996,7 +2032,8 @@
     },
     "pages": {
       "applications": {
-        "title": "Candidaturas enviadas",
+        "title": "Candidaturas",
+        "subtitle": "Consulte as candidaturas submetidas por migrantes às ofertas de emprego.",
         "empty": "Sem candidaturas no período"
       },
       "offers": {
@@ -2019,6 +2056,28 @@
           "reject": "Rejeitar",
           "delete": "Excluir"
         }
+      },
+      "statistics": {
+        "title": "Estatísticas",
+        "subtitle": "Indicadores e relatórios com filtros temporais e regionais.",
+        "export": {
+          "button": "Exportar",
+          "formats": {
+            "pdf": "PDF",
+            "docx": "DOCX",
+            "xlsx": "XLSX"
+          }
+        }
+      },
+      "trails": {
+        "title": "Trilhas",
+        "subtitle": "Criar e editar trilhas formativas e respetivos módulos."
+      },
+      "settings": {
+        "title": "Configurações",
+        "subtitle": "Gestão de notificações, SMTP e identidade visual dos documentos exportados.",
+        "loginRequired": "Inicie sessão para aceder.",
+        "noPermission": "Sem permissão para aceder a esta secção."
       }
     }
   },

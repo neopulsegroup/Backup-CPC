@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   AlignLeft,
   Bold,
+  Calendar,
   CalendarDays,
   Check,
   ChevronDown,
@@ -224,7 +225,18 @@ export default function TeamAgendaPage() {
   }, [lastAutosavedAt, t]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-white shadow-sm [overflow-wrap:anywhere]">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <Calendar className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            {t.get('cpc.agenda.page.title')}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t.get('cpc.agenda.page.subtitle')}</p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border bg-white shadow-sm [overflow-wrap:anywhere]">
       <Dialog open={eventInfoOpen} onOpenChange={setEventInfoOpen}>
         <DialogContent
           hideClose
@@ -527,7 +539,7 @@ export default function TeamAgendaPage() {
               <button className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100">
                 <ChevronRight className="h-4 w-4" />
               </button>
-                <h1 className="truncate text-lg font-semibold capitalize leading-none tracking-tight text-slate-900 sm:text-xl md:text-2xl">{monthTitle}</h1>
+                <h2 className="truncate text-lg font-semibold capitalize leading-none tracking-tight text-slate-900 sm:text-xl md:text-2xl">{monthTitle}</h2>
                 <Button variant="outline" className="h-8 rounded-lg border-slate-200 px-3.5 text-xs font-semibold md:h-9 md:text-sm">
                   {t.get('cpc.agenda.header.today')}
                 </Button>
@@ -725,6 +737,7 @@ export default function TeamAgendaPage() {
           </div>
         </aside>
       </div>
+    </div>
     </div>
   );
 }

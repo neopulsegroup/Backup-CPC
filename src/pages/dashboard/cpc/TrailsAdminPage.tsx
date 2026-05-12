@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { addDocument, queryDocuments, updateDocument } from '@/integrations/firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ function writeTrailsCache(data: Trail[]) {
 }
 
 export default function TrailsAdminPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [trails, setTrails] = useState<Trail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -369,11 +371,14 @@ export default function TrailsAdminPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-primary" />
-          Gerir Trilhas Formativas
-        </h1>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <BookOpen className="h-7 w-7 text-primary shrink-0" aria-hidden />
+            {t.get('cpc.pages.trails.title')}
+          </h1>
+          <p className="text-muted-foreground mt-1">{t.get('cpc.pages.trails.subtitle')}</p>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
