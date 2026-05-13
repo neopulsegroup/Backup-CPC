@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { addDocument, getDocument, queryDocuments, serverTimestamp, subscribeDocument, subscribeQuery, updateDocument } from '@/integrations/firebase/firestore';
+import { getDocument, subscribeDocument, subscribeQuery } from '@/integrations/firebase/firestore';
 import { loadActiveJobOfferRows } from '@/features/jobs/loadActiveJobOffers';
 import { formatActivityDurationShort, formatActivityStatusListLabel } from '@/features/activities/model';
 import { loadParticipantActivitiesForUser, MAX_PARTICIPANT_ACTIVITIES_QUERY_LIMIT } from '@/features/activities/participantActivityList';
@@ -25,8 +25,6 @@ import {
   Bell,
   AlertTriangle,
   AlertCircle,
-  MessageCircle,
-  MessageSquare,
   FileText,
   Settings,
   ClipboardList,
@@ -35,11 +33,10 @@ import {
   Search,
   ListChecks,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { todayIsoAppCalendar } from '@/lib/appCalendar';
 import { computeMigrantProfileCompletenessPercent } from '@/lib/migrantProfileCompleteness';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
@@ -119,8 +116,6 @@ function MigrantHome() {
   const [urgentOpen, setUrgentOpen] = useState(false);
   const [urgentType, setUrgentType] = useState<'juridico' | 'psicologico' | 'habitacional' | 'necessidades'>('juridico');
   const [urgentDesc, setUrgentDesc] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{ id: string; text: string; date: string; from: 'migrante' | 'cpc' }>>([]);
-  const [chatInput, setChatInput] = useState('');
   const [extras, setExtras] = useState<{ nationality?: string; originCountry?: string; arrivalDate?: string; skills?: string; languagesList?: string; mainNeeds?: string; professionalTitle?: string; professionalExperience?: string; contactPreference?: 'email' | 'phone' } | null>(null);
   const [accessibility, setAccessibility] = useState<boolean>(() => {
     try {
@@ -285,12 +280,6 @@ function MigrantHome() {
       setExtras(rawExtras ? JSON.parse(rawExtras) : null);
     } catch {
       setExtras(null);
-    }
-    try {
-      const rawChat = localStorage.getItem(`chat:${user.uid}`);
-      setChatMessages(rawChat ? JSON.parse(rawChat) : []);
-    } catch {
-      setChatMessages([]);
     }
 
     return () => {
@@ -515,65 +504,6 @@ function MigrantHome() {
     } catch { void 0; }
     setUrgentOpen(false);
     setUrgentDesc('');
-  }
-
-  async function sendChat() {
-    if (!user || !chatInput.trim()) return;
-    const text = chatInput.trim();
-    const msg = { id: String(Date.now()), text, date: new Date().toISOString(), from: 'migrante' as const };
-    const next = [msg, ...chatMessages];
-    setChatMessages(next);
-    localStorage.setItem(`chat:${user.uid}`, JSON.stringify(next));
-    setChatInput('');
-
-    try {
-      const cpcUsers = await queryDocuments<{ id: string; role?: string | null; name?: string | null; email?: string | null }>(
-        'users',
-        [{ field: 'role', operator: 'in', value: ['admin', 'manager', 'coordinator', 'mediator', 'lawyer', 'psychologist', 'trainer'] }],
-        undefined,
-        20
-      );
-      const firstCpc = cpcUsers[0];
-      if (!firstCpc?.id) return;
-
-      const myConversations = await queryDocuments<{ id: string; participants?: string[] | null; type?: string | null }>(
-        'conversations',
-        [{ field: 'participants', operator: 'array-contains', value: user.uid }],
-        undefined,
-        100
-      );
-      let conversationId =
-        myConversations.find((c) => (c.participants || []).includes(firstCpc.id) && (c.participants || []).length === 2)?.id || null;
-
-      if (!conversationId) {
-        conversationId = await addDocument('conversations', {
-          participants: [user.uid, firstCpc.id],
-          created_by: user.uid,
-          created_by_role: 'migrant',
-          type: 'support_request',
-          title: firstCpc.name || firstCpc.email || 'Equipa CPC',
-          subtitle: 'Equipa CPC',
-          recipient_role: 'cpc',
-          last_message_text: null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      await addDocument('conversation_messages', {
-        conversation_id: conversationId,
-        sender_id: user.uid,
-        text,
-        created_at: serverTimestamp(),
-      });
-      await updateDocument('conversations', conversationId, {
-        last_message_text: text,
-        last_sender_id: user.uid,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Erro ao iniciar conversa com equipa CPC:', error);
-    }
   }
 
   useEffect(() => {
@@ -894,73 +824,49 @@ function MigrantHome() {
             </CardContent>
           </Card>
 
-          {/* Communication */}
-          <Card className="p-0">
-            <CardHeader className="pb-2">
-              <h3 className="font-semibold flex items-center gap-2">{t.dashboard.communication}</h3>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                {t.dashboard.chat_prompt}
+          {/* Statistics/History Card */}
+          <div className="cpc-card p-6">
+            <h2 className="font-semibold mb-4">{t.dashboard.history_reports}</h2>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3 rounded-md bg-muted/50">
+                <p className="text-muted-foreground mb-1">{t.dashboard.sessions_done}</p>
+                <p className="font-semibold text-sm">{sessions.filter(s => s.status === 'completed' || s.status === t.dashboard.status_concluded).length}</p>
               </div>
-              <div className="flex gap-2">
-                <Input value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={t.dashboard.write_message} className="flex-1" />
-                <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={sendChat}>{t.dashboard.send}</Button>
+              <div className="p-3 rounded-md bg-muted/50">
+                <p className="text-muted-foreground mb-1">{t.dashboard.modules_done}</p>
+                <p className="font-semibold text-sm">{progress.reduce((a, b) => a + (b.modules_completed || 0), 0)}</p>
               </div>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
-                {chatMessages.slice(0, 5).map(m => (
-                  <div key={m.id} className={`p-2 rounded-lg text-xs ${m.from === 'migrante' ? 'bg-primary/10 ml-4' : 'bg-muted mr-4'}`}>
-                    {m.text}
-                  </div>
-                ))}
+              <div className="p-3 rounded-md bg-muted/50">
+                <p className="text-muted-foreground mb-1">{t.dashboard.applications}</p>
+                <p className="font-semibold text-sm">—</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Statistics/History Card */}
-        <div className="cpc-card p-6">
-          <h2 className="font-semibold mb-4">{t.dashboard.history_reports}</h2>
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3 rounded-md bg-muted/50">
-              <p className="text-muted-foreground mb-1">{t.dashboard.sessions_done}</p>
-              <p className="font-semibold text-sm">{sessions.filter(s => s.status === 'completed' || s.status === t.dashboard.status_concluded).length}</p>
-            </div>
-            <div className="p-3 rounded-md bg-muted/50">
-              <p className="text-muted-foreground mb-1">{t.dashboard.modules_done}</p>
-              <p className="font-semibold text-sm">{progress.reduce((a, b) => a + (b.modules_completed || 0), 0)}</p>
-            </div>
-            <div className="p-3 rounded-md bg-muted/50">
-              <p className="text-muted-foreground mb-1">{t.dashboard.applications}</p>
-              <p className="font-semibold text-sm">—</p>
-            </div>
-            <div className="p-3 rounded-md bg-muted/50">
-              <p className="text-muted-foreground mb-1">{t.dashboard.progress_report}</p>
-              <p className="font-semibold text-sm">{overallProgress}%</p>
+              <div className="p-3 rounded-md bg-muted/50">
+                <p className="text-muted-foreground mb-1">{t.dashboard.progress_report}</p>
+                <p className="font-semibold text-sm">{overallProgress}%</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Settings Card */}
-        <div className="cpc-card p-6">
-          <h2 className="font-semibold mb-4">{t.dashboard.settings}</h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <Label className="text-xs">{t.dashboard.language}</Label>
-              <Select value={localStorage.getItem('cpc-language') || 'pt'} onValueChange={(v) => { localStorage.setItem('cpc-language', v); location.reload(); }}>
-                <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pt">{t.common.languages.pt}</SelectItem>
-                  <SelectItem value="en">{t.common.languages.en}</SelectItem>
-                  <SelectItem value="es">{t.common.languages.es}</SelectItem>
-                  <SelectItem value="fr">{t.common.languages.fr}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="accessibility" checked={accessibility} onCheckedChange={(c) => setAccessibility(!!c)} />
-              <Label htmlFor="accessibility" className="text-xs cursor-pointer">{t.dashboard.accessibility_mode}</Label>
+          {/* Settings Card */}
+          <div className="cpc-card p-6">
+            <h2 className="font-semibold mb-4">{t.dashboard.settings}</h2>
+            <div className="space-y-4 text-sm">
+              <div>
+                <Label className="text-xs">{t.dashboard.language}</Label>
+                <Select value={localStorage.getItem('cpc-language') || 'pt'} onValueChange={(v) => { localStorage.setItem('cpc-language', v); location.reload(); }}>
+                  <SelectTrigger className="mt-1 h-8"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pt">{t.common.languages.pt}</SelectItem>
+                    <SelectItem value="en">{t.common.languages.en}</SelectItem>
+                    <SelectItem value="es">{t.common.languages.es}</SelectItem>
+                    <SelectItem value="fr">{t.common.languages.fr}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="accessibility" checked={accessibility} onCheckedChange={(c) => setAccessibility(!!c)} />
+                <Label htmlFor="accessibility" className="text-xs cursor-pointer">{t.dashboard.accessibility_mode}</Label>
+              </div>
             </div>
           </div>
         </div>
