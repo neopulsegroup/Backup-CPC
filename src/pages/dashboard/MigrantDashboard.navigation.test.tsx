@@ -123,7 +123,7 @@ describe('MigrantDashboard - navegação', () => {
     });
   });
 
-  it('mostra "Perfil" e "Mensagens" para utilizadores migrantes (mesmo padrão visual de secções)', async () => {
+  it('mostra "Perfil" e "Currículo" na secção Definições para migrantes (sem link Mensagens no menu)', async () => {
     render(
       <MemoryRouter initialEntries={['/dashboard/migrante/perfil']}>
         <Routes>
@@ -135,8 +135,7 @@ describe('MigrantDashboard - navegação', () => {
     expect(screen.getByText('Definições')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Perfil' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Currículo' })).toBeInTheDocument();
-    expect(screen.getByText('Mensagens', { selector: 'p' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Mensagens' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mensagens' })).not.toBeInTheDocument();
   });
 
   it('não mostra item "Mensagens" para utilizadores não migrantes', async () => {
@@ -154,7 +153,7 @@ describe('MigrantDashboard - navegação', () => {
     expect(screen.queryByRole('link', { name: 'Perfil' })).not.toBeInTheDocument();
   });
 
-  it('regressão visual (estrutura + active/hover): classNames do menu em /mensagens', async () => {
+  it('regressão visual (estrutura + active/hover): classNames do menu em /mensagens (rota ainda acessível)', async () => {
     render(
       <MemoryRouter initialEntries={['/dashboard/migrante/mensagens']}>
         <Routes>
@@ -195,10 +194,6 @@ describe('MigrantDashboard - navegação', () => {
         {
           "className": "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted",
           "label": "Currículo",
-        },
-        {
-          "className": "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors bg-primary text-primary-foreground",
-          "label": "Mensagens",
         },
       ]
     `);

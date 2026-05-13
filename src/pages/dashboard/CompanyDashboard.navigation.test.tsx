@@ -26,9 +26,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
       'company.menu.new_offer': 'Nova Oferta',
       'company.menu.candidates': 'Candidatos',
       'company.menu.profile': 'Perfil',
-      'company.menu.messages': 'Mensagens',
       'company.menu.sections.settings': 'Definições',
-      'company.menu.sections.messages': 'Mensagens',
       'company.profile.title': 'Perfil da Empresa',
       'company.messages.title': 'Conversas',
     };
@@ -79,7 +77,7 @@ describe('CompanyDashboard - navegação e estrutura', () => {
     expect(screen.getByText('Menu Empresa')).toBeInTheDocument();
     expect(screen.getByText('Acme')).toBeInTheDocument();
     expect(screen.getByText('Definições')).toBeInTheDocument();
-    expect(screen.getByText('Mensagens', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mensagens' })).not.toBeInTheDocument();
 
     expect(screen.getByText('Minhas ofertas')).toBeInTheDocument();
     const offersLink = screen.getByRole('link', { name: 'Minhas Vagas' });
@@ -98,8 +96,9 @@ describe('CompanyDashboard - navegação e estrutura', () => {
     expect(await screen.findByRole('heading', { name: 'Perfil da Empresa' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Perfil' }).className).toContain('bg-primary');
 
-    await user.click(screen.getByRole('link', { name: 'Mensagens' }));
-    expect(await screen.findByRole('heading', { name: 'Conversas' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Mensagens' }).className).toContain('bg-primary');
+    await user.click(screen.getByRole('link', { name: 'Candidatos' }));
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Candidatos' }).className).toContain('bg-primary');
+    });
   });
 });

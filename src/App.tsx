@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { useLayoutEffect } from "react";
 
 // Pages
 import Index from "./pages/Index";
@@ -80,6 +81,15 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   }
 
   return <>{children}</>;
+}
+
+/** Garante que cada navegação abre a página no topo (ex.: links do footer). */
+function ScrollToTop() {
+  const { pathname, search } = useLocation();
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname, search]);
+  return null;
 }
 
 // Triage Guard
@@ -174,6 +184,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>

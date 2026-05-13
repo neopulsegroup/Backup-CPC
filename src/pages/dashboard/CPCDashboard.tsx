@@ -35,7 +35,6 @@ import {
   Wrench,
   Settings,
   Languages,
-  MessagesSquare,
   ClipboardList,
   Trash2,
   Search,
@@ -629,7 +628,7 @@ export default function CPCDashboard() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[10050]" position="popper">
                     {CPC_TEAM_ROLES.map((item) => (
                       <SelectItem key={item} value={item}>
                         {getRoleLabel(item)}
@@ -672,7 +671,7 @@ export default function CPCDashboard() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[10050]" position="popper">
                     {CPC_TEAM_ROLES.map((item) => (
                       <SelectItem key={item} value={item}>
                         {getRoleLabel(item)}
@@ -1303,7 +1302,6 @@ export default function CPCDashboard() {
     { to: '/dashboard/cpc/perfil', label: t.get('cpc.menu.profile'), icon: Building2 },
     { to: '/dashboard/cpc/configuracoes', label: t.get('cpc.menu.settings'), icon: Settings },
   ];
-  const sidebarItemsMessages = [{ to: '/dashboard/cpc/mensagens', label: t.get('cpc.menu.messages'), icon: MessagesSquare }];
   const isHome = location.pathname === '/dashboard/cpc' || location.pathname === '/dashboard/cpc/';
 
   return (
@@ -1335,24 +1333,6 @@ export default function CPCDashboard() {
                   <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">Definições</p>
                   <div className="mt-2 space-y-1">
                     {sidebarItemsProfile.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`
-                        }
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-4 border-t">
-                  <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">Mensagens</p>
-                  <div className="mt-2 space-y-1">
-                    {sidebarItemsMessages.map((item) => (
                       <NavLink
                         key={item.to}
                         to={item.to}

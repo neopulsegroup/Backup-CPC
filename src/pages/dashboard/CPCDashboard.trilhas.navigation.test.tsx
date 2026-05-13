@@ -216,7 +216,7 @@ describe('CPCDashboard - navegação (inclui Trilhas)', () => {
     expect(screen.getByRole('link', { name: 'Trilhas' }).className).not.toContain('bg-primary');
   });
 
-  it('mantém "Perfil" e "Mensagens" no final do menu (ordem estável em diferentes larguras)', async () => {
+  it('mantém "Perfil" e "Configurações" no final da secção Definições (sem Mensagens no menu)', async () => {
     const setWidth = (value: number) => {
       Object.defineProperty(window, 'innerWidth', { value, writable: true, configurable: true });
       window.dispatchEvent(new Event('resize'));
@@ -232,15 +232,14 @@ describe('CPCDashboard - navegação (inclui Trilhas)', () => {
     );
 
     expect(await screen.findByText('Definições')).toBeInTheDocument();
-    expect(screen.getAllByText('Mensagens').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('link', { name: 'Mensagens' })).not.toBeInTheDocument();
 
     const nav = screen.getByRole('navigation');
     const links = Array.from(nav.querySelectorAll('a'))
       .map((a) => a.textContent?.trim() ?? '')
       .filter(Boolean);
-    expect(links.at(-3)).toBe('Perfil');
-    expect(links.at(-2)).toBe('Configurações');
-    expect(links.at(-1)).toBe('Mensagens');
+    expect(links.at(-2)).toBe('Perfil');
+    expect(links.at(-1)).toBe('Configurações');
 
     unmount();
 
@@ -254,13 +253,13 @@ describe('CPCDashboard - navegação (inclui Trilhas)', () => {
     );
 
     expect(await screen.findByText('Definições')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mensagens' })).not.toBeInTheDocument();
     const nav2 = screen.getByRole('navigation');
     const links2 = Array.from(nav2.querySelectorAll('a'))
       .map((a) => a.textContent?.trim() ?? '')
       .filter(Boolean);
-    expect(links2.at(-3)).toBe('Perfil');
-    expect(links2.at(-2)).toBe('Configurações');
-    expect(links2.at(-1)).toBe('Mensagens');
+    expect(links2.at(-2)).toBe('Perfil');
+    expect(links2.at(-1)).toBe('Configurações');
   });
 
   it('inclui "Atividades" imediatamente após "Migrantes" no menu principal', async () => {

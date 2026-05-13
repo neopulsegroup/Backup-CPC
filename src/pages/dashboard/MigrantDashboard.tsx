@@ -27,7 +27,6 @@ import {
   AlertCircle,
   MessageCircle,
   MessageSquare,
-  MessagesSquare,
   FileText,
   Settings,
   ClipboardList,
@@ -1015,7 +1014,6 @@ export default function MigrantDashboard() {
     { to: '/dashboard/migrante/perfil', label: t.get('dashboard.profile'), icon: Building2 },
     { to: '/dashboard/migrante/curriculo', label: t.get('dashboard.curriculum'), icon: FileText },
   ];
-  const sidebarItemsMessages = [{ to: '/dashboard/migrante/mensagens', label: t.get('dashboard.messages'), icon: MessagesSquare }];
 
   return (
     <Layout>
@@ -1031,9 +1029,8 @@ export default function MigrantDashboard() {
 
               {/* Documentação:
                 - Estrutura e estilos do menu replicam o padrão visual/funcional dos dashboards /empresa e /cpc.
-                - Os itens principais ficam no topo, e "Definições" + "Mensagens" ficam no final do menu com separadores (border-t),
-                  mantendo tipografia, espaçamento, hover/active e responsividade consistentes entre módulos.
-                - Visibilidade: "Perfil" e "Mensagens" são exibidos apenas para utilizadores com perfil migrante.
+                - Os itens principais ficam no topo; "Definições" (Perfil + Currículo) no final com separador (border-t).
+                - Visibilidade: secção de definições apenas para utilizadores com perfil migrante.
               */}
               <nav className="space-y-1">
                 {sidebarItemsMain.map((item) => (
@@ -1056,24 +1053,6 @@ export default function MigrantDashboard() {
                       <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('sidebar.sections.settings')}</p>
                       <div className="mt-2 space-y-1">
                         {sidebarItemsProfile.map((item) => (
-                          <NavLink
-                            key={item.to}
-                            to={item.to}
-                            className={({ isActive }) =>
-                              `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`
-                            }
-                          >
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.label}</span>
-                          </NavLink>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="pt-4 mt-4 border-t">
-                      <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('sidebar.sections.messages')}</p>
-                      <div className="mt-2 space-y-1">
-                        {sidebarItemsMessages.map((item) => (
                           <NavLink
                             key={item.to}
                             to={item.to}

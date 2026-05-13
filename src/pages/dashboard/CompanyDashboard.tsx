@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { getDocument, queryDocuments, setDocument, subscribeDocument, updateDocument } from '@/integrations/firebase/firestore';
-import { Building2, Briefcase, Check, MapPin, MessagesSquare, Users, FileText, Plus, ChevronRight, Eye, CheckCircle, TrendingUp, User } from 'lucide-react';
+import { Building2, Briefcase, Check, MapPin, Users, FileText, Plus, ChevronRight, Eye, CheckCircle, TrendingUp, User } from 'lucide-react';
 
 // Sub-pages
 import CreateJobPage from './company/CreateJobPage';
@@ -730,7 +730,6 @@ export default function CompanyDashboard() {
   ];
 
   const sidebarItemsProfile = [{ to: '/dashboard/empresa/perfil', label: t.get('company.menu.profile'), icon: Building2 }];
-  const sidebarItemsMessages = [{ to: '/dashboard/empresa/mensagens', label: t.get('company.menu.messages'), icon: MessagesSquare }];
 
   return (
     <Layout>
@@ -762,24 +761,6 @@ export default function CompanyDashboard() {
                   <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.menu.sections.settings')}</p>
                   <div className="mt-2 space-y-1">
                     {sidebarItemsProfile.map((item) => (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`
-                        }
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-4 border-t">
-                  <p className="px-2 text-xs font-semibold tracking-widest text-muted-foreground">{t.get('company.menu.sections.messages')}</p>
-                  <div className="mt-2 space-y-1">
-                    {sidebarItemsMessages.map((item) => (
                       <NavLink
                         key={item.to}
                         to={item.to}
