@@ -40,6 +40,14 @@ export default function About() {
                 "{t.about.missionQuote}"
               </p>
             </div>
+
+            <div className="mt-12 space-y-6">
+              <h2 className="text-2xl font-bold text-center">{t.about.platformTitle}</h2>
+              <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
+                <p>{t.about.platformP1}</p>
+                <p>{t.about.platformP2}</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
