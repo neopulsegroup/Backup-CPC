@@ -1,6 +1,7 @@
 import pt from '@/locales/pt.json';
 import en from '@/locales/en.json';
 import es from '@/locales/es.json';
+import fr from '@/locales/fr.json';
 
 export type Language = 'pt' | 'en' | 'es' | 'fr';
 
@@ -8,8 +9,7 @@ export const translations = {
   pt,
   en,
   es,
-  // FR is enabled in UI and admin flows; until a dedicated fr.json is curated, it starts from EN base copy.
-  fr: en,
+  fr,
 } as const;
 
 export type Translations = (typeof translations)['pt'];

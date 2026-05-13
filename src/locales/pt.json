@@ -2112,7 +2112,9 @@
     "no_permission": "Não tem permissões para gerir traduções.",
     "actions": {
       "validate": "Validar",
-      "publish": "Publicar ({count})"
+      "publish": "Publicar ({count})",
+      "export_csv": "Exportar CSV",
+      "import_csv": "Importar CSV"
     },
     "search": {
       "label": "Pesquisar por chave",
@@ -2134,6 +2136,14 @@
       "title": "Validação de traduções",
       "hint": "Conteúdos em falta devem ser preenchidos (por código ou via overrides) antes de publicar.",
       "incomplete_draft": "{count} chaves no rascunho estão incompletas (preencha PT/EN/ES/FR)."
+    },
+    "csv": {
+      "import_aria": "Selecionar ficheiro CSV de traduções",
+      "export_success": "Ficheiro CSV exportado com todas as chaves.",
+      "import_success": "{count} chaves importadas para o rascunho.",
+      "import_unknown": "{count} chaves do CSV não existem no projeto e foram ignoradas.",
+      "import_error_header": "Cabeçalho inválido. O CSV deve incluir as colunas: key, pt, en, es, fr (como no export).",
+      "import_empty": "Nenhuma linha válida encontrada no CSV."
     },
     "publish": {
       "nothing_to_publish": "Não há alterações para publicar.",

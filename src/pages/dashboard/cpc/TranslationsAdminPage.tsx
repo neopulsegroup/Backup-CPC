@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { getCollection, getDocument, setDocument, updateDocument } from '@/integrations/firebase/firestore';
+import { buildTranslationsCsv, parseTranslationsCsvImport } from '@/lib/csvTranslations';
 import { flattenTranslationStringKeys, getTranslationStringAtPath, Language, translations } from '@/lib/i18n';
 import { toast } from 'sonner';
 
@@ -62,8 +63,10 @@ export default function TranslationsAdminPage() {
   const [validating, setValidating] = useState(false);
   const [validationOpen, setValidationOpen] = useState(false);
   const [missing, setMissing] = useState<Record<Language, string[]>>({ pt: [], en: [], es: [], fr: [] });
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const baseKeys = useMemo(() => flattenTranslationStringKeys(translations.pt), []);
+  const knownKeys = useMemo(() => new Set(baseKeys), [baseKeys]);
 
   const filteredKeys = useMemo(() => {
     const q = normalizeKeyQuery(query);
@@ -128,6 +131,75 @@ export default function TranslationsAdminPage() {
       setValidationOpen(true);
     } finally {
       setValidating(false);
+    }
+  }
+
+  const getRowForExport = useCallback(
+    (keyPath: string): DraftRow => ({
+      pt: getDisplayValue({ keyPath, lang: 'pt', draft, overrides }),
+      en: getDisplayValue({ keyPath, lang: 'en', draft, overrides }),
+      es: getDisplayValue({ keyPath, lang: 'es', draft, overrides }),
+      fr: getDisplayValue({ keyPath, lang: 'fr', draft, overrides }),
+    }),
+    [draft, overrides],
+  );
+
+  function handleExportCsv() {
+    try {
+      const csv = buildTranslationsCsv(baseKeys, getRowForExport);
+      const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `cpc-translations-${stamp}.csv`;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(t.get('cpcTranslations.csv.export_success'));
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : t.get('common.error');
+      toast.error(message);
+    }
+  }
+
+  function handlePickImportFile() {
+    importInputRef.current?.click();
+  }
+
+  async function handleImportCsvFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsed = parseTranslationsCsvImport(text, knownKeys);
+      if (parsed.rows.size === 0) {
+        toast.error(t.get('cpcTranslations.csv.import_empty'));
+        return;
+      }
+      setDraft((prev) => {
+        const next = { ...prev };
+        for (const [keyPath, row] of parsed.rows) {
+          next[keyPath] = { pt: row.pt, en: row.en, es: row.es, fr: row.fr };
+        }
+        return next;
+      });
+      toast.success(t.get('cpcTranslations.csv.import_success', { count: parsed.rows.size }));
+      if (parsed.unknownKeys.length > 0) {
+        toast.message(t.get('cpcTranslations.csv.import_unknown', { count: parsed.unknownKeys.length }));
+      }
+    } catch (e: unknown) {
+      const code = e && typeof e === 'object' && 'code' in e ? String((e as { code?: string }).code) : '';
+      if (code === 'INVALID_HEADER') {
+        toast.error(t.get('cpcTranslations.csv.import_error_header'));
+        return;
+      }
+      const message = e instanceof Error ? e.message : t.get('common.error');
+      toast.error(message);
     }
   }
 
@@ -204,7 +276,21 @@ export default function TranslationsAdminPage() {
             <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{t.get('cpcTranslations.title')}</h1>
             <p className="text-sm text-muted-foreground mt-1">{t.get('cpcTranslations.subtitle')}</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 justify-end">
+            <Button type="button" variant="outline" onClick={handleExportCsv}>
+              {t.get('cpcTranslations.actions.export_csv')}
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              aria-label={t.get('cpcTranslations.csv.import_aria')}
+              onChange={handleImportCsvFileChange}
+            />
+            <Button type="button" variant="outline" onClick={handlePickImportFile}>
+              {t.get('cpcTranslations.actions.import_csv')}
+            </Button>
             <Button variant="outline" onClick={handleValidate} disabled={validating}>
               {t.get('cpcTranslations.actions.validate')}
             </Button>

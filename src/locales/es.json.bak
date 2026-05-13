@@ -10,65 +10,65 @@
     "logout": "Logout"
   },
   "header": {
-    "logoAlt": "CPC logo",
-    "taglineLine1": "Connecting",
-    "taglineLine2": "People & Companies"
+    "logoAlt": "Logo de CPC",
+    "taglineLine1": "Conectando",
+    "taglineLine2": "Personas y Empresas"
   },
   "about": {
     "title": "About Portal CPC",
     "subtitle": "Learn about our mission and the values that drive us.",
     "mission": "Our Mission",
-    "missionText": "To facilitate the socio-professional integration of migrants in the Algarve, creating sustainable bridges between talent and opportunity.",
+    "missionText": "Facilitar la integración socioprofesional de personas migrantes en el Algarve, creando puentes sostenibles entre el talento y la oportunidad.",
     "missionQuote": "CPC was born from the need to create bridges between migrants and the Portuguese labor market, offering a complete path of training, support and integration.",
     "values": "Our Values",
     "valuesCards": {
       "inclusion": {
-        "title": "Inclusion",
-        "description": "We believe everyone deserves equal opportunities."
+        "title": "Inclusión",
+        "description": "Creemos que todas las personas merecen las mismas oportunidades."
       },
       "empathy": {
-        "title": "Empathy",
-        "description": "We treat every person with respect and consideration."
+        "title": "Empatía",
+        "description": "Tratamos a cada persona con respeto y consideración."
       },
       "cooperation": {
-        "title": "Cooperation",
-        "description": "We work together to achieve common goals."
+        "title": "Cooperación",
+        "description": "Trabajamos juntos para alcanzar objetivos comunes."
       },
       "sustainability": {
-        "title": "Sustainability",
-        "description": "We build lasting and impactful solutions."
+        "title": "Sostenibilidad",
+        "description": "Construimos soluciones duraderas y con impacto."
       }
     }
   },
   "howItWorks": {
-    "title": "How It Works",
-    "subtitle": "A structured path to your success.",
-    "migrantHeading": "As a migrant",
+    "title": "Cómo funciona",
+    "subtitle": "Un recorrido estructurado para tu éxito.",
+    "migrantHeading": "Como persona migrante",
     "migrantSteps": {
       "step1": {
-        "title": "Registration & triage",
-        "description": "Account creation with an initial questionnaire to assess needs. This gathers information on legal status, housing, existing skills and interests, as well as warning signs or urgent situations to be addressed."
+        "title": "Registro y triaje",
+        "description": "Creación de cuenta con un cuestionario inicial para evaluar las necesidades. Se recopila información sobre la situación legal, la vivienda, las competencias adquiridas y los intereses, además de señales de alerta o situaciones urgentes a resolver."
       },
       "step2": {
-        "title": "Profile & actions",
-        "description": "The system builds a needs profile and suggests first steps."
+        "title": "Perfil y acciones",
+        "description": "El sistema crea un perfil de necesidades y sugiere los primeros pasos."
       },
       "step3": {
-        "title": "Scheduling",
-        "description": "Booking sessions with the technical team (lawyer, psychologist)."
+        "title": "Agenda",
+        "description": "Reserva de sesiones con el equipo técnico (abogado, psicólogo)."
       },
       "step4": {
-        "title": "Training",
-        "description": "Access to learning paths with suitable recommendations."
+        "title": "Formación",
+        "description": "Acceso a itinerarios formativos con recomendaciones adecuadas."
       }
     },
-    "companyHeading": "As a company",
-    "companyLead": "The CPC portal works both ways:",
-    "companyBullet1": "the candidate builds their profile, CV and searches for opportunities",
-    "companyBullet2": "the employer posts their vacancies and finds talent",
-    "companyMatch": "The system itself matches the most suitable profiles to the openings.",
-    "ctaTitle": "Ready to start your journey?",
-    "ctaSubtitle": "Register for free and start your integration journey today."
+    "companyHeading": "Como empresa",
+    "companyLead": "El portal CPC es una vía de doble sentido:",
+    "companyBullet1": "el candidato construye su perfil, currículum y busca oportunidades",
+    "companyBullet2": "el empleador publica sus ofertas y encuentra talento",
+    "companyMatch": "El propio sistema empareja los perfiles más adecuados con las vacantes.",
+    "ctaTitle": "¿Listo para empezar tu recorrido?",
+    "ctaSubtitle": "Regístrate gratis y comienza hoy tu proceso de integración."
   },
   "contact": {
     "title": "Contact Us",
@@ -186,7 +186,7 @@
   "hero": {
     "title": "Uniting Talent",
     "titleHighlight": "Without Borders",
-    "subtitle": "A platform for socio-professional integration, connecting migrants with technical teams and visionary companies ready to grow together. Project developed for migrants in the Algarve region.",
+    "subtitle": "Una plataforma para la integración socioprofesional, conectando migrantes con equipos técnicos y empresas visionarias listas para crecer juntas. Proyecto desarrollado para migrantes en la región del Algarve.",
     "iAm": "I am a",
     "migrant": "Migrant",
     "company": "Company"
@@ -196,8 +196,8 @@
     "title": "How Portal CPC works",
     "subtitle": "We simplify the journey, for both talent and organizations, across three fundamental pillars of success.",
     "step1": {
-      "title": "Specialized Support",
-      "description": "Information and guidance on culture, legal framework, health system and documentation, for clear integration without uncertainty."
+      "title": "Apoyo Especializado",
+      "description": "Información y orientación sobre cultura, marco legal, sistema de salud y documentación, para una integración clara y sin incertidumbres."
     },
     "step2": {
       "title": "Personalized Support",
@@ -223,7 +223,7 @@
     "contact": "Contact"
   },
   "footer": {
-    "logoAlt": "CPC logo",
+    "logoAlt": "Logo de CPC",
     "tagline": "Connecting People and Companies through meaningful opportunities and sustainable integration.",
     "column1": "PLATFORM",
     "column2": "SUPPORT",
@@ -237,13 +237,13 @@
     "privacy": "Privacy Policy",
     "cookies": "Cookie Policy",
     "rights": "All rights reserved",
-    "socialInclusionIntro": "Through the support of Portugal Inovação Social, CPC seeks to tackle the social exclusion of migrants in Portugal by creating a digital platform that will support their integration process in three stages:",
-    "socialInclusionPhases": "Cultural readiness and training – personalised support – socio-professional and community integration.",
-    "socialInclusionClosing": "Together with migrants themselves, we want to build their path towards inclusion through a holistic approach and ongoing, close support.",
-    "coFunded": "Co-funded by:",
-    "supportLogosAlt": "Portugal Inovação Social, Algarve 2030, Portugal 2030, European Union",
-    "manageCookies": "Manage cookies",
-    "copyright": "© {year} Portal CPC. All rights reserved.",
+    "socialInclusionIntro": "Con el apoyo de Portugal Inovação Social, el CPC busca combatir la exclusión social de las personas migrantes en Portugal mediante una plataforma digital que facilitará su proceso de integración en tres etapas:",
+    "socialInclusionPhases": "Capacitación y preparación cultural – apoyo personalizado – inserción socioprofesional y comunitaria.",
+    "socialInclusionClosing": "Queremos construir, junto a las propias personas migrantes, su camino hacia la inclusión, mediante un enfoque holístico y un acompañamiento continuo y cercano.",
+    "coFunded": "Cofinanciado por:",
+    "supportLogosAlt": "Portugal Inovação Social, Algarve 2030, Portugal 2030, Unión Europea",
+    "manageCookies": "Gestionar cookies",
+    "copyright": "© {year} Portal CPC. Todos los derechos reservados.",
     "contacts": {
       "email": "geral@cibea.eu",
       "phone": "+351 225 088 015",
@@ -254,23 +254,23 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "errorTitle": "Error",
-    "validationTitle": "Validation",
-    "notFoundTitle": "Not found",
+    "validationTitle": "Validación",
+    "notFoundTitle": "No encontrado",
     "save": "Save",
-    "create": "Create",
+    "create": "Crear",
     "cancel": "Cancel",
-    "close": "Close",
-    "retry": "Try again",
+    "close": "Cerrar",
+    "retry": "Intentar de nuevo",
     "next": "Next",
     "back": "Back",
     "submit": "Submit",
     "yes": "Yes",
     "no": "No",
     "languages": {
-      "pt": "Portuguese",
-      "en": "English",
-      "es": "Spanish",
-      "fr": "French"
+      "pt": "Portugués",
+      "en": "Inglés",
+      "es": "Español",
+      "fr": "Francés"
     }
   },
   "auth": {
@@ -292,12 +292,12 @@
     "backToSelection": "Back to profile selection",
     "registerAs": "Register as:",
     "loginError": "Incorrect email or password",
-    "loginTryAgain": "Could not sign in. Check your details and try again.",
-    "registerErrorGeneric": "Could not complete registration. Check your details or try again.",
-    "registerErrorEmailInUse": "This email is already registered. Sign in or reset your password.",
-    "networkError": "Connection issue. Check your internet and try again.",
-    "tooManyAttempts": "Too many attempts in a short time. Please wait a few minutes and try again.",
-    "serviceUnavailable": "Service temporarily unavailable. Please try again shortly.",
+    "loginTryAgain": "No fue posible iniciar sesión. Verifica los datos e inténtalo de nuevo.",
+    "registerErrorGeneric": "No fue posible completar el registro. Verifica los datos o inténtalo de nuevo.",
+    "registerErrorEmailInUse": "Este correo ya está registrado. Inicia sesión o recupera tu contraseña.",
+    "networkError": "Problema de conexión. Verifica tu internet e inténtalo de nuevo.",
+    "tooManyAttempts": "Demasiados intentos en poco tiempo. Espera unos minutos y vuelve a intentarlo.",
+    "serviceUnavailable": "Servicio temporalmente no disponible. Inténtalo de nuevo en unos instantes.",
     "accessDeniedBlockedTitle": "Account blocked",
     "accessDeniedBlockedDescription": "Your access is blocked and you cannot sign in at this time.",
     "accessDeniedDisabledTitle": "Account disabled",
@@ -615,7 +615,7 @@
     "trails": "Trails",
     "sessions": "Sessions",
     "profile": "Profile",
-    "curriculum": "Resume",
+    "curriculum": "Currículum",
     "messages": "Messages",
     "upcomingSessions": "Appointments",
     "notifications": "Notifications",
@@ -633,11 +633,11 @@
     "training_trails": "Training Trails",
     "no_trails": "No trails started",
     "employment_area": "Employment Area",
-    "activities": "Activities",
-    "activities_desc": "Activities you are registered for as a participant.",
-    "activities_empty": "You have not yet participated in any activities.",
-    "activities_back_home": "Back to dashboard",
-    "activities_back_list": "Back to activities",
+    "activities": "Actividades",
+    "activities_desc": "Actividades en las que estás inscrito como participante.",
+    "activities_empty": "Aún no ha participado en ninguna actividad.",
+    "activities_back_home": "Volver al panel",
+    "activities_back_list": "Volver a actividades",
     "view_vacancies": "View Vacancies",
     "communication": "Communication",
     "chat_prompt": "Messages with CPC Team",
@@ -664,42 +664,42 @@
     "date": "Date",
     "time": "Time",
     "session_types": {
-      "mediador": "Mediator",
-      "jurista": "Lawyer",
-      "psicologa": "Psychologist"
+      "mediador": "Mediador",
+      "jurista": "Abogado",
+      "psicologa": "Psicóloga"
     },
     "support_types": {
-      "juridico": "Legal",
-      "psicologico": "Psychological",
-      "habitacional": "Housing",
-      "necessidades": "Basic needs"
+      "juridico": "Jurídico",
+      "psicologico": "Psicológico",
+      "habitacional": "Vivienda",
+      "necessidades": "Necesidades básicas"
     },
     "migrant_jobs": {
-      "title": "Job openings",
-      "subtitle": "Find work opportunities in Portugal",
-      "search_placeholder": "Search by role, company or keyword...",
-      "all_sectors": "All sectors",
-      "all_locations": "All locations",
-      "offers_found": "{count} opening(s) found",
-      "empty_filtered_title": "No openings found",
-      "empty_filtered_hint": "Try adjusting your search filters",
-      "empty_active_title": "There are no active openings right now",
-      "empty_active_hint": "Check back later or contact the CPC team for support.",
-      "load_error": "Could not load openings. Check your connection and try again.",
-      "retry": "Try again",
-      "contract_full_time": "Full-time",
-      "contract_part_time": "Part-time",
-      "contract_temporary": "Temporary",
-      "contract_internship": "Internship",
-      "work_on_site": "On-site",
-      "work_hybrid": "Hybrid",
-      "work_remote": "Remote",
-      "time_today": "Today",
-      "time_yesterday": "Yesterday",
-      "time_days_ago": "{count} days ago",
-      "time_weeks_ago": "{count} weeks ago",
-      "time_months_ago": "{count} months ago",
-      "preview_empty": "No active openings to show."
+      "title": "Ofertas de empleo",
+      "subtitle": "Encuentra oportunidades laborales en Portugal",
+      "search_placeholder": "Buscar por puesto, empresa o palabra clave...",
+      "all_sectors": "Todos los sectores",
+      "all_locations": "Todas las ubicaciones",
+      "offers_found": "{count} oferta(s) encontrada(s)",
+      "empty_filtered_title": "No se encontraron ofertas",
+      "empty_filtered_hint": "Pruebe a ajustar los filtros de búsqueda",
+      "empty_active_title": "No hay ofertas activas en este momento",
+      "empty_active_hint": "Vuelva más tarde o contacte al equipo CPC para apoyo.",
+      "load_error": "No se pudieron cargar las ofertas. Compruebe la conexión e inténtelo de nuevo.",
+      "retry": "Reintentar",
+      "contract_full_time": "Tiempo completo",
+      "contract_part_time": "Media jornada",
+      "contract_temporary": "Temporal",
+      "contract_internship": "Prácticas",
+      "work_on_site": "Presencial",
+      "work_hybrid": "Híbrido",
+      "work_remote": "Remoto",
+      "time_today": "Hoy",
+      "time_yesterday": "Ayer",
+      "time_days_ago": "Hace {count} días",
+      "time_weeks_ago": "Hace {count} semanas",
+      "time_months_ago": "Hace {count} meses",
+      "preview_empty": "No hay ofertas activas para mostrar."
     }
   },
   "sidebar": {
@@ -709,84 +709,84 @@
     }
   },
   "messagesPage": {
-    "title": "Conversations",
-    "newAction": "New",
-    "hintPrefix": "Companies reply via",
-    "hintPathLabel": "Company Dashboard → Messages",
-    "emptyConversations": "No conversations. Create a new conversation to get started.",
-    "conversationFallbackTitle": "Conversation",
-    "noMessagesPreview": "No messages",
-    "selectConversation": "Select a conversation to view messages.",
-    "onlineNow": "Online now",
-    "today": "TODAY",
-    "noMessagesInConversation": "No messages in this conversation.",
-    "composePlaceholder": "Type your message here...",
+    "title": "Conversaciones",
+    "newAction": "Nueva",
+    "hintPrefix": "Las empresas responden a través de",
+    "hintPathLabel": "Panel de Empresa → Mensajes",
+    "emptyConversations": "No hay conversaciones. Crea una nueva conversación para empezar.",
+    "conversationFallbackTitle": "Conversación",
+    "noMessagesPreview": "Sin mensajes",
+    "selectConversation": "Selecciona una conversación para ver los mensajes.",
+    "onlineNow": "En línea ahora",
+    "today": "HOY",
+    "noMessagesInConversation": "No hay mensajes en esta conversación.",
+    "composePlaceholder": "Escribe tu mensaje aquí...",
     "aria": {
-      "videoCall": "Video call",
-      "call": "Call",
-      "moreOptions": "More options",
-      "add": "Add",
+      "videoCall": "Videollamada",
+      "call": "Llamada",
+      "moreOptions": "Más opciones",
+      "add": "Añadir",
       "emoji": "Emoji",
-      "send": "Send"
+      "send": "Enviar"
     },
     "dialog": {
-      "title": "New conversation",
-      "recipientEmailLabel": "Recipient email (company or team)",
-      "recipientEmailLabelUser": "User email",
-      "recipientEmailLabelSupport": "CPC team email (support)",
-      "emailPlaceholder": "email@domain.com"
+      "title": "Nueva conversación",
+      "recipientEmailLabel": "Email del destinatario (empresa o equipo)",
+      "recipientEmailLabelUser": "Email del usuario",
+      "recipientEmailLabelSupport": "Email del equipo CPC (soporte)",
+      "emailPlaceholder": "email@dominio.com"
     },
     "auth": {
-      "signInToAccess": "Sign in to access messages.",
-      "noPermission": "You don't have permission to access messages."
+      "signInToAccess": "Inicia sesión para acceder a los mensajes.",
+      "noPermission": "Sin permiso para acceder a los mensajes."
     },
     "errors": {
-      "loadConversations": "Couldn't load conversations.",
-      "loadMessages": "Couldn't load messages.",
-      "sendMessage": "Couldn't send the message.",
-      "createConversation": "Couldn't create the conversation."
+      "loadConversations": "No se pudieron cargar las conversaciones.",
+      "loadMessages": "No se pudieron cargar los mensajes.",
+      "sendMessage": "No se pudo enviar el mensaje.",
+      "createConversation": "No se pudo crear la conversación."
     },
     "validation": {
-      "emailValid": "Enter a valid email.",
-      "noUserWithEmail": "No user exists with that email.",
-      "emailDifferent": "Choose an email different from yours.",
-      "targetMustBeCpc": "You can start conversations only with the CPC team."
+      "emailValid": "Introduce un email válido.",
+      "noUserWithEmail": "No existe un usuario con ese email.",
+      "emailDifferent": "Elige un email diferente al tuyo.",
+      "targetMustBeCpc": "Solo puedes iniciar conversaciones con el equipo CPC."
     },
     "toast": {
-      "conversationCreatedTitle": "Conversation created",
-      "conversationCreatedDesc": "The new conversation was created successfully."
+      "conversationCreatedTitle": "Conversación creada",
+      "conversationCreatedDesc": "La nueva conversación se creó correctamente."
     },
     "export": {
-      "button": "Export",
+      "button": "Exportar",
       "formats": {
         "pdf": "PDF",
         "docx": "DOCX",
         "xlsx": "XLSX"
       },
-      "nothingToExport": "There are no conversations to export with the current filter.",
-      "documentTitle": "Messages — CPC",
-      "intro": "Generated on {date}. Filter: {filter}.",
-      "filterAll": "All",
-      "filterMigrant": "Migrants",
-      "filterCompany": "Companies",
-      "filterCpc": "CPC team",
-      "tableConversations": "Conversations",
+      "nothingToExport": "No hay conversaciones para exportar con el filtro actual.",
+      "documentTitle": "Mensajes — CPC",
+      "intro": "Generado el {date}. Filtro: {filter}.",
+      "filterAll": "Todas",
+      "filterMigrant": "Migrantes",
+      "filterCompany": "Empresas",
+      "filterCpc": "Equipo CPC",
+      "tableConversations": "Conversaciones",
       "colConvId": "ID",
-      "colConvTitle": "Title",
-      "colConvSubtitle": "Counterpart",
-      "colConvLast": "Last message",
-      "sectionMessages": "Messages (selected conversation)",
-      "noteActiveConversation": "Includes only messages from the currently selected conversation.",
-      "noteNoConversation": "No conversation selected: the messages table has no rows.",
+      "colConvTitle": "Título",
+      "colConvSubtitle": "Interlocutor",
+      "colConvLast": "Último mensaje",
+      "sectionMessages": "Mensajes (conversación seleccionada)",
+      "noteActiveConversation": "Incluye solo los mensajes de la conversación seleccionada actualmente.",
+      "noteNoConversation": "Sin conversación seleccionada: la tabla de mensajes queda sin filas.",
       "colMsgId": "ID",
-      "colMsgSender": "Sender",
-      "colMsgText": "Text",
-      "colMsgDate": "Date",
+      "colMsgSender": "Remitente",
+      "colMsgText": "Texto",
+      "colMsgDate": "Fecha",
       "sheets": {
-        "conversations": "Conversations",
-        "messages": "Messages"
+        "conversations": "Conversaciones",
+        "messages": "Mensajes"
       },
-      "errorGeneric": "Could not complete the export."
+      "errorGeneric": "No se pudo completar la exportación."
     }
   },
   "migrant": {
@@ -795,118 +795,118 @@
     },
     "profile": {
       "documents": {
-        "viewCvLink": "view résumé"
+        "viewCvLink": "ver currículum"
       }
     },
     "curriculum": {
-      "menuTitle": "Your Resume",
-      "menuSubtitle": "Complete all sections to build a clear professional resume.",
-      "title": "Resume Builder",
-      "subtitle": "Fill in key details and track the live preview while typing.",
-      "progressLabel": "Progress",
-      "completedFields": "{completed}/{total} fields completed",
+      "menuTitle": "Tu Currículum",
+      "menuSubtitle": "Completa todas las secciones para crear un CV claro y profesional.",
+      "title": "Constructor de Currículum",
+      "subtitle": "Completa los datos esenciales y acompaña la vista previa en tiempo real.",
+      "progressLabel": "Progreso",
+      "completedFields": "{completed}/{total} campos completados",
       "actions": {
-        "view": "View Resume",
-        "save": "Save resume",
-        "saving": "Saving...",
-        "exportPdf": "Export PDF",
-        "exportingPdf": "Exporting…"
+        "view": "Ver Currículum",
+        "save": "Guardar currículum",
+        "saving": "Guardando...",
+        "exportPdf": "Exportar PDF",
+        "exportingPdf": "Exportando…"
       },
       "feedback": {
-        "savedTitle": "Resume saved",
-        "savedDescription": "Your information was updated successfully.",
-        "errorTitle": "Save failed",
-        "errorDescription": "Could not save the resume. Please try again.",
-        "exportPdfErrorTitle": "PDF export failed",
-        "exportPdfErrorDescription": "Could not generate the PDF. Please try again or use another browser."
+        "savedTitle": "Currículum guardado",
+        "savedDescription": "La información se actualizó correctamente.",
+        "errorTitle": "Error al guardar",
+        "errorDescription": "No fue posible guardar el currículum. Inténtalo de nuevo.",
+        "exportPdfErrorTitle": "Error al exportar PDF",
+        "exportPdfErrorDescription": "No se pudo generar el PDF. Inténtalo de nuevo o usa otro navegador."
       },
       "sections": {
-        "personal": "Personal Information",
-        "personalHint": "Start with the basics. Recruiters need to know who you are and how to contact you.",
-        "experience": "Professional Experience",
-        "education": "Education",
-        "skills": "Skills and Languages"
+        "personal": "Información Personal",
+        "personalHint": "Empieza por lo básico. Los reclutadores necesitan saber quién eres y cómo contactarte.",
+        "experience": "Experiencia Profesional",
+        "education": "Formación Académica",
+        "skills": "Competencias e Idiomas"
       },
       "experience": {
-        "add": "Add experience",
-        "remove": "Remove",
-        "entryLabel": "Experience {n}"
+        "add": "Añadir experiencia",
+        "remove": "Eliminar",
+        "entryLabel": "Experiencia {n}"
       },
       "education": {
-        "add": "Add education",
-        "remove": "Remove",
-        "entryLabel": "Education {n}"
+        "add": "Añadir formación",
+        "remove": "Eliminar",
+        "entryLabel": "Formación {n}"
       },
       "degreeLevel": {
-        "unspecified": "Select…",
-        "secondary": "Secondary education",
-        "professional": "Vocational / technical education",
-        "bachelor": "Bachelor's degree",
-        "master": "Master's degree",
-        "doctorate": "Doctorate",
-        "other": "Other"
+        "unspecified": "Seleccione…",
+        "secondary": "Educación secundaria",
+        "professional": "Formación profesional / técnica",
+        "bachelor": "Grado / Licenciatura",
+        "master": "Máster",
+        "doctorate": "Doctorado",
+        "other": "Otro"
       },
       "workMode": {
-        "unspecified": "Select…",
-        "onsite": "On-site",
-        "remote": "Remote",
-        "hybrid": "Hybrid"
+        "unspecified": "Seleccione…",
+        "onsite": "Presencial",
+        "remote": "Remoto",
+        "hybrid": "Híbrido"
       },
       "fields": {
-        "firstName": "First Name",
-        "lastName": "Last Name",
-        "professionalTitle": "Professional Title",
-        "email": "Email Address",
-        "phone": "Phone Number",
-        "location": "Location",
-        "summary": "Professional Summary",
-        "experiencePlaceholder": "Describe your most relevant work experiences.",
-        "expTitle": "Title",
-        "expWorkMode": "Work arrangement",
-        "expOrganization": "Company or organization",
-        "expStartDate": "Start date",
-        "expEndDate": "End date",
-        "expCurrent": "I currently work in this role",
-        "expJobLocation": "Location",
-        "expDescription": "Description",
-        "eduInstitution": "Educational institution",
-        "eduDegreeLevel": "Level of education",
-        "eduCourse": "Program / course",
-        "eduStartDate": "Start date",
-        "eduEndDate": "End date",
-        "eduInProgress": "I am currently studying this program",
-        "eduDescription": "Description",
-        "educationPlaceholder": "Describe your education and most relevant courses.",
-        "skills": "Skills",
-        "skillsPlaceholder": "E.g. Customer support, Excel, Team leadership",
-        "languages": "Languages",
-        "languagesPlaceholder": "E.g. Portuguese (B2), English (B1), Spanish (A2)",
-        "tagSearchSkills": "Search or add a skill…",
-        "tagSearchLanguages": "Search or add a language…",
-        "tagAddCustom": "Add \"{value}\"",
-        "tagAlreadyAdded": "This item is already added.",
-        "removeTagAria": "Remove {tag}"
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "professionalTitle": "Cargo Profesional",
+        "email": "Correo Electrónico",
+        "phone": "Número de Teléfono",
+        "location": "Dirección / Ubicación",
+        "summary": "Resumen Profesional",
+        "experiencePlaceholder": "Describe tus experiencias profesionales más relevantes.",
+        "expTitle": "Título",
+        "expWorkMode": "Modalidad de trabajo",
+        "expOrganization": "Empresa u organización",
+        "expStartDate": "Fecha de inicio",
+        "expEndDate": "Fecha de finalización",
+        "expCurrent": "Trabajo actualmente en este puesto",
+        "expJobLocation": "Localidad",
+        "expDescription": "Descripción",
+        "eduInstitution": "Institución educativa",
+        "eduDegreeLevel": "Grado de formación",
+        "eduCourse": "Curso",
+        "eduStartDate": "Fecha de inicio",
+        "eduEndDate": "Fecha de finalización",
+        "eduInProgress": "En curso actualmente",
+        "eduDescription": "Descripción",
+        "educationPlaceholder": "Describe tu formación académica y cursos más relevantes.",
+        "skills": "Competencias",
+        "skillsPlaceholder": "Ej.: Atención al cliente, Excel, Liderazgo de equipo",
+        "languages": "Idiomas",
+        "languagesPlaceholder": "Ej.: Portugués (B2), Inglés (B1), Español (A2)",
+        "tagSearchSkills": "Buscar o añadir competencia…",
+        "tagSearchLanguages": "Buscar o añadir idioma…",
+        "tagAddCustom": "Añadir \"{value}\"",
+        "tagAlreadyAdded": "Este elemento ya está añadido.",
+        "removeTagAria": "Eliminar {tag}"
       },
       "preview": {
-        "title": "Preview",
-        "subtitle": "See how your resume will look while you fill in the data.",
-        "roleFallback": "Professional Title",
-        "summaryTitle": "Profile",
-        "summaryFallback": "Add a professional summary to present your profile.",
-        "experienceTitle": "Professional Experience",
-        "experienceFallback": "Add your professional experience.",
-        "present": "Present",
-        "educationTitle": "Education",
-        "educationFallback": "Add your education history.",
-        "inProgress": "In progress",
-        "skillsTitle": "Skills",
-        "skillsFallback": "Add skills to highlight your profile.",
-        "languagesTitle": "Languages",
-        "languagesFallback": "Add the languages you speak."
+        "title": "Vista previa",
+        "subtitle": "Mira cómo se presentará tu currículum mientras completas los datos.",
+        "roleFallback": "Cargo Profesional",
+        "summaryTitle": "Perfil",
+        "summaryFallback": "Añade un resumen profesional para presentar tu perfil.",
+        "experienceTitle": "Experiencia Profesional",
+        "experienceFallback": "Añade tus experiencias profesionales.",
+        "present": "Actualidad",
+        "educationTitle": "Formación Académica",
+        "educationFallback": "Añade tu formación académica.",
+        "inProgress": "En curso",
+        "skillsTitle": "Competencias",
+        "skillsFallback": "Añade competencias para destacar tu perfil.",
+        "languagesTitle": "Idiomas",
+        "languagesFallback": "Añade los idiomas que dominas."
       },
       "view": {
-        "title": "Resume View",
-        "subtitle": "Full-page view with a unique URL for your resume."
+        "title": "Visualización del Currículum",
+        "subtitle": "Página completa con URL exclusiva para tu currículum."
       }
     }
   },
@@ -1340,60 +1340,60 @@
       "user_fallback": "User",
       "overview": "Overview",
       "migrants": "Migrants",
-      "activities": "Activities",
+      "activities": "Actividades",
       "agenda": "Agenda",
       "applications": "Applications",
       "offers": "Offers",
       "trails": "Trails",
       "team": "Team",
-      "statistics": "Statistics",
+      "statistics": "Estadísticas",
       "profile": "Profile",
       "settings": "Settings",
       "messages": "Messages"
     },
     "profile": {
-      "title": "Profile",
-      "subtitle": "Manage your account details and contact preferences.",
+      "title": "Perfil",
+      "subtitle": "Gestiona los datos de tu cuenta y preferencias de contacto.",
       "actions": {
-        "edit": "Edit"
+        "edit": "Editar"
       },
       "sections": {
-        "photo": "PHOTO",
-        "info": "INFORMATION"
+        "photo": "FOTO",
+        "info": "INFORMACIÓN"
       },
       "labels": {
-        "name": "Name",
+        "name": "Nombre",
         "email": "Email",
-        "role": "Role",
-        "phone": "Phone"
+        "role": "Rol",
+        "phone": "Teléfono"
       },
       "placeholders": {
-        "phone": "e.g. +351 910 000 000"
+        "phone": "Ej.: +351 910 000 000"
       },
       "photo": {
-        "changeAriaLabel": "Change photo",
-        "invalidFormatTitle": "Invalid format",
-        "invalidFormatDesc": "Use JPG, PNG or GIF.",
-        "tooLargeTitle": "File too large",
-        "tooLargeDesc": "Limit is 5MB.",
-        "updatedTitle": "Photo updated",
-        "updatedDesc": "Your profile photo has been updated.",
-        "updateError": "Couldn't update the photo."
+        "changeAriaLabel": "Cambiar foto",
+        "invalidFormatTitle": "Formato inválido",
+        "invalidFormatDesc": "Usa JPG, PNG o GIF.",
+        "tooLargeTitle": "Archivo demasiado grande",
+        "tooLargeDesc": "El límite es 5MB.",
+        "updatedTitle": "Foto actualizada",
+        "updatedDesc": "Tu foto de perfil se ha actualizado.",
+        "updateError": "No se pudo actualizar la foto."
       },
       "validation": {
-        "nameRequired": "Name is required.",
-        "phoneInvalid": "Phone number is not valid."
+        "nameRequired": "El nombre es obligatorio.",
+        "phoneInvalid": "El teléfono no es válido."
       },
       "toast": {
-        "updatedTitle": "Profile updated",
-        "updatedDesc": "Changes were saved successfully."
+        "updatedTitle": "Perfil actualizado",
+        "updatedDesc": "Los cambios se guardaron correctamente."
       },
       "errors": {
-        "loadNoPermission": "You don't have permission to load your profile.",
-        "loadGeneric": "Couldn't load your profile.",
-        "saveNoPermissionTitle": "No permission",
-        "saveNoPermissionDesc": "Couldn't save the changes.",
-        "saveGeneric": "Couldn't save the changes."
+        "loadNoPermission": "Sin permisos para cargar tu perfil.",
+        "loadGeneric": "No se pudo cargar tu perfil.",
+        "saveNoPermissionTitle": "Sin permisos",
+        "saveNoPermissionDesc": "No se pudieron guardar los cambios.",
+        "saveGeneric": "No se pudieron guardar los cambios."
       }
     },
     "dashboard": {
@@ -1426,9 +1426,9 @@
       "title": "Recent migrants",
       "empty": "No recent migrants",
       "status": {
-        "triage_incomplete": "Triage incomplete",
-        "registration_incomplete": "Registration incomplete",
-        "registration_complete": "Registration complete"
+        "triage_incomplete": "Triaje incompleto",
+        "registration_incomplete": "Registro incompleto",
+        "registration_complete": "Registro completo"
       }
     },
     "sessions": {
@@ -1445,368 +1445,368 @@
       }
     },
     "activities": {
-      "title": "Activities",
-      "subtitle": "Create, edit and track activities with migrants (extensible to companies).",
+      "title": "Actividades",
+      "subtitle": "Crea, edita y sigue actividades con migrantes (extensible a empresas).",
       "export": {
-        "button": "Export",
-        "csv": "Export CSV",
-        "pdf": "Export PDF"
+        "button": "Exportar",
+        "csv": "Exportar CSV",
+        "pdf": "Exportar PDF"
       },
       "actions": {
-        "new": "New activity",
-        "save": "Save",
-        "publish": "Publish",
-        "unpublish": "Revert to draft",
-        "mark_completed": "Mark as completed",
-        "mark_cancelled": "Mark as cancelled",
-        "edit": "Edit",
-        "delete": "Delete",
-        "back": "Back",
-        "add_consultant": "Add consultant"
+        "new": "Nueva actividad",
+        "save": "Guardar",
+        "publish": "Publicar",
+        "unpublish": "Volver a borrador",
+        "mark_completed": "Marcar como completada",
+        "mark_cancelled": "Marcar como cancelada",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "back": "Volver",
+        "add_consultant": "Añadir consultor"
       },
       "list": {
-        "empty": "No activities for the selected filters.",
-        "showing_none": "Showing 0 results",
-        "showing_range": "Showing {start}-{end} of {total}"
+        "empty": "No hay actividades para los filtros seleccionados.",
+        "showing_none": "Mostrando 0 resultados",
+        "showing_range": "Mostrando {start}-{end} de {total}"
       },
       "pagination": {
-        "prev": "Previous",
-        "next": "Next"
+        "prev": "Anterior",
+        "next": "Siguiente"
       },
       "table": {
-        "activity": "Activity",
-        "type": "Type",
-        "date_time": "Date/Time",
-        "consultants": "Consultants",
-        "location": "Location",
-        "status": "Status"
+        "activity": "Actividad",
+        "type": "Tipo",
+        "date_time": "Fecha/Hora",
+        "consultants": "Consultores",
+        "location": "Lugar",
+        "status": "Estado"
       },
       "filters": {
         "search": {
-          "label": "Search",
-          "placeholder": "Search by title or location",
-          "action": "Apply",
-          "hint": "Use one or more words (min. 2 characters each). Matches activities that contain any of the terms in indexed data.",
-          "disabled_hint": "Search is disabled when you select Consultant or Topic."
+          "label": "Búsqueda",
+          "placeholder": "Buscar por título o lugar",
+          "action": "Aplicar",
+          "hint": "Usa una o varias palabras (mín. 2 letras cada una). Encuentra actividades que contengan cualquiera de los términos en los datos indexados.",
+          "disabled_hint": "La búsqueda se desactiva cuando seleccionas Consultor o Temática."
         },
-        "type": "Type",
-        "all_types": "All types",
-        "status": "Status",
-        "any_status": "Any status",
-        "format": "Format",
-        "all_formats": "All formats",
-        "date": "Period",
-        "date_this_month": "This month",
-        "date_next_30": "Next 30 days",
-        "date_all": "All",
+        "type": "Tipo",
+        "all_types": "Todos los tipos",
+        "status": "Estado",
+        "any_status": "Cualquier estado",
+        "format": "Formato",
+        "all_formats": "Todos los formatos",
+        "date": "Periodo",
+        "date_this_month": "Este mes",
+        "date_next_30": "Próximos 30 días",
+        "date_all": "Todos",
         "consultant": {
-          "label": "Consultant",
-          "disabled_hint": "Consultant filter is disabled when you select Topic or Search."
+          "label": "Consultor",
+          "disabled_hint": "El filtro por consultor se desactiva cuando seleccionas Temática o Búsqueda."
         },
-        "any_consultant": "Any consultant",
+        "any_consultant": "Cualquier consultor",
         "topic": {
-          "label": "Topic",
-          "disabled_hint": "Topic filter is disabled when you select Consultant or Search."
+          "label": "Temática",
+          "disabled_hint": "El filtro por temática se desactiva cuando seleccionas Consultor o Búsqueda."
         },
-        "any_topic": "Any topic",
-        "hints_title": "Tip",
-        "hints_body": "You can combine type, status, format, period, consultant, topic, and search. If Firestore asks for a composite index, create it in the console when the error appears."
+        "any_topic": "Cualquier temática",
+        "hints_title": "Consejo",
+        "hints_body": "Puedes combinar tipo, estado, formato, periodo, consultor, temática y búsqueda. Si Firestore pide un índice compuesto, créalo en la consola cuando aparezca el error."
       },
       "fields": {
-        "title": "Title",
-        "title_placeholder": "e.g. Integration Workshop",
-        "type": "Type",
-        "type_placeholder": "Select a type",
-        "format": "Format",
-        "format_placeholder": "Select a format",
-        "status": "Status",
-        "status_placeholder": "Select status",
-        "preview": "Summary",
-        "date": "Date",
-        "time": "Time",
-        "start_time": "Start",
-        "end_time": "End",
-        "duration": "Duration",
-        "duration_hint": "Calculated automatically",
-        "location": "Location / Link",
-        "location_placeholder": "e.g. CPC Faro or https://…",
-        "consultants": "Consultants",
-        "participants": "Participants",
-        "topics": "Topics"
+        "title": "Título",
+        "title_placeholder": "Ej.: Taller de Integración",
+        "type": "Tipo",
+        "type_placeholder": "Selecciona un tipo",
+        "format": "Formato",
+        "format_placeholder": "Selecciona un formato",
+        "status": "Estado",
+        "status_placeholder": "Selecciona el estado",
+        "preview": "Resumen",
+        "date": "Fecha",
+        "time": "Hora",
+        "start_time": "Inicio",
+        "end_time": "Fin",
+        "duration": "Duración",
+        "duration_hint": "Calculada automáticamente",
+        "location": "Lugar / Enlace",
+        "location_placeholder": "Ej.: CPC Faro o https://…",
+        "consultants": "Consultores",
+        "participants": "Participantes",
+        "topics": "Temáticas"
       },
       "status": {
-        "draft": "Draft",
-        "scheduled": "Published",
-        "completed": "Completed",
-        "cancelled": "Cancelled"
+        "draft": "Borrador",
+        "scheduled": "Publicada",
+        "completed": "Finalizada",
+        "cancelled": "Cancelada"
       },
       "format": {
-        "presencial": "In-person",
+        "presencial": "Presencial",
         "online": "Online",
-        "hibrido": "Hybrid"
+        "hibrido": "Híbrido"
       },
       "new": {
-        "title": "New activity"
+        "title": "Nueva actividad"
       },
       "edit": {
-        "title": "Edit activity"
+        "title": "Editar actividad"
       },
       "editor": {
-        "subtitle": "Fill the required fields and save to publish the activity.",
+        "subtitle": "Rellena los campos obligatorios y guarda para publicar la actividad.",
         "sections": {
           "general": "General",
-          "schedule": "Schedule",
-          "people": "People",
-          "topics": "Topics",
-          "summary": "Summary"
+          "schedule": "Programación",
+          "people": "Personas",
+          "topics": "Temáticas",
+          "summary": "Resumen"
         },
-        "consultants_hint": "Select at least one responsible consultant.",
-        "consultants_empty": "No consultants selected.",
-        "participants_hint": "Select the participants for this activity.",
-        "selected_count": "{count} selected",
-        "migrants_search": "Search migrants…",
-        "migrants_empty": "No migrants found.",
-        "topics_placeholder": "Add topic…",
-        "topics_add": "Add",
+        "consultants_hint": "Selecciona al menos un consultor responsable.",
+        "consultants_empty": "Ningún consultor seleccionado.",
+        "participants_hint": "Selecciona los participantes de la actividad.",
+        "selected_count": "{count} seleccionado(s)",
+        "migrants_search": "Buscar migrantes…",
+        "migrants_empty": "No se encontraron migrantes.",
+        "topics_placeholder": "Añadir temática…",
+        "topics_add": "Añadir",
         "checklist": "Checklist",
-        "checklist_title": "Valid title",
-        "checklist_time": "Valid time range",
-        "checklist_participants": "Participants selected",
-        "status_quick_hint": "Shortcuts: save the status immediately (subject to form validation)."
+        "checklist_title": "Título válido",
+        "checklist_time": "Horario válido",
+        "checklist_participants": "Participantes seleccionados",
+        "status_quick_hint": "Atajos: guardan el estado al instante (sujetos a la validación del formulario)."
       },
       "details": {
-        "not_found": "Activity not found.",
+        "not_found": "Actividad no encontrada.",
         "sections": {
-          "general": "Details",
-          "participants": "Participants"
+          "general": "Detalles",
+          "participants": "Participantes"
         },
         "participants": {
           "total": "Total",
-          "migrants": "Migrants",
-          "consultants": "Consultants",
-          "companies": "Companies"
+          "migrants": "Migrantes",
+          "consultants": "Consultores",
+          "companies": "Empresas"
         }
       },
       "delete": {
-        "title": "Delete activity",
-        "description": "Are you sure you want to delete “{title}”? This action cannot be undone.",
-        "confirm": "Delete",
+        "title": "Eliminar actividad",
+        "description": "¿Seguro que deseas eliminar “{title}”? Esta acción no se puede deshacer.",
+        "confirm": "Eliminar",
         "success": {
-          "title": "Activity deleted",
-          "desc": "“{title}” was deleted successfully."
+          "title": "Actividad eliminada",
+          "desc": "“{title}” fue eliminada con éxito."
         }
       },
       "save": {
         "success": {
-          "title": "Activity saved",
-          "desc": "Changes were saved successfully."
+          "title": "Actividad guardada",
+          "desc": "Los cambios se guardaron correctamente."
         }
       },
       "publish": {
         "success": {
-          "title": "Activity published",
-          "desc": "Status set to Published."
+          "title": "Actividad publicada",
+          "desc": "El estado pasó a Publicada."
         }
       },
       "unpublish": {
         "success": {
-          "title": "Activity in draft",
-          "desc": "Status set to Draft."
+          "title": "Actividad en borrador",
+          "desc": "El estado pasó a Borrador."
         }
       },
       "completed": {
         "success": {
-          "title": "Activity completed",
-          "desc": "Status set to Completed."
+          "title": "Actividad completada",
+          "desc": "El estado pasó a Completada."
         }
       },
       "cancelled_state": {
         "success": {
-          "title": "Activity cancelled",
-          "desc": "Status set to Cancelled."
+          "title": "Actividad cancelada",
+          "desc": "El estado pasó a Cancelada."
         }
       },
       "errors": {
-        "no_auth": "You must be signed in to perform this action.",
-        "permission_denied": "You don't have permission to perform this action.",
-        "delete_failed": "Couldn't delete the activity.",
-        "save_failed": "Couldn't save the activity."
+        "no_auth": "Debes iniciar sesión para realizar esta acción.",
+        "permission_denied": "No tienes permisos para realizar esta acción.",
+        "delete_failed": "No se pudo eliminar la actividad.",
+        "save_failed": "No se pudo guardar la actividad."
       }
     },
     "agenda": {
       "page": {
         "title": "Agenda",
-        "subtitle": "View and manage team sessions."
+        "subtitle": "Ver y gestionar las sesiones del equipo."
       },
       "header": {
-        "today": "Today",
-        "filterBy": "Filter by",
-        "week": "Week",
-        "month": "Month",
-        "newSession": "New session"
+        "today": "Hoy",
+        "filterBy": "Filtrar por",
+        "week": "Semana",
+        "month": "Mes",
+        "newSession": "Nueva sesión"
       },
       "weekdays": {
-        "mon": "MON",
-        "tue": "TUE",
-        "wed": "WED",
-        "thu": "THU",
-        "fri": "FRI",
-        "sat": "SAT",
-        "sun": "SUN"
+        "mon": "LUN",
+        "tue": "MAR",
+        "wed": "MIÉ",
+        "thu": "JUE",
+        "fri": "VIE",
+        "sat": "SÁB",
+        "sun": "DOM"
       },
       "events": {
         "legal-consult": {
-          "title": "Legal Consultation",
+          "title": "Consulta Legal",
           "subtitle": "M. Al-Fayed (ID ...)"
         },
         "initial-assessment": {
-          "title": "Initial Assessment",
+          "title": "Evaluación Inicial",
           "subtitle": "S. Kovacs (ID ...)"
         },
         "family-mediation": {
-          "title": "Family Mediation",
-          "subtitle": "Family H. (Case...)"
+          "title": "Mediación Familiar",
+          "subtitle": "Familia H. (Caso...)"
         },
         "workplace-conflict": {
-          "title": "Workplace Conflict",
-          "subtitle": "Case #9912"
+          "title": "Conflicto Laboral",
+          "subtitle": "Caso #9912"
         },
         "follow-up": {
-          "title": "Follow-up",
+          "title": "Seguimiento",
           "subtitle": "L. Dubois (ID: 4...)"
         }
       },
       "popover": {
-        "title": "Trauma Follow-up",
+        "title": "Seguimiento de Trauma",
         "person": "Lucas Dubois",
         "personMetaPrefix": "ID: 4100",
-        "personMetaStatus": "Status: Active",
-        "dateTime": "Wed, Oct 25 • 13:00 - 14:00",
-        "specialist": "Specialist: Dr. A. Rossi",
-        "notes": "Patient reported improved sleep patterns. Focus on integration stressors today."
+        "personMetaStatus": "Estado: Activo",
+        "dateTime": "Mié, 25 Oct • 13:00 - 14:00",
+        "specialist": "Especialista: Dr. A. Rossi",
+        "notes": "El paciente reportó mejora del sueño. Enfoque en factores de estrés de integración hoy."
       },
       "actions": {
-        "reschedule": "Reschedule",
-        "cancel": "Cancel",
-        "decline": "Decline",
-        "approve": "Approve",
-        "assignSlot": "Assign Slot"
+        "reschedule": "Reprogramar",
+        "cancel": "Cancelar",
+        "decline": "Rechazar",
+        "approve": "Aprobar",
+        "assignSlot": "Asignar horario"
       },
       "eventModal": {
-        "close": "Close"
+        "close": "Cerrar"
       },
       "sessionRecord": {
-        "open": "Session Record",
+        "open": "Registro de sesión",
         "breadcrumbs": {
-          "home": "Home",
-          "migrants": "Migrants",
-          "record": "Session Record"
+          "home": "Inicio",
+          "migrants": "Migrantes",
+          "record": "Registro de sesión"
         },
         "header": {
-          "title": "Session Record",
-          "dateTime": "February 24, 2024 • 14:30",
-          "tech": "Tech: Sarah J.",
-          "saveDraft": "Save Draft"
+          "title": "Registro de sesión",
+          "dateTime": "24 de febrero de 2024 • 14:30",
+          "tech": "Técnico: Sarah J.",
+          "saveDraft": "Guardar borrador"
         },
         "profile": {
           "name": "Mateo Silva",
           "initials": "MS",
           "idLabel": "ID:",
           "idValue": "#94821",
-          "statusActive": "Active"
+          "statusActive": "Activo"
         },
         "needs": {
-          "title": "Identified Needs",
-          "languageSupport": "Language Support",
-          "cvWorkshop": "CV Workshop",
-          "housing": "Housing"
+          "title": "Necesidades identificadas",
+          "languageSupport": "Apoyo de idioma",
+          "cvWorkshop": "Taller de CV",
+          "housing": "Vivienda"
         },
         "screening": {
-          "title": "Screening Summary",
-          "p1": "Initial intake conducted on Jan 15, 2024. Mateo shows high motivation for employment in the construction sector, specifically carpentry.",
-          "primaryChallengeLabel": "Primary challenge:",
-          "primaryChallengeText": "Current language proficiency (A2) is insufficient for vocational training entry requirements (B1 needed).",
-          "p2": "Living situation is stable but temporary. Has requested legal assistance regarding family reunification paperwork."
+          "title": "Resumen de evaluación",
+          "p1": "Ingreso inicial realizado el 15 de ene de 2024. Mateo muestra alta motivación para empleo en el sector de la construcción, específicamente carpintería.",
+          "primaryChallengeLabel": "Desafío principal:",
+          "primaryChallengeText": "El nivel actual de idioma (A2) es insuficiente para requisitos de entrada a formación vocacional (se necesita B1).",
+          "p2": "La situación de vivienda es estable pero temporal. Ha solicitado asistencia legal sobre documentación de reunificación familiar."
         },
         "activity": {
-          "title": "Recent Activity",
+          "title": "Actividad reciente",
           "item1": {
-            "date": "Feb 10, 2024",
-            "title": "CV Workshop Attendance",
-            "status": "Completed"
+            "date": "10 feb, 2024",
+            "title": "Asistencia a taller de CV",
+            "status": "Completado"
           },
           "item2": {
-            "date": "Jan 28, 2024",
-            "title": "Language Assessment",
-            "meta": "Scored: A2"
+            "date": "28 ene, 2024",
+            "title": "Evaluación de idioma",
+            "meta": "Puntuación: A2"
           }
         },
         "notes": {
-          "title": "Session Notes",
-          "placeholder": "Record the details of the conversation, goals set, and observations here...",
-          "lastAutosaved": "Last auto-saved {relative}",
-          "justNow": "just now",
-          "urgent": "Mark session as Urgent",
+          "title": "Notas de la sesión",
+          "placeholder": "Registra los detalles de la conversación, objetivos definidos y observaciones aquí...",
+          "lastAutosaved": "Último autoguardado {relative}",
+          "justNow": "ahora mismo",
+          "urgent": "Marcar sesión como urgente",
           "toolbar": {
-            "bold": "Bold",
-            "italic": "Italic",
-            "bullets": "Bulleted list",
-            "ordered": "Ordered list"
+            "bold": "Negrita",
+            "italic": "Cursiva",
+            "bullets": "Lista con viñetas",
+            "ordered": "Lista numerada"
           }
         },
         "outcomes": {
-          "title": "Outcomes & Next Steps",
-          "recommendTrack": "Recommend Training Track",
-          "immediateNextStep": "Immediate Next Step",
-          "selectTrackPlaceholder": "Select a track...",
-          "selectNextPlaceholder": "Select next step...",
+          "title": "Resultados y próximos pasos",
+          "recommendTrack": "Recomendar itinerario formativo",
+          "immediateNextStep": "Próximo paso inmediato",
+          "selectTrackPlaceholder": "Selecciona un itinerario...",
+          "selectNextPlaceholder": "Selecciona el próximo paso...",
           "track": {
-            "language": "Portuguese (B1)",
-            "career": "Employability & CV",
-            "legal": "Legal support"
+            "language": "Portugués (B1)",
+            "career": "Empleabilidad y CV",
+            "legal": "Apoyo legal"
           },
           "next": {
-            "schedule": "Schedule next session",
-            "docs": "Request documents",
-            "referral": "Refer to service"
+            "schedule": "Agendar próxima sesión",
+            "docs": "Solicitar documentos",
+            "referral": "Derivar a servicio"
           },
-          "finalize": "Finalize and Save"
+          "finalize": "Finalizar y guardar"
         }
       },
       "pending": {
-        "title": "Pending Requests",
-        "viewAll": "View All Requests"
+        "title": "Solicitudes Pendientes",
+        "viewAll": "Ver Todas las Solicitudes"
       },
       "status": {
-        "approved": "Approved",
-        "declined": "Declined",
-        "assigned": "Slot assigned"
+        "approved": "Aprobado",
+        "declined": "Rechazado",
+        "assigned": "Horario asignado"
       },
       "requests": {
         "r1": {
           "category": "LEGAL",
-          "title": "Residency Appeal Consult",
+          "title": "Consulta de Recurso de Residencia",
           "person": "Ahmed K.",
-          "team": "Req. Front Desk",
-          "when": "Mon, Oct 30 • 10:00 AM",
-          "timeAgo": "2h ago"
+          "team": "Solicitud Recepción",
+          "when": "Lun, 30 Oct • 10:00",
+          "timeAgo": "hace 2h"
         },
         "r2": {
-          "category": "PSYCHOLOGY",
-          "title": "Emergency Counseling",
+          "category": "PSICOLOGÍA",
+          "title": "Asesoramiento de Emergencia",
           "person": "Nia J.",
-          "team": "Req. Social Worker",
-          "when": "Date to be defined",
-          "timeAgo": "5h ago",
-          "urgent": "Urgent: ASAP"
+          "team": "Solicitud Trab. Social",
+          "when": "Fecha por definir",
+          "timeAgo": "hace 5h",
+          "urgent": "Urgente: ASAP"
         },
         "r3": {
-          "category": "MEDIATION",
-          "title": "Conflict Resolution",
+          "category": "MEDIACIÓN",
+          "title": "Resolución de Conflictos",
           "person": "Marcus T.",
-          "team": "Req. Housing",
-          "when": "Wed, Nov 1 • 14:00 PM",
-          "timeAgo": "1d ago"
+          "team": "Solicitud Vivienda",
+          "when": "Mié, 1 Nov • 14:00",
+          "timeAgo": "hace 1d"
         }
       }
     },
@@ -1955,24 +1955,24 @@
           "all": "All"
         },
         "triage": {
-          "label": "Triage",
-          "all": "All",
-          "complete": "Complete",
-          "incomplete": "Incomplete"
+          "label": "Triaje",
+          "all": "Todos",
+          "complete": "Completa",
+          "incomplete": "Incompleta"
         }
       },
       "list": {
-        "sortLabel": "Sort by name",
-        "sortAsc": "A–Z (ascending)",
-        "sortDesc": "Z–A (descending)",
-        "pageSizeLabel": "Migrants per page",
+        "sortLabel": "Ordenar por nombre",
+        "sortAsc": "A–Z (ascendente)",
+        "sortDesc": "Z–A (descendente)",
+        "pageSizeLabel": "Migrantes por página",
         "pageSize10": "10",
         "pageSize20": "20",
         "pageSize50": "50",
-        "showing": "Showing {from}–{to} of {total}",
-        "pageOf": "Page {page} of {pages}",
-        "prev": "Previous page",
-        "next": "Next page"
+        "showing": "Mostrando {from}–{to} de {total}",
+        "pageOf": "Página {page} de {pages}",
+        "prev": "Página anterior",
+        "next": "Página siguiente"
       },
       "empty": {
         "title": "No migrants found",
@@ -2072,36 +2072,36 @@
     },
     "pages": {
       "applications": {
-        "title": "Applications",
-        "subtitle": "Review applications submitted by migrants to job postings.",
-        "empty": "No applications in this period"
+        "title": "Candidaturas",
+        "subtitle": "Consulte las candidaturas presentadas por migrantes a las ofertas de empleo.",
+        "empty": "No hay candidaturas en este periodo"
       },
       "offers": {
-        "title": "Offers",
+        "title": "Ofertas",
         "empty": "No pending offers",
-        "subtitle": "Validate, reject or delete jobs published by companies.",
-        "status_pending": "Pending approval",
-        "status_active": "Approved",
-        "status_rejected": "Rejected",
-        "search_placeholder": "Search by job, company or location",
-        "confirm_delete": "Do you want to delete job \"{title}\"? This action cannot be undone.",
+        "subtitle": "Valida, rechaza o elimina vacantes publicadas por empresas.",
+        "status_pending": "Pendiente de aprobación",
+        "status_active": "Aprobada",
+        "status_rejected": "Rechazada",
+        "search_placeholder": "Buscar por vacante, empresa o ubicación",
+        "confirm_delete": "¿Quieres eliminar la vacante \"{title}\"? Esta acción no se puede deshacer.",
         "filters": {
-          "pending": "Pending",
-          "active": "Approved",
-          "rejected": "Rejected",
-          "all": "All"
+          "pending": "Pendientes",
+          "active": "Aprobadas",
+          "rejected": "Rechazadas",
+          "all": "Todas"
         },
         "actions": {
-          "approve": "Validate",
-          "reject": "Reject",
-          "delete": "Delete"
+          "approve": "Validar",
+          "reject": "Rechazar",
+          "delete": "Eliminar"
         }
       },
       "statistics": {
-        "title": "Statistics",
-        "subtitle": "Indicators and reports with time and regional filters.",
+        "title": "Estadísticas",
+        "subtitle": "Indicadores e informes con filtros temporales y regionales.",
         "export": {
-          "button": "Export",
+          "button": "Exportar",
           "formats": {
             "pdf": "PDF",
             "docx": "DOCX",
@@ -2110,602 +2110,592 @@
         }
       },
       "trails": {
-        "title": "Trails",
-        "subtitle": "Create and edit learning trails and their modules."
+        "title": "Rutas formativas",
+        "subtitle": "Crear y editar rutas formativas y sus módulos."
       },
       "settings": {
-        "title": "Settings",
-        "subtitle": "Manage notifications, SMTP and exported document branding.",
-        "loginRequired": "Sign in to access this page.",
-        "noPermission": "You do not have permission to access this section."
+        "title": "Configuración",
+        "subtitle": "Gestión de notificaciones, SMTP e identidad visual de los documentos exportados.",
+        "loginRequired": "Inicie sesión para acceder.",
+        "noPermission": "No tiene permiso para acceder a esta sección."
       }
     }
   },
   "cpcTranslations": {
-    "title": "Translations",
-    "subtitle": "Manage translations (PT/EN/ES/FR), validate completeness and publish a new cached version.",
-    "no_permission": "You do not have permission to manage translations.",
+    "title": "Traducciones",
+    "subtitle": "Gestiona traducciones (PT/EN/ES/FR), valida la completitud y publica una nueva versión con caché.",
+    "no_permission": "No tienes permisos para gestionar traducciones.",
     "actions": {
-      "validate": "Validate",
-      "publish": "Publish ({count})",
-      "export_csv": "Export CSV",
-      "import_csv": "Import CSV"
+      "validate": "Validar",
+      "publish": "Publicar ({count})"
     },
     "search": {
-      "label": "Search by key",
-      "placeholder": "E.g.: dashboard.overview"
+      "label": "Buscar por clave",
+      "placeholder": "Ej.: dashboard.overview"
     },
     "settings": {
-      "enabled": "Remote overrides enabled",
-      "version": "Version: {version}"
+      "enabled": "Overrides remotos activos",
+      "version": "Versión: {version}"
     },
     "runtimeMissing": {
-      "title": "Missing keys (runtime)",
-      "clear": "Clear log",
-      "cleared": "Log cleared."
+      "title": "Claves faltantes (runtime)",
+      "clear": "Limpiar registro",
+      "cleared": "Registro limpiado."
     },
     "table": {
-      "key": "Key"
+      "key": "Clave"
     },
     "validation": {
-      "title": "Translation validation",
-      "hint": "Missing content should be filled (in code or via overrides) before publishing.",
-      "incomplete_draft": "{count} draft keys are incomplete (fill PT/EN/ES/FR)."
-    },
-    "csv": {
-      "import_aria": "Select translations CSV file",
-      "export_success": "CSV file exported with all keys.",
-      "import_success": "{count} keys imported into the draft.",
-      "import_unknown": "{count} CSV keys are not in the project and were ignored.",
-      "import_error_header": "Invalid header. The CSV must include columns: key, pt, en, es, fr (same as export).",
-      "import_empty": "No valid rows found in the CSV."
+      "title": "Validación de traducciones",
+      "hint": "El contenido faltante debe completarse (en código o mediante overrides) antes de publicar.",
+      "incomplete_draft": "{count} claves del borrador están incompletas (completa PT/EN/ES/FR)."
     },
     "publish": {
-      "nothing_to_publish": "There are no changes to publish.",
-      "success": "Translations published. Version {version}."
+      "nothing_to_publish": "No hay cambios para publicar.",
+      "success": "Traducciones publicadas. Versión {version}."
     }
   },
   "company": {
     "menu": {
-      "title": "Company Menu",
-      "user_fallback": "User",
-      "overview": "Overview",
-      "offers": "Jobs",
-      "applications": "Applications",
-      "new_offer": "New Job",
-      "candidates": "Candidates",
-      "profile": "Profile",
-      "messages": "Messages",
+      "title": "Menú Empresa",
+      "user_fallback": "Usuario",
+      "overview": "Visión general",
+      "offers": "Ofertas",
+      "applications": "Candidaturas",
+      "new_offer": "Nueva Oferta",
+      "candidates": "Candidatos",
+      "profile": "Perfil",
+      "messages": "Mensajes",
       "sections": {
-        "settings": "Settings",
-        "messages": "Messages"
+        "settings": "Configuración",
+        "messages": "Mensajes"
       }
     },
     "dashboard": {
-      "welcome": "Welcome,",
-      "summary": "Dashboard summary on {date}"
+      "welcome": "Bienvenido(a),",
+      "summary": "Resumen de tu panel en {date}"
     },
     "common": {
-      "viewAll": "View all",
-      "soon": "Coming soon.",
-      "today": "Today",
-      "yesterday": "Yesterday",
-      "daysAgo": "{count} days ago",
-      "weeksAgo": "{count} weeks ago"
+      "viewAll": "Ver todas",
+      "soon": "Próximamente.",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "daysAgo": "Hace {count} días",
+      "weeksAgo": "Hace {count} semanas"
     },
     "status": {
-      "active": "Active",
-      "in_review": "In review",
-      "new": "New",
-      "viewed": "Viewed",
-      "in_analysis": "Under review"
+      "active": "Activa",
+      "in_review": "En revisión",
+      "new": "Nuevo",
+      "viewed": "Visto",
+      "in_analysis": "En análisis"
     },
     "profile": {
       "breadcrumbs": {
-        "settings": "SETTINGS",
-        "companyProfile": "COMPANY PROFILE"
+        "settings": "CONFIGURACIÓN",
+        "companyProfile": "PERFIL DE LA EMPRESA"
       },
-      "title": "Company Profile",
-      "description": "Manage your organization's identity and legal information.",
-      "logoSection": "LOGO",
-      "logoRecommendation": "Recommended: SVG or transparent PNG (512×512px).",
-      "changeLogo": "Change logo",
+      "title": "Perfil de la Empresa",
+      "description": "Gestiona la identidad y la información legal de tu organización.",
+      "logoSection": "LOGOTIPO",
+      "logoRecommendation": "Recomendado: SVG o PNG transparente (512×512px).",
+      "changeLogo": "Cambiar logotipo",
       "accountVerification": {
-        "title": "Account verification",
-        "description": "Legal information (Name and Tax ID) can only be changed by contacting support to ensure fiscal security."
+        "title": "Verificación de cuenta",
+        "description": "La información legal (Nombre y NIF) solo puede modificarse contactando con soporte para garantizar la seguridad fiscal."
       },
-      "legalInfoTitle": "Legal information",
-      "contactLocationTitle": "Contact and location",
+      "legalInfoTitle": "Información legal",
+      "contactLocationTitle": "Contacto y ubicación",
       "labels": {
-        "legalName": "LEGAL NAME",
-        "taxId": "TAX ID",
-        "activityArea": "BUSINESS AREA",
-        "fiscalAddress": "FISCAL ADDRESS",
-        "phone": "PHONE",
-        "notes": "NOTES",
+        "legalName": "NOMBRE LEGAL",
+        "taxId": "NIF (NÚMERO DE IDENTIFICACIÓN FISCAL)",
+        "activityArea": "ÁREA DE ACTIVIDAD",
+        "fiscalAddress": "DIRECCIÓN FISCAL",
+        "phone": "TELÉFONO",
+        "notes": "NOTAS",
         "email": "EMAIL",
-        "userFullName": "FULL NAME",
-        "showUserName": "SHOW USER NAME",
-        "showUserNameHelp": "On: shows user name. Off: shows legal name."
+        "userFullName": "NOMBRE COMPLETO",
+        "showUserName": "MOSTRAR NOMBRE DE USUARIO",
+        "showUserNameHelp": "Activo: muestra el nombre de usuario. Desactivado: muestra el nombre legal."
       },
       "placeholders": {
-        "notes": "Optional"
+        "notes": "Opcional"
       },
       "actions": {
-        "cancel": "Cancel",
-        "saveChanges": "Save changes"
+        "cancel": "Cancelar",
+        "saveChanges": "Guardar cambios"
       },
-      "loading": "Loading profile...",
-      "userDataTitle": "User Data",
+      "loading": "Cargando perfil...",
+      "userDataTitle": "Datos del Usuario",
       "toast": {
-        "savedTitle": "Profile updated",
-        "savedDescription": "Changes were saved successfully.",
+        "savedTitle": "Perfil actualizado",
+        "savedDescription": "Los cambios se guardaron correctamente.",
         "errorTitle": "Error",
-        "errorDescription": "Could not save company profile."
+        "errorDescription": "No se pudo guardar el perfil de empresa."
       }
     },
     "messages": {
-      "title": "Conversations",
-      "newCount": "{count} NEW",
+      "title": "Conversaciones",
+      "newCount": "{count} NUEVAS",
       "filters": {
-        "all": "All",
-        "candidates": "Candidates",
-        "technicians": "Staff"
+        "all": "Todas",
+        "candidates": "Candidatos",
+        "technicians": "Técnicos"
       },
-      "onlineNow": "Online now",
-      "today": "TODAY",
-      "messagePlaceholder": "Write your message here...",
+      "onlineNow": "En línea ahora",
+      "today": "HOY",
+      "messagePlaceholder": "Escribe tu mensaje aquí...",
       "aria": {
-        "videoCall": "Video call",
-        "call": "Call",
-        "moreOptions": "More options",
-        "add": "Add",
+        "videoCall": "Videollamada",
+        "call": "Llamada",
+        "moreOptions": "Más opciones",
+        "add": "Añadir",
         "emoji": "Emoji",
-        "send": "Send"
+        "send": "Enviar"
       },
       "sample": {
-        "message1": "Hi Ricardo! I'd like to know if there is any update regarding my application for the Product Manager role.",
-        "message2": "Hi Maria, good morning! Yes, the technical team finished reviewing your portfolio and we were very impressed. We'd like to schedule the next interview.",
-        "message3": "That's great news! I confirm my availability for any time next Thursday or Friday afternoon."
+        "message1": "Hola Ricardo. Quería saber si ya hay alguna actualización sobre mi candidatura al puesto de Product Manager.",
+        "message2": "Hola María, buenos días. Sí, el equipo técnico terminó de revisar tu portafolio y quedamos muy impresionados. Nos gustaría agendar la próxima entrevista.",
+        "message3": "¡Qué buenas noticias! Confirmo mi disponibilidad para cualquier horario el próximo jueves o viernes por la tarde."
       }
     },
     "home": {
       "stats": {
-        "activeOffers": "Open job posts",
-        "receivedApplications": "Applications received",
-        "viewedCandidates": "Viewed candidates",
-        "hires": "Hires"
+        "activeOffers": "Ofertas en curso",
+        "receivedApplications": "Candidaturas recibidas",
+        "viewedCandidates": "Candidatos vistos",
+        "hires": "Contrataciones"
       },
-      "activeJobsTitle": "Your job posts",
-      "applicationsCount": "{count} applications",
-      "recentApplicationsTitle": "Recent applications",
+      "activeJobsTitle": "Sus ofertas",
+      "applicationsCount": "{count} candidaturas",
+      "recentApplicationsTitle": "Candidaturas recientes",
       "promo": {
-        "title": "Find the best candidates",
-        "description": "Post jobs and access a pool of qualified and motivated candidates",
-        "cta": "Create job"
+        "title": "Encuentra a los mejores candidatos",
+        "description": "Publica ofertas y accede a un banco de candidatos cualificados y motivados",
+        "cta": "Crear oferta"
       }
     },
     "createJob": {
-      "backToDashboard": "Back to dashboard",
-      "title": "New job posting",
-      "subtitle": "Fill in the job details. After submission, it will be reviewed by the CPC team.",
-      "editTitle": "Edit job",
-      "editSubtitle": "Update the job details.",
+      "backToDashboard": "Volver al panel",
+      "title": "Nueva oferta de empleo",
+      "subtitle": "Completa los detalles de la oferta. Tras enviarla, el equipo CPC la revisará.",
+      "editTitle": "Editar vacante",
+      "editSubtitle": "Actualiza los detalles de la vacante.",
       "toast": {
-        "createdTitle": "Job created!",
-        "createdDesc": "Your job has been submitted for review.",
-        "updatedTitle": "Job updated!",
-        "updatedDesc": "Your changes have been saved."
+        "createdTitle": "¡Oferta creada!",
+        "createdDesc": "Tu oferta se ha enviado para revisión.",
+        "updatedTitle": "¡Vacante actualizada!",
+        "updatedDesc": "Los cambios se han guardado correctamente."
       },
       "errors": {
         "companyNotFoundTitle": "Error",
-        "companyNotFoundDesc": "Company profile not found.",
+        "companyNotFoundDesc": "No se encontró el perfil de empresa.",
         "loadFailedTitle": "Error",
-        "loadFailedDesc": "Could not load this job for editing.",
+        "loadFailedDesc": "No se pudo cargar esta vacante para editarla.",
         "createFailedTitle": "Error",
-        "createFailedDesc": "Could not create the job. Please try again."
+        "createFailedDesc": "No se pudo crear la oferta. Inténtalo de nuevo."
       },
       "form": {
-        "sectionTitle": "Job details",
+        "sectionTitle": "Información de la oferta",
         "labels": {
-          "title": "Job title *",
-          "description": "Description",
-          "location": "Location",
+          "title": "Título del puesto *",
+          "description": "Descripción",
+          "location": "Ubicación",
           "sector": "Sector",
-          "contractType": "Contract type",
-          "workMode": "Work mode",
-          "salaryRange": "Salary range",
-          "requirements": "Requirements"
+          "contractType": "Tipo de contrato",
+          "workMode": "Modalidad de trabajo",
+          "salaryRange": "Rango salarial",
+          "requirements": "Requisitos"
         },
         "placeholders": {
-          "title": "E.g.: Cleaner",
-          "description": "Describe responsibilities and tasks...",
-          "location": "E.g.: Lisbon",
-          "sector": "E.g.: Services, Logistics",
-          "salaryRange": "E.g.: €900 - €1100/month",
-          "requirements": "List the required qualifications..."
+          "title": "Ej.: Auxiliar de limpieza",
+          "description": "Describe responsabilidades y tareas...",
+          "location": "Ej.: Lisboa",
+          "sector": "Ej.: Servicios, Logística",
+          "salaryRange": "Ej.: 900€ - 1100€/mes",
+          "requirements": "Lista los requisitos y cualificaciones necesarias..."
         },
         "contractTypes": {
-          "full_time": "Full-time",
-          "part_time": "Part-time",
-          "temporary": "Temporary",
-          "internship": "Internship"
+          "full_time": "Tiempo completo",
+          "part_time": "Medio tiempo",
+          "temporary": "Temporal",
+          "internship": "Prácticas"
         },
         "workModes": {
-          "on_site": "On-site",
-          "hybrid": "Hybrid",
-          "remote": "Remote"
+          "on_site": "Presencial",
+          "hybrid": "Híbrido",
+          "remote": "Remoto"
         }
       },
       "actions": {
-        "cancel": "Cancel",
-        "saving": "Saving...",
-        "save": "Save changes",
-        "publish": "Publish job"
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "save": "Guardar cambios",
+        "publish": "Publicar oferta"
       }
     },
     "offers": {
-      "backToDashboard": "Back to dashboard",
-      "title": "My jobs",
-      "subtitle": "Manage your job postings",
-      "manageTitle": "My Jobs",
-      "manageSubtitle": "Manage, filter, and track your published jobs.",
+      "backToDashboard": "Volver al panel",
+      "title": "Mis ofertas",
+      "subtitle": "Gestiona tus ofertas de empleo",
+      "manageTitle": "Mis vacantes",
+      "manageSubtitle": "Gestiona, filtra y sigue tus vacantes publicadas.",
       "actions": {
-        "newOffer": "New job",
-        "publishNew": "Publish new job",
-        "viewCandidates": "View candidates",
-        "edit": "Edit",
-        "pause": "Pause",
-        "resume": "Resume",
-        "close": "Close"
+        "newOffer": "Nueva oferta",
+        "publishNew": "Publicar nueva vacante",
+        "viewCandidates": "Ver candidatos",
+        "edit": "Editar",
+        "pause": "Pausar",
+        "resume": "Reanudar",
+        "close": "Cerrar"
       },
       "kpis": {
         "total": "TOTAL",
-        "active": "ACTIVE",
-        "paused": "PAUSED",
-        "closed": "CLOSED"
+        "active": "ACTIVAS",
+        "paused": "PAUSADAS",
+        "closed": "CERRADAS"
       },
-      "searchPlaceholder": "Search by title or location",
-      "searchAria": "Search jobs",
+      "searchPlaceholder": "Buscar por título o ubicación",
+      "searchAria": "Buscar vacantes",
       "filters": {
-        "all": "All",
-        "active": "Active",
-        "in_review": "In review",
-        "paused": "Paused",
-        "closed": "Closed",
-        "dateFrom": "FROM",
-        "dateTo": "TO",
-        "sort": "SORT",
-        "sortAria": "Sort jobs",
-        "sortNewest": "Newest",
-        "sortOldest": "Oldest"
+        "all": "Todas",
+        "active": "Activas",
+        "in_review": "En revisión",
+        "paused": "Pausadas",
+        "closed": "Cerradas",
+        "dateFrom": "DESDE",
+        "dateTo": "HASTA",
+        "sort": "ORDENAR",
+        "sortAria": "Ordenar vacantes",
+        "sortNewest": "Más recientes",
+        "sortOldest": "Más antiguas"
       },
       "status": {
-        "active": "Active",
-        "pending_review": "In review",
-        "closed": "Closed",
-        "rejected": "Rejected",
-        "paused": "Paused",
-        "other": "Unknown status"
+        "active": "Activa",
+        "pending_review": "En revisión",
+        "closed": "Cerrada",
+        "rejected": "Rechazada",
+        "paused": "Pausada",
+        "other": "Estado desconocido"
       },
       "empty": {
-        "title": "No jobs",
-        "subtitle": "You haven't published any job postings yet.",
-        "cta": "Create your first job",
-        "filtered": "No jobs found for the selected filters."
+        "title": "Sin ofertas",
+        "subtitle": "Aún no has publicado ninguna oferta de empleo.",
+        "cta": "Crear primera oferta",
+        "filtered": "No se encontraron vacantes para los filtros seleccionados."
       },
-      "loading": "Loading jobs...",
+      "loading": "Cargando vacantes...",
       "table": {
-        "caption": "Published jobs list",
+        "caption": "Lista de vacantes publicadas",
         "headers": {
-          "title": "Job",
-          "published": "Created",
-          "status": "Status",
-          "applications": "Candidates",
-          "actions": "Actions"
+          "title": "Vacante",
+          "published": "Creada",
+          "status": "Estado",
+          "applications": "Candidatos",
+          "actions": "Acciones"
         },
-        "candidatesLabel": "candidates"
+        "candidatesLabel": "candidatos"
       },
       "pagination": {
-        "summary": "Showing {from}–{to} of {total}",
-        "prev": "Previous page",
-        "next": "Next page"
+        "summary": "Mostrando {from}–{to} de {total}",
+        "prev": "Página anterior",
+        "next": "Página siguiente"
       },
       "toast": {
-        "updatedTitle": "Status updated",
-        "updatedDesc": "The job was updated successfully.",
+        "updatedTitle": "Estado actualizado",
+        "updatedDesc": "La vacante se actualizó correctamente.",
         "updateErrorTitle": "Error",
-        "updateErrorDesc": "Could not update the job status."
+        "updateErrorDesc": "No se pudo actualizar el estado de la vacante."
       },
-      "applicationsCount": "{count} applications"
+      "applicationsCount": "{count} candidaturas"
     },
     "applications": {
-      "unknownApplicant": "Unknown",
-      "backToOffers": "Back to jobs",
-      "pageTitle": "Applications",
-      "count": "{count} application(s) received",
+      "unknownApplicant": "Desconocido",
+      "backToOffers": "Volver a las ofertas",
+      "pageTitle": "Candidaturas",
+      "count": "{count} candidatura(s) recibida(s)",
       "empty": {
-        "title": "No applications",
-        "subtitle": "This job hasn't received any applications yet."
+        "title": "Sin candidaturas",
+        "subtitle": "Esta oferta aún no ha recibido candidaturas."
       },
-      "appliedOn": "Applied on {date}",
-      "selectPrompt": "Select an application to view details",
+      "appliedOn": "Se postuló el {date}",
+      "selectPrompt": "Selecciona una candidatura para ver los detalles",
       "status": {
-        "submitted": "New",
-        "reviewing": "Under review",
-        "interview": "Interview",
-        "accepted": "Accepted",
-        "rejected": "Rejected"
+        "submitted": "Nuevo",
+        "reviewing": "En análisis",
+        "interview": "Entrevista",
+        "accepted": "Aceptada",
+        "rejected": "Rechazada"
       },
       "actions": {
-        "reviewing": "Under review",
-        "interview": "Interview",
-        "accept": "Accept",
-        "reject": "Reject"
+        "reviewing": "En análisis",
+        "interview": "Entrevista",
+        "accept": "Aceptar",
+        "reject": "Rechazar"
       },
       "details": {
-        "title": "Application details",
-        "updateStatus": "Update status:",
+        "title": "Detalles de la candidatura",
+        "updateStatus": "Actualizar estado:",
         "labels": {
-          "candidate": "Candidate",
+          "candidate": "Candidato",
           "email": "Email",
-          "date": "Date",
-          "coverLetter": "Cover letter"
+          "date": "Fecha",
+          "coverLetter": "Carta de presentación"
         }
       }
     },
     "applicationsHub": {
-      "backToDashboard": "Back to dashboard",
-      "title": "Applications",
-      "subtitle": "Track all applications received for your jobs.",
+      "backToDashboard": "Volver al panel",
+      "title": "Candidaturas",
+      "subtitle": "Sigue todas las candidaturas recibidas en tus vacantes.",
       "kpis": {
         "total": "TOTAL",
-        "submitted": "NEW",
-        "reviewing": "UNDER REVIEW",
-        "accepted": "ACCEPTED",
-        "rejected": "REJECTED"
+        "submitted": "NUEVAS",
+        "reviewing": "EN ANÁLISIS",
+        "accepted": "ACEPTADAS",
+        "rejected": "RECHAZADAS"
       },
       "filters": {
-        "all": "All",
-        "submitted": "New",
-        "reviewing": "Under review",
-        "interview": "Interview",
-        "accepted": "Accepted",
-        "rejected": "Rejected"
+        "all": "Todas",
+        "submitted": "Nuevas",
+        "reviewing": "En análisis",
+        "interview": "Entrevista",
+        "accepted": "Aceptadas",
+        "rejected": "Rechazadas"
       },
-      "searchPlaceholder": "Search by candidate, email, job or location",
-      "searchAria": "Search applications",
+      "searchPlaceholder": "Buscar por candidato, email, vacante o ubicación",
+      "searchAria": "Buscar candidaturas",
       "sort": {
-        "aria": "Sort applications",
-        "newest": "Newest first",
-        "oldest": "Oldest first"
+        "aria": "Ordenar candidaturas",
+        "newest": "Más recientes",
+        "oldest": "Más antiguas"
       },
       "empty": {
-        "noApplicationsTitle": "No applications",
-        "noApplicationsSubtitle": "You have not received applications for your jobs yet.",
-        "filtered": "No applications found for the selected filters."
+        "noApplicationsTitle": "Sin candidaturas",
+        "noApplicationsSubtitle": "Aún no recibiste candidaturas en tus vacantes.",
+        "filtered": "No se encontraron candidaturas para los filtros aplicados."
       },
       "actions": {
-        "openOffers": "Go to jobs",
-        "viewOffer": "View job",
-        "viewCandidate": "View candidate"
+        "openOffers": "Ir a vacantes",
+        "viewOffer": "Ver vacante",
+        "viewCandidate": "Ver candidato"
       },
       "toast": {
-        "loadError": "Could not load applications.",
-        "updatedTitle": "Status updated",
-        "updatedDesc": "Application status updated successfully.",
-        "updateError": "Could not update application status."
+        "loadError": "No se pudieron cargar las candidaturas.",
+        "updatedTitle": "Estado actualizado",
+        "updatedDesc": "La candidatura se actualizó correctamente.",
+        "updateError": "No se pudo actualizar el estado de la candidatura."
       }
     },
     "candidates": {
-      "loading": "Loading candidates...",
-      "companyNotFound": "Company profile not found.",
+      "loading": "Cargando candidatos...",
+      "companyNotFound": "Perfil de empresa no encontrado.",
       "breadcrumbs": {
-        "root": "Candidates",
-        "current": "Candidate Management"
+        "root": "Candidatos",
+        "current": "Gestión de Candidatos"
       },
-      "title": "Candidate Management",
-      "subtitle": "List, filter and manage your candidate database.",
+      "title": "Gestión de Candidatos",
+      "subtitle": "Lista, filtra y gestiona tu base de candidatos.",
       "kpis": {
-        "total": "TOTAL CANDIDATES",
-        "newMonth": "NEW THIS MONTH",
-        "ideal": "IDEAL MATCHES"
+        "total": "TOTAL CANDIDATOS",
+        "newMonth": "NUEVOS ESTE MES",
+        "ideal": "MATCHES IDEALES"
       },
       "filters": {
-        "job": "FILTER BY JOB",
-        "job_all": "All Jobs",
-        "skills": "SKILLS",
-        "skills_placeholder": "Ex: React, Figma...",
-        "experience": "EXPERIENCE",
-        "experience_all": "Any level",
-        "minMatch": "MIN MATCH (%)"
+        "job": "FILTRAR POR VACANTE",
+        "job_all": "Todas las Vacantes",
+        "skills": "COMPETENCIAS",
+        "skills_placeholder": "Ej: React, Figma...",
+        "experience": "EXPERIENCIA",
+        "experience_all": "Cualquier nivel",
+        "minMatch": "MÍNIMO MATCH (%)"
       },
       "search": {
-        "placeholder": "Search by name or role",
-        "aria": "Search candidates"
+        "placeholder": "Buscar por nombre o cargo",
+        "aria": "Buscar candidatos"
       },
       "table": {
         "headers": {
-          "candidate": "CANDIDATE / ROLE",
+          "candidate": "CANDIDATO / CARGO",
           "match": "MATCH",
-          "skills": "SKILLS",
-          "stage": "STATUS",
-          "actions": "ACTION"
+          "skills": "COMPETENCIAS",
+          "stage": "ESTADO",
+          "actions": "ACCIÓN"
         },
-        "jobPrefix": "Job:",
-        "jobFallback": "Job"
+        "jobPrefix": "Vacante:",
+        "jobFallback": "Vacante"
       },
       "pagination": {
-        "summary": "Showing {from}-{to} of {total} candidates",
-        "prev": "Previous",
-        "next": "Next"
+        "summary": "Mostrando {from}-{to} de {total} candidatos",
+        "prev": "Anterior",
+        "next": "Siguiente"
       },
-      "empty": "No candidates for the current filters.",
+      "empty": "No hay candidatos con los filtros actuales.",
       "stage": {
-        "triage": "In triage",
-        "interview": "Interview scheduled",
-        "rejected": "Rejected",
-        "hired": "Hired"
+        "triage": "En evaluación",
+        "interview": "Entrevista programada",
+        "rejected": "Rechazado",
+        "hired": "Contratado"
       },
       "experience": {
         "junior": "Junior",
-        "mid": "Mid",
+        "mid": "Intermedio",
         "senior": "Senior"
       },
       "actions": {
-        "new": "New Candidate",
-        "view": "View details",
-        "edit": "Edit",
-        "delete": "Delete"
+        "new": "Nuevo Candidato",
+        "view": "Ver detalles",
+        "edit": "Editar",
+        "delete": "Eliminar"
       },
       "form": {
-        "title_create": "Create candidate",
-        "title_edit": "Edit candidate",
-        "description": "Fill required fields and save your changes.",
+        "title_create": "Crear candidato",
+        "title_edit": "Editar candidato",
+        "description": "Completa los campos obligatorios y guarda los cambios.",
         "labels": {
-          "name": "Name *",
+          "name": "Nombre *",
           "cpf": "CPF *",
           "email": "Email *",
-          "phone": "Phone *",
-          "desired_role": "Desired role *",
-          "experience": "Experience *",
-          "skills": "Skills",
-          "job_offer": "Linked job",
+          "phone": "Teléfono *",
+          "desired_role": "Cargo deseado *",
+          "experience": "Experiencia *",
+          "skills": "Competencias",
+          "job_offer": "Vacante vinculada",
           "match": "Match (%)",
-          "stage": "Status *"
+          "stage": "Estado *"
         },
         "placeholders": {
-          "skills": "Ex: React, Node.js, TypeScript",
-          "job_offer": "None"
+          "skills": "Ej: React, Node.js, TypeScript",
+          "job_offer": "Ninguna"
         },
         "buttons": {
-          "cancel": "Cancel",
-          "save": "Save"
+          "cancel": "Cancelar",
+          "save": "Guardar"
         },
         "errors": {
-          "name": "Enter the name (min. 2 characters).",
-          "cpf": "Invalid CPF.",
-          "email": "Invalid email.",
-          "phone": "Invalid phone.",
-          "desired_role": "Enter the desired role.",
-          "experience": "Select experience.",
-          "stage": "Select status.",
-          "match": "Match must be between 0 and 100."
+          "name": "Introduce el nombre (mín. 2 caracteres).",
+          "cpf": "CPF inválido.",
+          "email": "Email inválido.",
+          "phone": "Teléfono inválido.",
+          "desired_role": "Introduce el cargo deseado.",
+          "experience": "Selecciona la experiencia.",
+          "stage": "Selecciona el estado.",
+          "match": "El match debe estar entre 0 y 100."
         }
       },
       "delete": {
-        "title": "Confirm deletion",
-        "description": "Are you sure you want to delete candidate {name}?",
+        "title": "Confirmar eliminación",
+        "description": "¿Seguro que deseas eliminar al candidato {name}?",
         "buttons": {
-          "cancel": "Cancel",
-          "confirm": "Delete"
+          "cancel": "Cancelar",
+          "confirm": "Eliminar"
         }
       },
       "toast": {
         "created": {
-          "title": "Candidate created",
-          "description": "The candidate was added successfully."
+          "title": "Candidato creado",
+          "description": "El candidato se agregó correctamente."
         },
         "updated": {
-          "title": "Candidate updated",
-          "description": "Changes saved successfully."
+          "title": "Candidato actualizado",
+          "description": "Cambios guardados correctamente."
         },
         "deleted": {
-          "title": "Candidate deleted",
-          "description": "The candidate was removed successfully."
+          "title": "Candidato eliminado",
+          "description": "El candidato se eliminó correctamente."
         },
         "error": {
           "title": "Error",
-          "description": "Could not complete the operation.",
-          "delete_failed": "Could not delete the candidate."
+          "description": "No se pudo completar la operación.",
+          "delete_failed": "No se pudo eliminar al candidato."
         }
       },
       "export": {
         "buttons": {
-          "csv": "Export CSV",
-          "xlsx": "Export Excel"
+          "csv": "Exportar CSV",
+          "xlsx": "Exportar Excel"
         },
         "columns": {
-          "name": "Name",
+          "name": "Nombre",
           "cpf": "CPF",
           "email": "Email",
-          "phone": "Phone",
-          "desired_role": "Desired role",
-          "experience": "Experience",
-          "skills": "Skills"
+          "phone": "Teléfono",
+          "desired_role": "Cargo deseado",
+          "experience": "Experiencia",
+          "skills": "Competencias"
         },
         "no_results": {
-          "title": "No results",
-          "description": "There are no candidates to export with the current filters."
+          "title": "Sin resultados",
+          "description": "No hay candidatos para exportar con los filtros actuales."
         },
         "limit": {
-          "title": "Limit exceeded",
-          "description": "Refine filters to export up to 10,000 records."
+          "title": "Límite excedido",
+          "description": "Refina los filtros para exportar hasta 10.000 registros."
         },
         "xlsx_ready": {
-          "title": "Excel ready",
-          "description": "Excel exporter prepared. Click again to export."
+          "title": "Excel listo",
+          "description": "Exportador Excel preparado. Haz clic de nuevo para exportar."
         },
         "done": {
-          "title": "Export complete",
-          "description": "{count} candidates exported."
+          "title": "Exportación completada",
+          "description": "Se exportaron {count} candidatos."
         },
         "error": {
-          "title": "Export error",
-          "generic": "Could not export.",
-          "xlsx_prepare": "Could not prepare the Excel exporter.",
-          "xlsx_missing": "XLSX module unavailable."
+          "title": "Error al exportar",
+          "generic": "No se pudo exportar.",
+          "xlsx_prepare": "No se pudo preparar el exportador Excel.",
+          "xlsx_missing": "Módulo XLSX no disponible."
         }
       },
       "details": {
-        "title": "Candidate details",
-        "description": "Profile and résumé data (when available).",
-        "matchHelp": "Match indicator (0-100).",
-        "firstName": "First name",
-        "lastName": "Last name",
-        "professionalTitle": "Professional title",
-        "email": "Email address",
-        "phone": "Phone number",
-        "location": "Address / location",
-        "summary": "Professional summary",
-        "emptySummary": "No summary provided.",
-        "skills": "Skills",
-        "languages": "Languages",
-        "noSkills": "No skills registered.",
-        "noLanguages": "No languages registered.",
-        "viewCurriculum": "View résumé",
-        "close": "Close",
-        "goToJobs": "View Jobs"
+        "title": "Detalles del candidato",
+        "description": "Datos del perfil y del currículum (cuando estén disponibles).",
+        "matchHelp": "Indicador de match (0-100).",
+        "firstName": "Nombre",
+        "lastName": "Apellidos",
+        "professionalTitle": "Cargo profesional",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "location": "Dirección / ubicación",
+        "summary": "Resumen profesional",
+        "emptySummary": "Sin resumen registrado.",
+        "skills": "Competencias",
+        "languages": "Idiomas",
+        "noSkills": "Sin competencias registradas.",
+        "noLanguages": "Sin idiomas registrados.",
+        "viewCurriculum": "Ver currículum",
+        "close": "Cerrar",
+        "goToJobs": "Ver Vacantes"
       }
     },
     "candidate": {
-      "fallbackName": "Candidate",
-      "fallbackOfferTitle": "Job",
-      "notFound": "Candidate not found",
-      "back": "Back",
-      "backToDashboard": "Back to dashboard",
+      "fallbackName": "Candidato",
+      "fallbackOfferTitle": "Oferta",
+      "notFound": "Candidato no encontrado",
+      "back": "Volver",
+      "backToDashboard": "Volver al panel",
       "resume": {
-        "title": "Resume",
-        "iframeTitle": "Resume",
-        "openInNewWindow": "Open resume in a new tab",
-        "notAvailable": "Resume not available. Ask the candidate to send their resume.",
-        "useDemo": "Use demo resume"
+        "title": "Currículum",
+        "iframeTitle": "Currículum",
+        "openInNewWindow": "Abrir CV en una nueva pestaña",
+        "notAvailable": "Currículum no disponible. Solicita al candidato que envíe su CV.",
+        "useDemo": "Usar CV de demostración"
       },
       "sessions": {
-        "title": "Appointments",
-        "empty": "No appointments recorded.",
-        "status": "Status: {status}",
-        "defaultStatus": "Scheduled"
+        "title": "Citas",
+        "empty": "Sin citas registradas.",
+        "status": "Estado: {status}",
+        "defaultStatus": "Programada"
       },
       "trails": {
-        "title": "Watched tracks",
-        "empty": "No track progress.",
-        "completed": "Completed",
-        "modulesProgress": "{completed}/{total} modules"
+        "title": "Rutas vistas",
+        "empty": "Sin progreso en rutas.",
+        "completed": "Completada",
+        "modulesProgress": "{completed}/{total} módulos"
       },
       "applications": {
-        "title": "Applications",
-        "empty": "No applications recorded for this candidate."
+        "title": "Candidaturas",
+        "empty": "No hay candidaturas registradas para este candidato."
       }
     }
   }
