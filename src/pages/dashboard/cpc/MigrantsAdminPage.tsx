@@ -44,6 +44,12 @@ import {
   escapeHtmlForPrint,
   printBrandingStylesCss,
 } from '@/lib/printDocumentBrandingHtml';
+import {
+  mapProfileToRegion,
+  MIGRANT_REGION_FILTER_OPTIONS,
+  type MigrantRegion,
+  type MigrantRegionFilter,
+} from '@/lib/migrantRegion';
 
 type TriageAnswers = Record<string, unknown>;
 
@@ -65,10 +71,20 @@ type MigrantRow = {
   upcoming_sessions?: number;
   trails_progress_avg?: number;
   blocked?: boolean;
+  region: MigrantRegion;
 };
 
 type UserDoc = { id: string; name?: string | null; email?: string | null; role?: string | null; nif?: string | null; blocked?: boolean | null; active?: boolean | null };
-type ProfileDoc = { name?: string | null; email?: string | null; birthDate?: string | null; nationality?: string | null; arrivalDate?: string | null };
+type ProfileDoc = {
+  name?: string | null;
+  email?: string | null;
+  birthDate?: string | null;
+  nationality?: string | null;
+  arrivalDate?: string | null;
+  region?: 'Lisboa' | 'Norte' | 'Centro' | 'Alentejo' | 'Algarve' | 'Outra' | null;
+  regionOther?: string | null;
+  currentLocation?: string | null;
+};
 type TriageDoc = {
   legal_status?: string | null;
   work_status?: string | null;
@@ -138,7 +154,7 @@ export default function MigrantsAdminPage() {
   const [query, setQuery] = useState('');
   const [legalFilter, setLegalFilter] = useState<'all' | 'regular' | 'irregular' | 'pendente'>('all');
   const [workFilter, setWorkFilter] = useState<'all' | 'empregado' | 'desempregado' | 'informal'>('all');
-  const [langFilter, setLangFilter] = useState<'all' | 'iniciante' | 'intermediario' | 'avancado'>('all');
+  const [regionFilter, setRegionFilter] = useState<MigrantRegionFilter>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<'all' | 'juridico' | 'psicologico' | 'habitacional'>('all');
   const [triageFilter, setTriageFilter] = useState<'all' | 'complete' | 'incomplete'>('all');
   const [nameSortDir, setNameSortDir] = useState<'asc' | 'desc'>('asc');
@@ -261,6 +277,18 @@ export default function MigrantsAdminPage() {
     if (normalized === 'intermediario') return t.get('cpc.migrantsAdmin.language.intermediate');
     if (normalized === 'avancado') return t.get('cpc.migrantsAdmin.language.advanced');
     return '—';
+  }
+
+  function regionLabel(value: MigrantRegion): string {
+    const keys: Record<MigrantRegion, string> = {
+      Lisboa: 'cpc.migrantsAdmin.region.lisboa',
+      Norte: 'cpc.migrantsAdmin.region.norte',
+      Centro: 'cpc.migrantsAdmin.region.centro',
+      Alentejo: 'cpc.migrantsAdmin.region.alentejo',
+      Algarve: 'cpc.migrantsAdmin.region.algarve',
+      Desconhecida: 'cpc.migrantsAdmin.region.unknown',
+    };
+    return t.get(keys[value]);
   }
 
   function exportRowValue(row: MigrantRow, key: 'birth_date' | 'nationality' | 'arrival_date'): string {
@@ -589,6 +617,7 @@ export default function MigrantsAdminPage() {
             upcoming_sessions: sessionsMap[p.user_id] || 0,
             trails_progress_avg: progressMap[p.user_id] || 0,
             blocked: p.blocked,
+            region: mapProfileToRegion(profileMap[p.user_id]),
           };
         });
 
@@ -717,15 +746,15 @@ export default function MigrantsAdminPage() {
       const matchQuery = query.trim().length === 0 || r.name.toLowerCase().includes(query.toLowerCase());
       const matchLegal = legalFilter === 'all' || normalizeLegalStatus(r.legal_status) === legalFilter;
       const matchWork = workFilter === 'all' || normalizeWorkStatus(r.work_status) === workFilter;
-      const matchLang = langFilter === 'all' || normalizeLanguageLevel(r.language_level) === langFilter;
+      const matchRegion = regionFilter === 'all' || r.region === regionFilter;
       const matchUrg = urgencyFilter === 'all' || normalizeUrgencies(r.urgencies).includes(urgencyFilter);
       const matchTriage =
         triageFilter === 'all' ||
         (triageFilter === 'complete' && r.triage_completed) ||
         (triageFilter === 'incomplete' && !r.triage_completed);
-      return matchQuery && matchLegal && matchWork && matchLang && matchUrg && matchTriage;
+      return matchQuery && matchLegal && matchWork && matchRegion && matchUrg && matchTriage;
     });
-  }, [rows, query, legalFilter, workFilter, langFilter, urgencyFilter, triageFilter]);
+  }, [rows, query, legalFilter, workFilter, regionFilter, urgencyFilter, triageFilter]);
 
   const filteredSorted = useMemo(() => {
     const sorted = [...filtered];
@@ -738,7 +767,7 @@ export default function MigrantsAdminPage() {
 
   useEffect(() => {
     setPageIndex(0);
-  }, [query, legalFilter, workFilter, langFilter, urgencyFilter, triageFilter, pageSize]);
+  }, [query, legalFilter, workFilter, regionFilter, urgencyFilter, triageFilter, pageSize]);
 
   useEffect(() => {
     setPageIndex((p) => {
@@ -832,14 +861,16 @@ export default function MigrantsAdminPage() {
             </Select>
           </div>
           <div className="min-w-0">
-            <Label className="line-clamp-2">{t.get('cpc.migrantsAdmin.filters.language.label')}</Label>
-            <Select value={langFilter} onValueChange={(v) => setLangFilter(v as typeof langFilter)}>
+            <Label className="line-clamp-2">{t.get('cpc.migrantsAdmin.filters.region.label')}</Label>
+            <Select value={regionFilter} onValueChange={(v) => setRegionFilter(v as MigrantRegionFilter)}>
               <SelectTrigger className="mt-1 h-11 text-base"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">{t.get('cpc.migrantsAdmin.filters.language.all')}</SelectItem>
-                <SelectItem value="iniciante">{t.get('cpc.migrantsAdmin.language.beginner')}</SelectItem>
-                <SelectItem value="intermediario">{t.get('cpc.migrantsAdmin.language.intermediate')}</SelectItem>
-                <SelectItem value="avancado">{t.get('cpc.migrantsAdmin.language.advanced')}</SelectItem>
+                <SelectItem value="all">{t.get('cpc.migrantsAdmin.filters.region.all')}</SelectItem>
+                {MIGRANT_REGION_FILTER_OPTIONS.map((region) => (
+                  <SelectItem key={region} value={region}>
+                    {regionLabel(region)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

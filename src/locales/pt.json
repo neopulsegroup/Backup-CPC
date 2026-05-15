@@ -1915,6 +1915,14 @@
         "intermediate": "Intermediário",
         "advanced": "Avançado"
       },
+      "region": {
+        "lisboa": "Lisboa",
+        "norte": "Norte",
+        "centro": "Centro",
+        "alentejo": "Alentejo",
+        "algarve": "Algarve",
+        "unknown": "Desconhecida"
+      },
       "urgencies": {
         "legal": "Jurídico",
         "psychological": "Psicológico",
@@ -1937,6 +1945,10 @@
         "language": {
           "label": "Nível de língua",
           "all": "Todos"
+        },
+        "region": {
+          "label": "Região",
+          "all": "Todas"
         },
         "urgencies": {
           "label": "Urgências",
